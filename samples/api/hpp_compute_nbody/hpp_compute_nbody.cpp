@@ -316,7 +316,7 @@ vk::Pipeline HPPComputeNBody::create_graphics_pipeline()
 	                                                             .dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha,
 	                                                             .alphaBlendOp        = vk::BlendOp::eAdd,
 	                                                             .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                                                                    vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthTestEnable  = false;

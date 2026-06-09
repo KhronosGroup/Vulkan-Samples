@@ -360,9 +360,9 @@ void MeshShaderCulling::setup_query_result_buffer()
 		query_pool_info.sType                 = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 		query_pool_info.queryType             = VK_QUERY_TYPE_PIPELINE_STATISTICS;
 		query_pool_info.pipelineStatistics    = VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
-		                                        VK_QUERY_PIPELINE_STATISTIC_TASK_SHADER_INVOCATIONS_BIT_EXT |
-		                                        VK_QUERY_PIPELINE_STATISTIC_MESH_SHADER_INVOCATIONS_BIT_EXT;
-		query_pool_info.queryCount            = 3;
+		                                     VK_QUERY_PIPELINE_STATISTIC_TASK_SHADER_INVOCATIONS_BIT_EXT |
+		                                     VK_QUERY_PIPELINE_STATISTIC_MESH_SHADER_INVOCATIONS_BIT_EXT;
+		query_pool_info.queryCount = 3;
 		VK_CHECK(vkCreateQueryPool(get_device().get_handle(), &query_pool_info, nullptr, &query_pool));
 	}
 }

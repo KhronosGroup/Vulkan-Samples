@@ -198,7 +198,7 @@ vk::DescriptorPool HPPInstancing::create_descriptor_pool()
 	// Example uses one ubo
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 2}, {vk::DescriptorType::eCombinedImageSampler, 2}}};
 	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info{
-	    .maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
+	             .maxSets = 2, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
 
 	return get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -496,9 +496,9 @@ void HPPInstancing::update_planet_descriptor_set()
 {
 	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
 	vk::DescriptorImageInfo  image_descriptor{
-	    planet.texture.sampler,
-	    planet.texture.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, planet.texture.image->get_vk_image_view().get_format())};
+        planet.texture.sampler,
+        planet.texture.image->get_vk_image_view().get_handle(),
+        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, planet.texture.image->get_vk_image_view().get_format())};
 	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = planet.descriptor_set,
 	                                                                 .dstBinding      = 0,
 	                                                                 .descriptorCount = 1,
@@ -516,9 +516,9 @@ void HPPInstancing::update_rocks_descriptor_set()
 {
 	vk::DescriptorBufferInfo buffer_descriptor{uniform_buffers.scene->get_handle(), 0, vk::WholeSize};
 	vk::DescriptorImageInfo  image_descriptor{
-	    rocks.texture.sampler,
-	    rocks.texture.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, rocks.texture.image->get_vk_image_view().get_format())};
+        rocks.texture.sampler,
+        rocks.texture.image->get_vk_image_view().get_handle(),
+        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, rocks.texture.image->get_vk_image_view().get_format())};
 	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{{.dstSet          = rocks.descriptor_set,
 	                                                                 .dstBinding      = 0,
 	                                                                 .descriptorCount = 1,

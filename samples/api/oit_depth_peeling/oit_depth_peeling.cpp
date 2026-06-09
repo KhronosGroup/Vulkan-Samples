@@ -322,9 +322,9 @@ void OITDepthPeeling::create_gather_pass_objects(const uint32_t width, const uin
 	{
 		framebuffer_create_info.renderPass = gather_render_pass;
 		const VkImageView attachments[]    = {
-		    layer_image_view[i]->get_handle(),
-		    depth_image_view[i % kDepthCount]->get_handle(),
-		};
+            layer_image_view[i]->get_handle(),
+            depth_image_view[i % kDepthCount]->get_handle(),
+        };
 		framebuffer_create_info.pAttachments = attachments;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, gather_framebuffer + i));
 	}
@@ -336,22 +336,22 @@ void OITDepthPeeling::create_images(const uint32_t width, const uint32_t height)
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)
 	{
 		layer_image[i]      = std::make_unique<vkb::core::Image>(get_device(),
-		                                                         image_extent,
-		                                                         VK_FORMAT_R8G8B8A8_UNORM,
-		                                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		                                                         VMA_MEMORY_USAGE_GPU_ONLY,
-		                                                         VK_SAMPLE_COUNT_1_BIT);
+                                                            image_extent,
+                                                            VK_FORMAT_R8G8B8A8_UNORM,
+                                                            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                                                            VMA_MEMORY_USAGE_GPU_ONLY,
+                                                            VK_SAMPLE_COUNT_1_BIT);
 		layer_image_view[i] = std::make_unique<vkb::core::ImageView>(*layer_image[i], VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 	}
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
 		depth_image[i]      = std::make_unique<vkb::core::Image>(get_device(),
-		                                                         image_extent,
-		                                                         VK_FORMAT_D32_SFLOAT,
-		                                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-		                                                         VMA_MEMORY_USAGE_GPU_ONLY,
-		                                                         VK_SAMPLE_COUNT_1_BIT);
+                                                            image_extent,
+                                                            VK_FORMAT_D32_SFLOAT,
+                                                            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                                            VMA_MEMORY_USAGE_GPU_ONLY,
+                                                            VK_SAMPLE_COUNT_1_BIT);
 		depth_image_view[i] = std::make_unique<vkb::core::ImageView>(*depth_image[i], VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_D32_SFLOAT);
 	}
 }
@@ -420,9 +420,9 @@ void OITDepthPeeling::create_descriptors()
 		const uint32_t num_uniform_buffer_descriptors         = num_gather_pass_uniform_buffer + num_combine_pass_uniform_buffer;
 		const uint32_t num_combined_image_sampler_descriptors = num_gather_pass_combined_image_sampler + num_combine_pass_combined_image_sampler;
 		std::vector<VkDescriptorPoolSize> pool_sizes          = {
-		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, num_uniform_buffer_descriptors),
-		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, num_combined_image_sampler_descriptors),
-		};
+            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, num_uniform_buffer_descriptors),
+            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, num_combined_image_sampler_descriptors),
+        };
 		const uint32_t             num_gather_descriptor_sets  = 2;
 		const uint32_t             num_combine_descriptor_sets = 1;
 		const uint32_t             num_descriptor_sets         = num_gather_descriptor_sets + num_combine_descriptor_sets;

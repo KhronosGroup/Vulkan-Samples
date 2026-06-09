@@ -280,7 +280,7 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 	                                                             .dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha,
 	                                                             .alphaBlendOp        = vk::BlendOp::eAdd,
 	                                                             .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                                                                    vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;

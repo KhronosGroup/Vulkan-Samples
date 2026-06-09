@@ -43,7 +43,7 @@ class Tag
 		tags = {Tag<TAGS>::ID...};
 	}
 
-	static void member() {};
+	static void member(){};
 
 	/**
 	 * @brief Unique TagID for a given Tag<TagName>

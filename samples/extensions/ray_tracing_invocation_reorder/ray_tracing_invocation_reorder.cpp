@@ -365,7 +365,7 @@ void RaytracingInvocationReorder::create_bottom_level_acceleration_structure(boo
 	               static_index_handle   = get_buffer_device_address(index_buffer->get_handle()),
 	               dynamic_vertex_handle = dynamic_vertex_buffer ? get_buffer_device_address(dynamic_vertex_buffer->get_handle()) : 0,
 	               dynamic_index_handle  = dynamic_index_buffer ? get_buffer_device_address(dynamic_index_buffer->get_handle()) : 0;
-	auto          &model_buffers         = raytracing_scene->model_buffers;
+	auto &model_buffers                  = raytracing_scene->model_buffers;
 	for (auto &model_buffer : model_buffers)
 	{
 		if (model_buffer.is_static && is_update)
@@ -672,12 +672,12 @@ void RaytracingInvocationReorder::create_shader_binding_tables()
 */
 void RaytracingInvocationReorder::create_descriptor_sets()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
-	                                                {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1},
-	                                                {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-	                                                {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5},
-	                                                {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-	                                                {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(raytracing_scene->imageInfos.size())}};
+	std::vector<VkDescriptorPoolSize> pool_sizes                  = {{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
+	                                                                 {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1},
+	                                                                 {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+	                                                                 {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5},
+	                                                                 {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+	                                                                 {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(raytracing_scene->imageInfos.size())}};
 	VkDescriptorPoolCreateInfo        descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
@@ -789,11 +789,11 @@ void RaytracingInvocationReorder::create_dynamic_object_buffers(float time)
 		                                                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 		dynamic_index_buffer  = std::make_unique<vkb::core::BufferC>(get_device(),
-		                                                             index_buffer_size,
-		                                                             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-		                                                                 VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-		                                                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
+                                                                    index_buffer_size,
+                                                                    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+                                                                        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                                                                        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
 	dynamic_vertex_buffer->update(refraction_model.data(), vertex_buffer_size);

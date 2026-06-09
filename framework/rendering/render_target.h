@@ -240,8 +240,8 @@ inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImage> &&i
 	auto get_image_extent = [](const vkb::core::HPPImage &image) { return vk::Extent2D{image.get_extent().width, image.get_extent().height}; };
 
 	extent = get_image_extent(images.front());
-	if (std::ranges::find_if(images,
-	                         [extent = this->extent, &get_image_extent](const vkb::core::HPPImage &image) { return get_image_extent(image) != extent; }) != images.end())
+	if (std::ranges::find_if(
+	        images, [extent = this->extent, &get_image_extent](const vkb::core::HPPImage &image) { return get_image_extent(image) != extent; }) != images.end())
 	{
 		throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
 	}
@@ -291,8 +291,8 @@ inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImageView>
 
 	// allow only one extent size for a render target
 	extent = get_view_extent(views.front());
-	if (std::ranges::find_if(views,
-	                         [extent = this->extent, &get_view_extent](const vkb::core::HPPImageView &view) { return get_view_extent(view) != extent; }) != views.end())
+	if (std::ranges::find_if(
+	        views, [extent = this->extent, &get_view_extent](const vkb::core::HPPImageView &view) { return get_view_extent(view) != extent; }) != views.end())
 	{
 		throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
 	}

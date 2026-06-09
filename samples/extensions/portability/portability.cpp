@@ -367,9 +367,10 @@ void Portability::prepare_offscreen_buffer()
 		// Use subpass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies{};
 
-		// vkCmdBeginRenderPass clears the color aspect of attachment 0 (offscreen.color[0]) and 1 (offscreen.color[1]) in subpass 0 of VkRenderPass offscreen.render_pass
-		// (loadOp VK_ATTACHMENT_LOAD_OP_CLEAR), which was previously written during an image layout transition initiated by the same command.
-		// For correct synchronization, the dependency from external to subpass 0 must allow VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT access at VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.
+		// vkCmdBeginRenderPass clears the color aspect of attachment 0 (offscreen.color[0]) and 1 (offscreen.color[1]) in subpass 0 of VkRenderPass
+		// offscreen.render_pass (loadOp VK_ATTACHMENT_LOAD_OP_CLEAR), which was previously written during an image layout transition initiated by the same
+		// command. For correct synchronization, the dependency from external to subpass 0 must allow VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT access at
+		// VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.
 		dependencies[0].srcSubpass    = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass    = 0;
 		dependencies[0].srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -377,9 +378,10 @@ void Portability::prepare_offscreen_buffer()
 		dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-		// vkCmdBeginRenderPass clears the depth aspect of attachment 2 (offscreen.depth.view) in subpass 0 of VkRenderPass offscreen.render_pass (loadOp VK_ATTACHMENT_LOAD_OP_CLEAR),
-		// which was previously written during an image layout transition initiated by the same command.
-		// For correct synchronization, the dependency from external to subpass 0 must allow VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT access at VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.
+		// vkCmdBeginRenderPass clears the depth aspect of attachment 2 (offscreen.depth.view) in subpass 0 of VkRenderPass offscreen.render_pass (loadOp
+		// VK_ATTACHMENT_LOAD_OP_CLEAR), which was previously written during an image layout transition initiated by the same command. For correct
+		// synchronization, the dependency from external to subpass 0 must allow VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT access at
+		// VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.
 		dependencies[1].srcSubpass    = VK_SUBPASS_EXTERNAL;
 		dependencies[1].dstSubpass    = 0;
 		dependencies[1].srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -600,9 +602,9 @@ void Portability::setup_descriptor_sets()
 	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
 	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.skysphere);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.sphere, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(descriptor_sets.sphere, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-	};
+        vkb::initializers::write_descriptor_set(descriptor_sets.sphere, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_sets.sphere, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+    };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Sky sphere descriptor set
@@ -611,9 +613,9 @@ void Portability::setup_descriptor_sets()
 	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
 	environment_image_descriptor = create_descriptor(textures.skysphere);
 	write_descriptor_sets        = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-	};
+        vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+    };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Bloom filter

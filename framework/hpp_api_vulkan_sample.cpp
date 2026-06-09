@@ -717,17 +717,17 @@ void HPPApiVulkanSample::setup_render_pass()
 	     .srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe,
 	     .dstStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-	     .srcAccessMask   = vk::AccessFlagBits::eNoneKHR,
-	     .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
-	                        vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .srcAccessMask = vk::AccessFlagBits::eNoneKHR,
+	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	    {.srcSubpass = 0,
 	     .dstSubpass = vk::SubpassExternal,
 	     .srcStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-	     .dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
-	     .srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
-	                        vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe,
+	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	}};
@@ -791,17 +791,17 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	     .srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe,
 	     .dstStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-	     .srcAccessMask   = vk::AccessFlagBits::eNoneKHR,
-	     .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
-	                        vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .srcAccessMask = vk::AccessFlagBits::eNoneKHR,
+	     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	    {.srcSubpass = 0,
 	     .dstSubpass = vk::SubpassExternal,
 	     .srcStageMask =
 	         vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-	     .dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
-	     .srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
-	                        vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+	     .dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe,
+	     .srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite |
+	                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 	     .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
 	     .dependencyFlags = vk::DependencyFlagBits::eByRegion},
 	}};

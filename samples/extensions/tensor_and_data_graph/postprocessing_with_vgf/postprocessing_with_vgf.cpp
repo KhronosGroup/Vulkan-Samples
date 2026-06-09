@@ -424,12 +424,12 @@ void PostprocessingWithVgf::prepare_input_tensor()
 #endif
 
 	input_tensor      = std::make_unique<ExternallyAllocatedTensor>(get_device(),
-	                                                                TensorBuilder({vgf_data.input_tensor_infos[0].dimensions})
-	                                                                    .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_IMAGE_ALIASING_BIT_ARM)
-	                                                                    .with_format(vgf_data.input_tensor_infos[0].format)
-	                                                                    .with_tiling(VK_TENSOR_TILING_OPTIMAL_ARM),
-	                                                                image_to_alias.get_memory(),
-	                                                                image_to_alias.get_memory_offset());
+                                                               TensorBuilder({vgf_data.input_tensor_infos[0].dimensions})
+                                                                   .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_IMAGE_ALIASING_BIT_ARM)
+                                                                   .with_format(vgf_data.input_tensor_infos[0].format)
+                                                                   .with_tiling(VK_TENSOR_TILING_OPTIMAL_ARM),
+                                                               image_to_alias.get_memory(),
+                                                               image_to_alias.get_memory_offset());
 	input_tensor_view = std::make_unique<TensorView>(*input_tensor);
 }
 
@@ -442,13 +442,13 @@ void PostprocessingWithVgf::prepare_output_tensor()
 {
 	const vkb::core::Image &image_to_alias = *output_image;
 
-	output_tensor = std::make_unique<ExternallyAllocatedTensor>(get_device(),
-	                                                            TensorBuilder({vgf_data.output_tensor_infos[0].dimensions})
-	                                                                .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_IMAGE_ALIASING_BIT_ARM)
-	                                                                .with_format(vgf_data.output_tensor_infos[0].format)
-	                                                                .with_tiling(VK_TENSOR_TILING_OPTIMAL_ARM),
-	                                                            image_to_alias.get_memory(),
-	                                                            image_to_alias.get_memory_offset());
+	output_tensor      = std::make_unique<ExternallyAllocatedTensor>(get_device(),
+                                                                TensorBuilder({vgf_data.output_tensor_infos[0].dimensions})
+                                                                    .with_usage(VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM | VK_TENSOR_USAGE_IMAGE_ALIASING_BIT_ARM)
+                                                                    .with_format(vgf_data.output_tensor_infos[0].format)
+                                                                    .with_tiling(VK_TENSOR_TILING_OPTIMAL_ARM),
+                                                                image_to_alias.get_memory(),
+                                                                image_to_alias.get_memory_offset());
 	output_tensor_view = std::make_unique<TensorView>(*output_tensor);
 }
 
@@ -651,56 +651,57 @@ void PostprocessingWithVgf::draw_renderpass(vkb::core::CommandBufferC &command_b
 		{
 			const VkImageMemoryBarrier2 imageBarriers[2] = {
 #if TENSOR_IMAGE_ALIASING_RENDER_TO_ALIASED_IMAGE
-			    // Input tensor (which is aliased as the scene_render_target)
-			    {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			     nullptr,
-			     // Previously was rendered to as a color attachment
-			     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,        // srcStageMask
-			     VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,               // srcAccessMask
-			     VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM,               // dstStageMask
-			     VK_ACCESS_2_DATA_GRAPH_READ_BIT_ARM,                  // dstAccessMask
-			     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,             // oldLayout
+				// Input tensor (which is aliased as the scene_render_target)
+				{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+				 nullptr,
+				 // Previously was rendered to as a color attachment
+				 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,        // srcStageMask
+				 VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,               // srcAccessMask
+				 VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM,               // dstStageMask
+				 VK_ACCESS_2_DATA_GRAPH_READ_BIT_ARM,                  // dstAccessMask
+				 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,             // oldLayout
 
-			     // Transition to the special layout for tensor aliasing
-			     VK_IMAGE_LAYOUT_TENSOR_ALIASING_ARM,        // newLayout
-			     0,                                          // srcQueueFamilyIndex
-			     0,                                          // dstQueueFamilyIndex
-			     scene_render_target->get_views().at(0).get_image().get_handle(),
-			     VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}},
+				 // Transition to the special layout for tensor aliasing
+				 VK_IMAGE_LAYOUT_TENSOR_ALIASING_ARM,        // newLayout
+				 0,                                          // srcQueueFamilyIndex
+				 0,                                          // dstQueueFamilyIndex
+				 scene_render_target->get_views().at(0).get_image().get_handle(),
+				 VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}},
 #else
-			    // Input tensor (which is aliased as input_image)
-			    {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			     nullptr,
-			     // Previously was copied to
-			     VK_PIPELINE_STAGE_TRANSFER_BIT,                // srcStageMask
-			     VK_ACCESS_2_TRANSFER_WRITE_BIT,                // srcAccessMask
-			     VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM,        // dstStageMask
-			     VK_ACCESS_2_DATA_GRAPH_READ_BIT_ARM,           // dstAccessMask
-			     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,          // oldLayout
+				// Input tensor (which is aliased as input_image)
+				{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+				 nullptr,
+				 // Previously was copied to
+				 VK_PIPELINE_STAGE_TRANSFER_BIT,                // srcStageMask
+				 VK_ACCESS_2_TRANSFER_WRITE_BIT,                // srcAccessMask
+				 VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM,        // dstStageMask
+				 VK_ACCESS_2_DATA_GRAPH_READ_BIT_ARM,           // dstAccessMask
+				 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,          // oldLayout
 
-			     // Transition to the special layout for tensor aliasing
-			     VK_IMAGE_LAYOUT_TENSOR_ALIASING_ARM,        // newLayout
-			     0,                                          // srcQueueFamilyIndex
-			     0,                                          // dstQueueFamilyIndex
-			     input_image->get_handle(),
-			     VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}},
+				 // Transition to the special layout for tensor aliasing
+				 VK_IMAGE_LAYOUT_TENSOR_ALIASING_ARM,        // newLayout
+				 0,                                          // srcQueueFamilyIndex
+				 0,                                          // dstQueueFamilyIndex
+				 input_image->get_handle(),
+				 VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}},
 #endif
-			    // Output tensor (which is aliased as output_image)
-			    {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			     nullptr,
-			     // Previously was read by the blit shader
-			     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,         // srcStageMask
-			     VK_ACCESS_2_SHADER_READ_BIT,                   // srcAccessMask
-			     VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM,        // dstStageMask
-			     VK_ACCESS_2_DATA_GRAPH_WRITE_BIT_ARM,          // dstAccessMask
-			     VK_IMAGE_LAYOUT_UNDEFINED,                     // oldLayout
+				// Output tensor (which is aliased as output_image)
+				{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+				 nullptr,
+				 // Previously was read by the blit shader
+				 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,         // srcStageMask
+				 VK_ACCESS_2_SHADER_READ_BIT,                   // srcAccessMask
+				 VK_PIPELINE_STAGE_2_DATA_GRAPH_BIT_ARM,        // dstStageMask
+				 VK_ACCESS_2_DATA_GRAPH_WRITE_BIT_ARM,          // dstAccessMask
+				 VK_IMAGE_LAYOUT_UNDEFINED,                     // oldLayout
 
-			     // Transition to the special layout for tensor aliasing
-			     VK_IMAGE_LAYOUT_TENSOR_ALIASING_ARM,        // newLayout
-			     0,                                          // srcQueueFamilyIndex
-			     0,                                          // dstQueueFamilyIndex
-			     output_image->get_handle(),
-			     VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}}};
+				 // Transition to the special layout for tensor aliasing
+				 VK_IMAGE_LAYOUT_TENSOR_ALIASING_ARM,        // newLayout
+				 0,                                          // srcQueueFamilyIndex
+				 0,                                          // dstQueueFamilyIndex
+				 output_image->get_handle(),
+				 VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}}
+			};
 
 			VkDependencyInfo dependencyInfo        = {VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
 			dependencyInfo.imageMemoryBarrierCount = 2;

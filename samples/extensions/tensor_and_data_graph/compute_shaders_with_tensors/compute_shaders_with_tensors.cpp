@@ -270,8 +270,8 @@ void ComputeShadersWithTensors::prepare_output_tensors()
 	// strides (1, 1), dilation (1, 1) and padding (0, 0, 0, 0).
 	std::vector<int64_t> dimensions = {1, 100, 100, 3};
 	output_tensor                   = std::make_unique<Tensor>(
-	    get_device(),
-	    TensorBuilder(dimensions).with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM).with_format(VK_FORMAT_R32_SFLOAT));
+        get_device(),
+        TensorBuilder(dimensions).with_usage(VK_TENSOR_USAGE_SHADER_BIT_ARM | VK_TENSOR_USAGE_DATA_GRAPH_BIT_ARM).with_format(VK_FORMAT_R32_SFLOAT));
 
 	output_tensor_view = std::make_unique<TensorView>(*output_tensor);
 
@@ -290,9 +290,9 @@ void ComputeShadersWithTensors::prepare_output_tensors()
 void ComputeShadersWithTensors::prepare_output_image(uint32_t width, uint32_t height)
 {
 	output_image      = std::make_unique<vkb::core::Image>(get_device(),
-	                                                       vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
-	                                                           .with_format(VK_FORMAT_R8G8B8A8_UNORM)
-	                                                           .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
+                                                      vkb::core::ImageBuilder(VkExtent3D{width, height, 1})
+                                                          .with_format(VK_FORMAT_R8G8B8A8_UNORM)
+                                                          .with_usage(VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT));
 	output_image_view = std::make_unique<vkb::core::ImageView>(*output_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM);
 }
 

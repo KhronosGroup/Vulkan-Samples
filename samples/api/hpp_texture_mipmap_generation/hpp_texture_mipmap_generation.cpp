@@ -216,10 +216,10 @@ vk::Pipeline HPPTextureMipMapGeneration::create_pipeline()
 	    {0, 0, vk::Format::eR32G32B32Sfloat, 0},                     // Position
 	    {1, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6},        // UV
 	}};
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state{.vertexBindingDescriptionCount   = 1,
-	                                                          .pVertexBindingDescriptions      = &vertex_input_binding,
-	                                                          .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
-	                                                          .pVertexAttributeDescriptions    = vertex_input_attributes.data()};
+	vk::PipelineVertexInputStateCreateInfo             vertex_input_state{.vertexBindingDescriptionCount = 1,
+	                                                                      .pVertexBindingDescriptions    = &vertex_input_binding,
+	                                                                      .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size()),
+	                                                                      .pVertexAttributeDescriptions = vertex_input_attributes.data()};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state{.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
 	                                                                               vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};

@@ -217,7 +217,7 @@ void OpenGLInterop::prepare_shared_resources()
 #ifdef WIN32
 		export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 #else
-		export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+		export_memory_allocate_Info.handleTypes       = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
 #endif
 
 		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &export_memory_allocate_Info};
@@ -589,8 +589,7 @@ void OpenGLInterop::view_changed()
 void OpenGLInterop::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
-	{
-	}
+	{}
 }
 
 void OpenGLInterop::build_command_buffers()

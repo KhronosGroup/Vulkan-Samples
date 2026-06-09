@@ -458,11 +458,11 @@ void Profiles::setup_descriptor_set_layout()
 	descriptor_layout_create_info.pNext = &descriptor_set_layout_binding_flags;
 
 	// Set layout for the uniform buffer and the image
-	set_layout_bindings = {// Binding 0 : Vertex shader uniform buffer
-	                       vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	                       // Binding 1 : Fragment shader combined image and sampler
-	                       vkb::initializers::descriptor_set_layout_binding(
-	                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, static_cast<uint32_t>(textures.size()))};
+	set_layout_bindings                        = {// Binding 0 : Vertex shader uniform buffer
+                           vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+                           // Binding 1 : Fragment shader combined image and sampler
+                           vkb::initializers::descriptor_set_layout_binding(
+                               VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	descriptor_layout_create_info.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;

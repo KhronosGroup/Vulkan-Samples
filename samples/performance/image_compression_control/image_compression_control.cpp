@@ -245,12 +245,12 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 
 				VkImageFormatProperties format_properties;
 				auto                    result = vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(),
-				                                                                          color_image_info.format,
-				                                                                          color_image_info.imageType,
-				                                                                          color_image_info.tiling,
-				                                                                          color_image_info.usage,
-				                                                                          0,        // no create flags
-				                                                                          &format_properties);
+                                                                       color_image_info.format,
+                                                                       color_image_info.imageType,
+                                                                       color_image_info.tiling,
+                                                                       color_image_info.usage,
+                                                                       0,        // no create flags
+                                                                       &format_properties);
 
 				// Pick the first format that supports at least 2 or more levels of fixed-rate compression, otherwise
 				// pick the first format that supports at least 1 level

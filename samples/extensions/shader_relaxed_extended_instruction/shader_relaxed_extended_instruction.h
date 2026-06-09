@@ -33,7 +33,8 @@ class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 	uint32_t get_api_version() const override;
 	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
-	void     request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
+	void     request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+	                                vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
 	void     request_validation_feature_enables(std::vector<VkValidationFeatureEnableEXT> &requested_validation_feature_enables) const override;
 
 	bool prepare(const vkb::ApplicationOptions &options) override;

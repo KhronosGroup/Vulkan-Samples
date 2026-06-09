@@ -465,7 +465,7 @@ void RayQueries::create_uniforms()
 	const auto vertex_buffer_size = model.vertices.size() * sizeof(model.vertices[0]);
 	const auto index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
 	vertex_buffer                 = std::make_unique<vkb::core::BufferC>(
-	    get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer = std::make_unique<vkb::core::BufferC>(
 	    get_device(), index_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	if (vertex_buffer_size)

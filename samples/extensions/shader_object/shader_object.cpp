@@ -255,9 +255,9 @@ void ShaderObject::setup_render_pass()
 	dependency.srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	dependency.dstStageMask =
 	    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-	dependency.srcAccessMask   = VK_ACCESS_TRANSFER_WRITE_BIT;
-	dependency.dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-	                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependency.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+	                           VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Setup create info for the render pass for the UI
@@ -763,9 +763,9 @@ void ShaderObject::create_images()
 	depth_images.reserve(supported_depth_formats.size());
 
 	// Create image and set sampler for the post process image
-	post_process_image = create_output_image(VK_FORMAT_R8G8B8A8_UNORM,
-	                                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-	                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	post_process_image                 = create_output_image(VK_FORMAT_R8G8B8A8_UNORM,
+                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                                                 VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	post_process_input_sampler.sampler = standard_sampler;
 
 	// Create an output image for all supported formats

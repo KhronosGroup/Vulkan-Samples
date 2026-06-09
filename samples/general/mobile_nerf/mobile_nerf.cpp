@@ -1144,7 +1144,7 @@ void MobileNerf::create_descriptor_sets_baseline()
 		{
 			VkDescriptorBufferInfo weights_buffer_descriptor = create_descriptor(*weights_buffers[models[0].model_index]);
 			VkWriteDescriptorSet   weights_buffer_write      = vkb::initializers::write_descriptor_set(
-			    descriptor_set_baseline[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, &weights_buffer_descriptor);        // UBO
+                descriptor_set_baseline[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, &weights_buffer_descriptor);        // UBO
 
 			std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 			    texture_input_write_0, texture_input_write_1, texture_input_write_2, weights_buffer_write};

@@ -872,8 +872,8 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	static float    time_pass  = 0.0f;
 	time_pass += delta_time;
 	static auto &transform   = std::ranges::find_if(scene_elements_baseline, [](SceneNode const &scene_node) {
-		                         return scene_node.node->get_name() == "Cube_1";
-	                           })->node->get_transform();
+                                 return scene_node.node->get_name() == "Cube_1";
+                             })->node->get_transform();
 	static auto  translation = transform.get_translation();
 	static float difference  = 0.0f;
 	static bool  rising      = true;

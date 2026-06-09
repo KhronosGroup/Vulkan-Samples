@@ -271,10 +271,10 @@ void FragmentDensityMap::prepare_pipelines()
 
 			const VkPipelineShaderStageCreateInfo fdm_comp = load_shader("fragment_density_map/generate_density_map.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 			VkComputePipelineCreateInfo           pipeline_create_info{
-			    .sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-			    .stage  = fdm_comp,
-			    .layout = fdm.generate.pipeline.pipeline_layout,
-			};
+			              .sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+			              .stage  = fdm_comp,
+			              .layout = fdm.generate.pipeline.pipeline_layout,
+            };
 			VK_CHECK(vkCreateComputePipelines(device_handle, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &fdm.generate.pipeline.pipeline));
 			debug_utils.set_debug_name(
 			    device_handle, VK_OBJECT_TYPE_PIPELINE, get_object_handle(fdm.generate.pipeline.pipeline), "Generate FDM Pipeline (compute)");
@@ -982,8 +982,8 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		     physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.height);
 
 		fdm.texel_size.width  = std::clamp(fdm.texel_size.width,
-		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.width,
-		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.width);
+                                          physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.width,
+                                          physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.width);
 		fdm.texel_size.height = std::clamp(fdm.texel_size.height,
 		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.minFragmentDensityTexelSize.height,
 		                                   physical_device_FRAGMENT_DENSITY_MAP_properties.maxFragmentDensityTexelSize.height);
@@ -1309,7 +1309,7 @@ void FragmentDensityMap::setup_framebuffer()
 		                                                   .pNext      = nullptr,
 		                                                   .renderPass = render_pass,
 		                                                   .attachmentCount =
-		                                                       is_fdm_enabled() ? vkb::to_u32(attachments.size()) : (vkb::to_u32(attachments.size()) - 1u),
+                                                            is_fdm_enabled() ? vkb::to_u32(attachments.size()) : (vkb::to_u32(attachments.size()) - 1u),
 		                                                   .pAttachments = attachments.data(),
 		                                                   .width        = main_pass.extend.width,
 		                                                   .height       = main_pass.extend.height,

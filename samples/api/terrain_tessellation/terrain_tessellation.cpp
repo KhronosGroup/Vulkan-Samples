@@ -409,13 +409,13 @@ void TerrainTessellation::setup_descriptor_sets()
 	VkDescriptorImageInfo  heightmap_image_descriptor  = create_descriptor(textures.heightmap);
 	VkDescriptorImageInfo  terrainmap_image_descriptor = create_descriptor(textures.terrain_array);
 	write_descriptor_sets                              = {
-	    // Binding 0 : Shared tessellation shader ubo
-	    vkb::initializers::write_descriptor_set(descriptor_sets.terrain, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &terrain_buffer_descriptor),
-	    // Binding 1 : Displacement map
-	    vkb::initializers::write_descriptor_set(descriptor_sets.terrain, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &heightmap_image_descriptor),
-	    // Binding 2 : Color map (alpha channel)
-	    vkb::initializers::write_descriptor_set(descriptor_sets.terrain, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &terrainmap_image_descriptor),
-	};
+        // Binding 0 : Shared tessellation shader ubo
+        vkb::initializers::write_descriptor_set(descriptor_sets.terrain, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &terrain_buffer_descriptor),
+        // Binding 1 : Displacement map
+        vkb::initializers::write_descriptor_set(descriptor_sets.terrain, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &heightmap_image_descriptor),
+        // Binding 2 : Color map (alpha channel)
+        vkb::initializers::write_descriptor_set(descriptor_sets.terrain, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &terrainmap_image_descriptor),
+    };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 
 	// Skysphere
@@ -425,11 +425,11 @@ void TerrainTessellation::setup_descriptor_sets()
 	VkDescriptorBufferInfo skysphere_buffer_descriptor = create_descriptor(*uniform_buffers.skysphere_vertex);
 	VkDescriptorImageInfo  skysphere_image_descriptor  = create_descriptor(textures.skysphere);
 	write_descriptor_sets                              = {
-	    // Binding 0 : Vertex shader ubo
-	    vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &skysphere_buffer_descriptor),
-	    // Binding 1 : Fragment shader color map
-	    vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &skysphere_image_descriptor),
-	};
+        // Binding 0 : Vertex shader ubo
+        vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &skysphere_buffer_descriptor),
+        // Binding 1 : Fragment shader color map
+        vkb::initializers::write_descriptor_set(descriptor_sets.skysphere, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &skysphere_image_descriptor),
+    };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 

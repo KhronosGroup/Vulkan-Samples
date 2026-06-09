@@ -1032,8 +1032,8 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 
 	const auto enabled_instance_extensions = get_instance().get_enabled_extensions();
 	debug_utils_supported                  = std::ranges::find_if(enabled_instance_extensions, [](std::string const &ext) {
-		                        return ext == VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-	                                         }) != enabled_instance_extensions.cend();
+                                return ext == VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+                            }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));

@@ -198,8 +198,7 @@ void DynamicPrimitiveClipping::on_update_ui_overlay(vkb::Drawer &drawer)
 			rebuild_command_buffers();
 		}
 		if (drawer.combo_box("Visualization", &params.visualization, visualization_names))
-		{
-		}
+		{}
 		if (drawer.checkbox("Draw object 1", &params.drawObject[0]))
 		{
 			rebuild_command_buffers();
@@ -372,8 +371,8 @@ void DynamicPrimitiveClipping::setup_descriptor_sets()
 	std::vector<VkDescriptorBufferInfo> descriptor_buffer_infos = {create_descriptor(*uniform_buffers.buffer_positive),
 	                                                               create_descriptor(*uniform_buffers.buffer_negative)};
 	std::vector<VkWriteDescriptorSet>   write_descriptor_sets   = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.descriptor_positive, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptor_buffer_infos[0]),
-	    vkb::initializers::write_descriptor_set(descriptor_sets.descriptor_negative, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptor_buffer_infos[1])};
+        vkb::initializers::write_descriptor_set(descriptor_sets.descriptor_positive, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptor_buffer_infos[0]),
+        vkb::initializers::write_descriptor_set(descriptor_sets.descriptor_negative, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &descriptor_buffer_infos[1])};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 

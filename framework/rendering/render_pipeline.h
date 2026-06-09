@@ -109,7 +109,7 @@ class RenderPipeline
   private:
 	size_t                                     active_subpass_index = 0;
 	std::vector<vk::ClearValue>                clear_value{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f},
-	                                                       vk::ClearDepthStencilValue{0.0f, ~0U}};        // Defaults for swapchain and depth attachment
+                                            vk::ClearDepthStencilValue{0.0f, ~0U}};        // Defaults for swapchain and depth attachment
 	std::vector<vkb::common::HPPLoadStoreInfo> load_store{
 	    {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore},
 	    {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment

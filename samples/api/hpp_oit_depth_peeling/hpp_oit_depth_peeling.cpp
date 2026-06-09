@@ -329,7 +329,7 @@ void HPPOITDepthPeeling::create_descriptor_pool()
 	const uint32_t                        num_combine_descriptor_sets = 1;
 	const uint32_t                        num_descriptor_sets         = num_gather_descriptor_sets + num_combine_descriptor_sets;
 	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info{
-	    .maxSets = num_descriptor_sets, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
+	             .maxSets = num_descriptor_sets, .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()), .pPoolSizes = pool_sizes.data()};
 
 	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
@@ -473,22 +473,22 @@ void HPPOITDepthPeeling::create_images(const uint32_t width, const uint32_t heig
 	for (uint32_t i = 0; i < kLayerMaxCount; ++i)
 	{
 		layers[i].image      = std::make_unique<vkb::core::HPPImage>(get_device(),
-		                                                             image_extent,
-		                                                             vk::Format::eR8G8B8A8Unorm,
-		                                                             vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
-		                                                             VMA_MEMORY_USAGE_GPU_ONLY,
-		                                                             vk::SampleCountFlagBits::e1);
+                                                                image_extent,
+                                                                vk::Format::eR8G8B8A8Unorm,
+                                                                vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
+                                                                VMA_MEMORY_USAGE_GPU_ONLY,
+                                                                vk::SampleCountFlagBits::e1);
 		layers[i].image_view = std::make_unique<vkb::core::HPPImageView>(*layers[i].image, vk::ImageViewType::e2D, vk::Format::eR8G8B8A8Unorm);
 	}
 
 	for (uint32_t i = 0; i < kDepthCount; ++i)
 	{
 		depths[i].image      = std::make_unique<vkb::core::HPPImage>(get_device(),
-		                                                             image_extent,
-		                                                             vk::Format::eD32Sfloat,
-		                                                             vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eDepthStencilAttachment,
-		                                                             VMA_MEMORY_USAGE_GPU_ONLY,
-		                                                             vk::SampleCountFlagBits::e1);
+                                                                image_extent,
+                                                                vk::Format::eD32Sfloat,
+                                                                vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                                                                VMA_MEMORY_USAGE_GPU_ONLY,
+                                                                vk::SampleCountFlagBits::e1);
 		depths[i].image_view = std::make_unique<vkb::core::HPPImageView>(*depths[i].image, vk::ImageViewType::e2D, vk::Format::eD32Sfloat);
 	}
 }

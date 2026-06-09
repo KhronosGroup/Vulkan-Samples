@@ -1449,12 +1449,12 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		// Image embedded in gltf file
 		auto                    mipmap = sg::Mipmap{/* .level = */ 0,
-		                                            /* .offset = */ 0,
-		                                            /* .extent = */
-		                                            {/* .width = */ static_cast<uint32_t>(gltf_image.width),
-		                                             /* .height = */ static_cast<uint32_t>(gltf_image.height),
-		                                             /* .depth = */ 1u}};
-		std::vector<sg::Mipmap> mipmaps{mipmap};
+                                 /* .offset = */ 0,
+                                 /* .extent = */
+                                 {/* .width = */ static_cast<uint32_t>(gltf_image.width),
+                                  /* .height = */ static_cast<uint32_t>(gltf_image.height),
+                                  /* .depth = */ 1u}};
+        std::vector<sg::Mipmap> mipmaps{mipmap};
 		image = std::make_unique<sg::Image>(gltf_image.name, std::move(gltf_image.image), std::move(mipmaps));
 	}
 	else

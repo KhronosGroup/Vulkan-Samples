@@ -1237,7 +1237,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 		auto                                 debugExtensionIt              = std::ranges::find_if(
-		    available_instance_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+            available_instance_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -1338,7 +1338,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = physical_device->get_handle().enumerateDeviceExtensionProperties();
 		auto                                 debugExtensionIt            = std::ranges::find_if(
-		    available_device_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+            available_device_extensions, [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
@@ -1383,7 +1383,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats, const float font_size, bool explicit_update)
+inline void
+    VulkanSample<bindingType>::create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats, const float font_size, bool explicit_update)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{

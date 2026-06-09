@@ -1259,7 +1259,7 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 
 			// Using the log2 formula to calculate required mip level
 			double delta     = std::max(std::max(x_texture_to_screen_horizontal_ratio, y_texture_to_screen_horizontal_ratio),
-			                            std::max(x_texture_to_screen_vertical_ratio, y_texture_to_screen_vertical_ratio));
+                                    std::max(x_texture_to_screen_vertical_ratio, y_texture_to_screen_vertical_ratio));
 			double mip_level = std::min(static_cast<double>(mip_levels - 1U), std::max(log2(delta), 0.0));
 
 			mip_table[row][column].mip_level = mip_level;
@@ -1289,7 +1289,7 @@ void SparseImage::create_vertex_buffer()
 
 	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), vertices);
 	vertex_buffer       = std::make_unique<vkb::core::BufferC>(
-	    get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+        get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1313,7 +1313,7 @@ void SparseImage::create_index_buffer()
 
 	auto staging_buffer = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 	index_buffer        = std::make_unique<vkb::core::BufferC>(
-	    get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+        get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1407,7 +1407,7 @@ void SparseImage::create_uniform_buffers()
 {
 	VkDeviceSize buffer_size = sizeof(MVP);
 	mvp_buffer               = std::make_unique<vkb::core::BufferC>(
-	    get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+        get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 	buffer_size               = sizeof(FragSettingsData);
 	frag_settings_data_buffer = std::make_unique<vkb::core::BufferC>(
@@ -1553,8 +1553,8 @@ void SparseImage::create_sparse_texture_image()
 
 	for (uint32_t mip_level = 0U; mip_level < virtual_texture.mip_levels; mip_level++)
 	{
-		size_t numRows    = current_mip_height / virtual_texture.format_properties.imageGranularity.height +
-		                    (current_mip_height % virtual_texture.format_properties.imageGranularity.height == 0U ? 0U : 1U);
+		size_t numRows = current_mip_height / virtual_texture.format_properties.imageGranularity.height +
+		                 (current_mip_height % virtual_texture.format_properties.imageGranularity.height == 0U ? 0U : 1U);
 		size_t numColumns = current_mip_width / virtual_texture.format_properties.imageGranularity.width +
 		                    (current_mip_width % virtual_texture.format_properties.imageGranularity.width == 0U ? 0U : 1U);
 

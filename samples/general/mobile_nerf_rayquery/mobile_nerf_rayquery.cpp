@@ -766,16 +766,16 @@ void MobileNerfRayQuery::create_top_level_acceleration_structure()
 {
 	std::vector<VkAccelerationStructureInstanceKHR> acceleration_structure_instances;
 	auto                                            add_instance = [&](Model &model, const VkTransformMatrixKHR &transform_matrix, uint32_t instance_index) {
-		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-		acceleration_structure_instance.transform = transform_matrix;
-		acceleration_structure_instance.instanceCustomIndex =
-		    instance_index;        // this is the model index instead of the instance index in instancing rendering.
-		                           // need this to index correct weights and vertex & index buffer in shader.
-		acceleration_structure_instance.mask                                   = 0xFF;
-		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
-		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-		acceleration_structure_instance.accelerationStructureReference         = model.bottom_level_acceleration_structure->get_device_address();
-		acceleration_structure_instances.emplace_back(acceleration_structure_instance);
+        VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
+        acceleration_structure_instance.transform = transform_matrix;
+        acceleration_structure_instance.instanceCustomIndex =
+            instance_index;        // this is the model index instead of the instance index in instancing rendering.
+                                   // need this to index correct weights and vertex & index buffer in shader.
+        acceleration_structure_instance.mask                                   = 0xFF;
+        acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
+        acceleration_structure_instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+        acceleration_structure_instance.accelerationStructureReference = model.bottom_level_acceleration_structure->get_device_address();
+        acceleration_structure_instances.emplace_back(acceleration_structure_instance);
 	};
 
 	auto     &ii = instancing_info;
@@ -1036,15 +1036,15 @@ void MobileNerfRayQuery::create_descriptor_sets()
 		VkWriteDescriptorSet uniform_buffer_write =
 		    vkb::initializers::write_descriptor_set(descriptor_set_common[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor);
 		VkWriteDescriptorSet vertex_buffer_write   = vkb::initializers::write_descriptor_set(descriptor_set_vertices[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-		                                                                                     0,
-		                                                                                     vertex_buffer_descriptors.data(),
-		                                                                                     static_cast<uint32_t>(vertex_buffer_descriptors.size()));
+                                                                                           VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                                                                           0,
+                                                                                           vertex_buffer_descriptors.data(),
+                                                                                           static_cast<uint32_t>(vertex_buffer_descriptors.size()));
 		VkWriteDescriptorSet index_buffer_write    = vkb::initializers::write_descriptor_set(descriptor_set_indices[i],
-		                                                                                     VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-		                                                                                     0,
-		                                                                                     index_buffer_descriptors.data(),
-		                                                                                     static_cast<uint32_t>(index_buffer_descriptors.size()));
+                                                                                          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                                                                          0,
+                                                                                          index_buffer_descriptors.data(),
+                                                                                          static_cast<uint32_t>(index_buffer_descriptors.size()));
 		VkWriteDescriptorSet texture_input_write_0 = vkb::initializers::write_descriptor_set(descriptor_set_feature1[i],
 		                                                                                     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 		                                                                                     0,

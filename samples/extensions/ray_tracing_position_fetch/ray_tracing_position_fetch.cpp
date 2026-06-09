@@ -265,15 +265,15 @@ void RayTracingPositionFetch::create_shader_binding_tables()
 	                                                                       .with_vma_usage(sbt_memory_usage)
 	                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 	miss_shader_binding_table   = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                   vkb::core::BufferBuilderC(handle_size)
-	                                                                       .with_usage(sbt_buffer_usage_flags)
-	                                                                       .with_vma_usage(sbt_memory_usage)
-	                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+                                                                     vkb::core::BufferBuilderC(handle_size)
+                                                                         .with_usage(sbt_buffer_usage_flags)
+                                                                         .with_vma_usage(sbt_memory_usage)
+                                                                         .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 	hit_shader_binding_table    = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                   vkb::core::BufferBuilderC(handle_size)
-	                                                                       .with_usage(sbt_buffer_usage_flags)
-	                                                                       .with_vma_usage(sbt_memory_usage)
-	                                                                       .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
+                                                                    vkb::core::BufferBuilderC(handle_size)
+                                                                        .with_usage(sbt_buffer_usage_flags)
+                                                                        .with_vma_usage(sbt_memory_usage)
+                                                                        .with_alignment(ray_tracing_pipeline_properties.shaderGroupBaseAlignment));
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);

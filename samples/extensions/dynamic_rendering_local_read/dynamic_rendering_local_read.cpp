@@ -730,7 +730,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount  = 1;
+	blend_state.attachmentCount = 1;
 	pipeline_create_info.subpass = 2;
 #endif
 
@@ -752,7 +752,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
 #else
-	blend_state.attachmentCount  = 1;
+	blend_state.attachmentCount = 1;
 	pipeline_create_info.subpass = 1;
 #endif
 
@@ -785,11 +785,13 @@ void DynamicRenderingLocalRead::request_instance_extensions(std::unordered_map<s
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void DynamicRenderingLocalRead::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+void DynamicRenderingLocalRead::request_layer_settings(std::vector<VkLayerSettingEXT>                    &requested_layer_settings,
+                                                       vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
 	// On iOS Simulator use layer setting to disable MoltenVK's Metal argument buffers - otherwise incorrect rendering for this sample
 	vkb::VulkanSampleC::request_layer_settings(requested_layer_settings, scb);
-	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(0)});
+	requested_layer_settings.push_back(
+	    {"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(0)});
 }
 #endif
 
@@ -981,15 +983,15 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		vkb::image_layout_transition(
 		    cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 #else
-		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-		render_pass_begin_info.renderPass               = render_pass;
-		render_pass_begin_info.renderArea.offset.x      = 0;
-		render_pass_begin_info.renderArea.offset.y      = 0;
-		render_pass_begin_info.renderArea.extent.width  = width;
+		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass = render_pass;
+		render_pass_begin_info.renderArea.offset.x = 0;
+		render_pass_begin_info.renderArea.offset.y = 0;
+		render_pass_begin_info.renderArea.extent.width = width;
 		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.clearValueCount          = 5;
-		render_pass_begin_info.pClearValues             = clear_values;
-		render_pass_begin_info.framebuffer              = framebuffers[i];
+		render_pass_begin_info.clearValueCount = 5;
+		render_pass_begin_info.pClearValues = clear_values;
+		render_pass_begin_info.framebuffer = framebuffers[i];
 
 		// Start our render pass, which contains multiple sub passes
 		vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);

@@ -139,7 +139,7 @@ class Device : public vkb::core::VulkanResource<bindingType, typename std::condi
 	                                                         vk::ImageUsageFlags     usage,
 	                                                         vk::MemoryPropertyFlags properties) const;
 	void                                   flush_command_buffer_impl(
-	    vk::Device device, vk::CommandBuffer command_buffer, vk::Queue queue, bool free = true, vk::Semaphore signal_semaphore = nullptr) const;
+	                                      vk::Device device, vk::CommandBuffer command_buffer, vk::Queue queue, bool free = true, vk::Semaphore signal_semaphore = nullptr) const;
 	vkb::core::HPPQueue const &get_queue_by_flags_impl(vk::QueueFlags queue_flags, uint32_t queue_index) const;
 	void                       init(std::unordered_map<const char *, bool> const                 &requested_extensions,
 	                                std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features);

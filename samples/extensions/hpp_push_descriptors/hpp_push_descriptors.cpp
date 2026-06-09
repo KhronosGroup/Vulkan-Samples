@@ -139,9 +139,9 @@ void HPPPushDescriptors::build_command_buffers()
 
 			vk::DescriptorBufferInfo cube_buffer_descriptor{cube.uniform_buffer->get_handle(), 0, vk::WholeSize};
 			vk::DescriptorImageInfo  cube_image_descriptor{
-			    cube.texture.sampler,
-			    cube.texture.image->get_vk_image_view().get_handle(),
-			    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, cube.texture.image->get_vk_image_view().get_format())};
+                cube.texture.sampler,
+                cube.texture.image->get_vk_image_view().get_handle(),
+                descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, cube.texture.image->get_vk_image_view().get_format())};
 
 			std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
 			    {{.dstBinding = 0, .descriptorCount = 1, .descriptorType = vk::DescriptorType::eUniformBuffer, .pBufferInfo = &scene_buffer_descriptor},
