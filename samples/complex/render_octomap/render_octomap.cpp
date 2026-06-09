@@ -749,8 +749,8 @@ void render_octomap::render(float delta_time)
 				// Flip Y to match the octomap coordinate convention (which applies coords.y *= -1).
 				// GLTF is Y-up; our world space expects Y-down.
 				static const glm::mat4 kFlipY = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
-				pc.model = kFlipY * d.node->get_transform().get_world_matrix();
-				pc.color = col;
+				pc.model                      = kFlipY * d.node->get_transform().get_world_matrix();
+				pc.color                      = col;
 				vkCmdPushConstants(cmd, gltf_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(GltfPushConstants), &pc);
 
 				if (d.sub_mesh->index_buffer)
