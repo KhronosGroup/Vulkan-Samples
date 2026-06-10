@@ -1,0 +1,281 @@
+////
+- Copyright (c) 2025-2026, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= ImGui Integration with Vulkan: A Practical Guide
+:toc:
+:toclevels: 3
+:sectnums:
+
+== Introduction
+
+This tutorial demonstrates how to integrate https://github.com/ocornut/imgui[Dear ImGui] with a Vulkan application using the `ImGUIUtil` class provided in the render_octomap sample. ImGui is an immediate mode graphical user interface library that is particularly well-suited for debugging tools, in-application configuration, and rapid prototyping.
+
+For background on the render_octomap sample and its purpose, see the link:../README.adoc[README].
+
+== Why ImGui for Vulkan Applications?
+
+ImGui offers several advantages for Vulkan developers:
+
+* **Immediate Mode**: No need to manage widget state - just call functions each frame
+* **Lightweight**: Minimal overhead and easy to integrate
+* **Customizable**: Full control over rendering and styling
+* **Debug-Friendly**: Perfect for runtime parameter tweaking and visualization
+
+== The ImGUIUtil Class
+
+The `ImGUIUtil` class wraps ImGui functionality and handles all Vulkan-specific setup. It manages:
+
+* Font texture upload and sampling
+* Vertex and index buffer management
+* Pipeline creation and configuration
+* Descriptor sets for texture binding
+* Push constants for viewport transformation
+
+=== Class Overview
+
+[source,cpp]
+----
+class ImGUIUtil {
+public:
+    // Initialize styles, keys, etc.
+    void init(float width, float height);
+    
+    // Initialize all Vulkan resources used by the UI
+    void initResources(VkRenderPass renderPass, VkQueue copyQueue);
+    
+    // Starts a new ImGui frame and sets up windows and UI elements
+    bool newFrame(bool updateFrameGraph);
+    
+    // Update vertex and index buffer containing the ImGui elements
+    void updateBuffers();
+    
+    // Draw current ImGui frame into a command buffer
+    void drawFrame(VkCommandBuffer commandBuffer);
+    
+    // Input handling
+    static void handleKey(int key, int scancode, int action, int mode);
+    static bool GetWantKeyCapture();
+    static void charPressed(uint32_t key);
+};
+----
+
+== Integration Steps
+
+=== Step 1: Create the ImGUIUtil Instance
+
+Create an instance of `ImGUIUtil` by passing your `ApiVulkanSample` base pointer:
+
+[source,cpp]
+----
+ImGUIUtil gui(this);  // 'this' is your ApiVulkanSample-derived class
+----
+
+=== Step 2: Initialize ImGui
+
+Call `init()` with your window dimensions:
+
+[source,cpp]
+----
+gui.init(width, height);
+----
+
+This sets up:
+
+* ImGui context and IO configuration
+* Font loading (Montserrat font family in various weights)
+* Key mappings for input handling
+* Default styling
+
+=== Step 3: Initialize Vulkan Resources
+
+After creating your render pass, initialize the Vulkan resources:
+
+[source,cpp]
+----
+gui.initResources(renderPass, graphicsQueue);
+----
+
+This creates:
+
+* Font texture and image view
+* Sampler for font texture
+* Descriptor pool, layout, and sets
+* Graphics pipeline with appropriate blend states
+* Pipeline layout with push constants
+
+=== Step 4: Render Loop Integration
+
+In your render loop, follow this pattern:
+
+[source,cpp]
+----
+// Start new ImGui frame
+if (gui.newFrame(updateFrameGraph)) {
+    // ImGui will capture input - handle accordingly
+}
+
+// Update buffers if UI changed
+gui.updateBuffers();
+
+// In your command buffer recording:
+gui.drawFrame(commandBuffer);
+----
+
+== Vulkan Resource Management
+
+=== Font Texture Upload
+
+The `ImGUIUtil` handles font texture upload using a staging buffer and command buffer submission:
+
+[source,cpp]
+----
+// Create staging buffer with font data
+vkb::core::BufferC stage_buffer = vkb::core::BufferC::create_staging_buffer(
+    device, uploadSize, fontData);
+
+// Request command buffer from pool
+auto command_buffer = device.get_command_pool().request_command_buffer();
+
+// Record copy commands with proper image layout transitions
+command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+
+// Transition to TRANSFER_DST_OPTIMAL
+// Copy buffer to image
+// Transition to SHADER_READ_ONLY_OPTIMAL
+
+command_buffer->end();
+
+// Submit and wait
+queue.submit(*command_buffer, device.get_fence_pool().request_fence());
+device.get_fence_pool().wait();
+----
+
+=== Pipeline Configuration
+
+The ImGui pipeline uses:
+
+* **Vertex Input**: Position (vec2), UV (vec2), Color (uint32)
+* **Blend State**: Alpha blending enabled for transparency
+* **Depth Test**: Disabled (UI renders on top)
+* **Cull Mode**: None (UI elements may be flipped)
+
+=== Push Constants
+
+Viewport transformation is handled via push constants:
+
+[source,cpp]
+----
+struct PushConstBlock {
+    glm::vec2 scale;      // 2.0 / width, 2.0 / height
+    glm::vec2 translate;  // -1.0, -1.0
+} pushConstBlock;
+----
+
+== Input Handling
+
+=== Keyboard Input
+
+Forward keyboard events to ImGui:
+
+[source,cpp]
+----
+void onKeyEvent(int key, int scancode, int action, int mods) {
+    ImGUIUtil::handleKey(key, scancode, action, mods);
+    
+    // Check if ImGui wants keyboard input
+    if (ImGUIUtil::GetWantKeyCapture()) {
+        // Don't process key for application
+        return;
+    }
+    
+    // Process key for application...
+}
+----
+
+=== Character Input
+
+For text input:
+
+[source,cpp]
+----
+void onCharEvent(uint32_t codepoint) {
+    ImGUIUtil::charPressed(codepoint);
+}
+----
+
+== Extending ImGUIUtil
+
+=== Adding Custom Widgets
+
+The `MapView` class demonstrates how to extend the UI with custom views:
+
+[source,cpp]
+----
+class MapView {
+public:
+    std::vector<VkWriteDescriptorSet> LoadAssets(
+        ApiVulkanSample* base,
+        VkDescriptorSetAllocateInfo allocInfo,
+        VkQueue copyQueue);
+    
+    void Draw();  // Called during newFrame()
+};
+----
+
+=== Rendering Images in the UI
+
+One key feature of this `ImGUIUtil` implementation is the ability to render images within the ImGui interface. This is useful for:
+
+* Displaying render target previews
+* Showing texture thumbnails
+* Creating viewport windows within the UI
+
+== Best Practices
+
+1. **Buffer Updates**: Only call `updateBuffers()` when the UI has changed
+2. **Font Loading**: Load fonts during initialization, not per-frame
+3. **Descriptor Management**: Pre-allocate enough descriptor sets for your images
+4. **Command Buffer Reuse**: Use the framework's command pool for efficient buffer management
+
+== Comparison with Framework GUI
+
+The Vulkan-Samples framework includes its own GUI implementation in `framework/gui.h`. The `ImGUIUtil` in this sample differs in that it:
+
+* Supports rendering images within the UI
+* Demonstrates viewport placement from GUI to render backend
+* Shows a more self-contained implementation pattern
+
+== Further Reading
+
+* https://github.com/ocornut/imgui[Dear ImGui GitHub Repository]
+* https://github.com/ocornut/imgui/wiki[ImGui Wiki]
+* link:../README.adoc[render_octomap Sample README]
+* link:../ImGUIUtil.h[ImGUIUtil Header File]
+* link:../ImGUIUtil.cpp[ImGUIUtil Implementation]
+
+== Summary
+
+The `ImGUIUtil` class provides a complete solution for integrating ImGui with Vulkan applications. By handling all the Vulkan-specific details internally, it allows developers to focus on building their UI rather than managing graphics resources.
+
+Key takeaways:
+
+* Use `init()` and `initResources()` for setup
+* Call `newFrame()`, `updateBuffers()`, and `drawFrame()` each frame
+* Forward input events for proper interaction
+* Extend with custom views like `MapView` for application-specific UI

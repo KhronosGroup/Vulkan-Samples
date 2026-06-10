@@ -56,3 +56,6 @@
 [submodule "third_party/ai-ml-sdk-vgf-library"]
 	path = third_party/ai-ml-sdk-vgf-library
 	url = https://github.com/arm/ai-ml-sdk-vgf-library
+[submodule "samples/complex/render_octomap/octomap"]
+	path = samples/complex/render_octomap/octomap
+	url = https://github.com/OctoMap/octomap.git
