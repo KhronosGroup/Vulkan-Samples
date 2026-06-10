@@ -112,6 +112,15 @@ class render_octomap : public ApiVulkanSample
 	std::chrono::time_point<std::chrono::system_clock> lastBuildTime;
 	std::vector<InstanceData>                          instances;
 
+	// Numpad look state (KP_4/6 = yaw left/right, KP_8/2 = pitch up/down)
+	struct
+	{
+		bool left  = false;        // KP_4
+		bool right = false;        // KP_6
+		bool up    = false;        // KP_8
+		bool down  = false;        // KP_2
+	} numpad_look;
+
 	// View state management
 	MapView::ViewState                        currentViewState = MapView::ViewState::Octomap;
 	std::unique_ptr<vkb::scene_graph::SceneC> gltfScene;

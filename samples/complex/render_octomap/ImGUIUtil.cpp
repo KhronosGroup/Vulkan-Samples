@@ -568,6 +568,8 @@ bool ImGUIUtil::newFrame(bool updateFrameGraph)
 
 		ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(sidebar_width, io.DisplaySize.y), ImGuiCond_Always);
+		// Always keep keyboard focus on the sidebar so navigation keys work without a mouse
+		ImGui::SetNextWindowFocus();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, sidebarColor);
 		ImGui::PushStyleColor(ImGuiCol_Text, blackColor);
@@ -808,18 +810,22 @@ void ImGUIUtil::TextColorAlign(int align, const ImVec4 &col, const char *text, .
 
 void ImGUIUtil::handle_key_event(vkb::KeyCode code, vkb::KeyAction action)
 {
-	ImGuiIO       &io        = ImGui::GetIO();
-	const ImGuiKey imgui_key = KeyCodeToImGuiKey(code);
-	if (imgui_key != ImGuiKey_None)
+	ImGuiIO   &io      = ImGui::GetIO();
+	const bool is_down = (action == vkb::KeyAction::Down || action == vkb::KeyAction::Repeat);
+	const int  key_idx = static_cast<int>(code);
+
+	// Use the legacy KeysDown[] API to stay compatible with the framework's
+	// gui.h which sets io.KeyMap[] (legacy path). Mixing KeyMap[] with
+	// AddKeyEvent() triggers an ImGui assertion.
+	if (key_idx >= 0 && key_idx < IM_ARRAYSIZE(io.KeysDown))
 	{
-		io.AddKeyEvent(imgui_key, action == vkb::KeyAction::Down || action == vkb::KeyAction::Repeat);
+		io.KeysDown[key_idx] = is_down;
 	}
 
-	// Update modifier states using ImGui keys
-	io.KeyCtrl  = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl);
-	io.KeyShift = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift);
-	io.KeyAlt   = ImGui::IsKeyDown(ImGuiKey_LeftAlt) || ImGui::IsKeyDown(ImGuiKey_RightAlt);
-	io.KeySuper = ImGui::IsKeyDown(ImGuiKey_LeftSuper) || ImGui::IsKeyDown(ImGuiKey_RightSuper);
+	// Update modifier states
+	io.KeyCtrl  = io.KeysDown[static_cast<int>(vkb::KeyCode::LeftControl)] || io.KeysDown[static_cast<int>(vkb::KeyCode::RightControl)];
+	io.KeyShift = io.KeysDown[static_cast<int>(vkb::KeyCode::LeftShift)] || io.KeysDown[static_cast<int>(vkb::KeyCode::RightShift)];
+	io.KeyAlt   = io.KeysDown[static_cast<int>(vkb::KeyCode::LeftAlt)] || io.KeysDown[static_cast<int>(vkb::KeyCode::RightAlt)];
 }
 
 bool ImGUIUtil::GetWantKeyCapture()

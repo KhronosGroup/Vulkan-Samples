@@ -630,6 +630,20 @@ void render_octomap::render(float delta_time)
 	// Update camera movement based on keyboard input (WASD)
 	camera.update(delta_time);
 
+	// Apply numpad look: KP_4/6 = yaw left/right, KP_8/2 = pitch up/down
+	{
+		const float look_speed = 60.0f * delta_time;        // degrees per second
+		glm::vec3   delta(0.0f);
+		if (numpad_look.up)    delta.x -= look_speed;
+		if (numpad_look.down)  delta.x += look_speed;
+		if (numpad_look.left)  delta.y += look_speed;
+		if (numpad_look.right) delta.y -= look_speed;
+		if (delta != glm::vec3(0.0f))
+		{
+			camera.rotate(delta);
+		}
+	}
+
 	// Update imGui every frame to process input
 	ImGuiIO &io = ImGui::GetIO();
 
@@ -865,10 +879,31 @@ void render_octomap::input_event(const vkb::InputEvent &input_event)
 	// For keyboard and other events, use the framework input pipeline.
 	if (input_event.get_source() == vkb::EventSource::Keyboard)
 	{
-		const auto &key_event = static_cast<const vkb::KeyInputEvent &>(input_event);
+		const auto      &key_event = static_cast<const vkb::KeyInputEvent &>(input_event);
+		const vkb::KeyCode code    = key_event.get_code();
+
+		// WASD movement always passes through to the camera even when the sidebar has focus.
+		const bool is_wasd =
+		    code == vkb::KeyCode::W || code == vkb::KeyCode::A ||
+		    code == vkb::KeyCode::S || code == vkb::KeyCode::D;
+
+		if (is_wasd)
+		{
+			// Always forward WASD to the framework camera regardless of GUI focus.
+			ApiVulkanSample::input_event(input_event);
+			return;
+		}
+
+		// Numpad 4/6/8/2 drive camera look (yaw/pitch) — track state here.
+		const bool is_up_action = (key_event.get_action() == vkb::KeyAction::Up);
+		if (code == vkb::KeyCode::KP_4) { numpad_look.left  = !is_up_action; return; }
+		if (code == vkb::KeyCode::KP_6) { numpad_look.right = !is_up_action; return; }
+		if (code == vkb::KeyCode::KP_8) { numpad_look.up    = !is_up_action; return; }
+		if (code == vkb::KeyCode::KP_2) { numpad_look.down  = !is_up_action; return; }
+
 		if (gui)
 		{
-			gui->handle_key_event(key_event.get_code(), key_event.get_action());
+			gui->handle_key_event(code, key_event.get_action());
 			if (gui->GetWantKeyCapture())
 			{
 				return;
