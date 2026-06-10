@@ -31,7 +31,7 @@
 #include <tiny_gltf.h>
 
 // KHR_gaussian_splatting extension name
-#define KHR_GAUSSIAN_SPLATTING_EXTENSION "KHR_gaussian_splatting"
+#define GLTF_KHR_GAUSSIAN_SPLATTING_EXTENSION "KHR_gaussian_splatting"
 
 render_octomap::render_octomap() :
     vertices(), indexCount(), pipelineCache(VK_NULL_HANDLE), pipelineLayout(VK_NULL_HANDLE), pipeline(VK_NULL_HANDLE), descriptorPool(VK_NULL_HANDLE), descriptorSetLayout(VK_NULL_HANDLE), descriptorSet(VK_NULL_HANDLE), gui(nullptr), mMaxTreeDepth(16), m_zMin(), m_zMax(), lastMapBuildSize()
@@ -1161,9 +1161,9 @@ void render_octomap::loadGaussianSplatsData(const std::string &filename)
 	int scale_accessor   = prim.attributes.contains("KHR_gaussian_splatting:SCALE") ? prim.attributes.at("KHR_gaussian_splatting:SCALE") : -1;
 	int opacity_accessor = prim.attributes.contains("KHR_gaussian_splatting:OPACITY") ? prim.attributes.at("KHR_gaussian_splatting:OPACITY") : -1;
 
-	if (prim.extensions.contains(KHR_GAUSSIAN_SPLATTING_EXTENSION))
+	if (prim.extensions.contains(GLTF_KHR_GAUSSIAN_SPLATTING_EXTENSION))
 	{
-		const tinygltf::Value &ext = prim.extensions.at(KHR_GAUSSIAN_SPLATTING_EXTENSION);
+		const tinygltf::Value &ext = prim.extensions.at(GLTF_KHR_GAUSSIAN_SPLATTING_EXTENSION);
 		if (ext.IsObject())
 		{
 			// Fallback to old draft extension property names
