@@ -863,6 +863,19 @@ void render_octomap::input_event(const vkb::InputEvent &input_event)
 	}
 
 	// For keyboard and other events, use the framework input pipeline.
+	if (input_event.get_source() == vkb::EventSource::Keyboard)
+	{
+		const auto &key_event = static_cast<const vkb::KeyInputEvent &>(input_event);
+		if (gui)
+		{
+			gui->handle_key_event(key_event.get_code(), key_event.get_action());
+			if (gui->GetWantKeyCapture())
+			{
+				return;
+			}
+		}
+	}
+
 	ApiVulkanSample::input_event(input_event);
 }
 
@@ -953,7 +966,7 @@ void render_octomap::loadGaussianSplatsScene(const std::string &scene_dir)
 		if (!entry.is_regular_file())
 			continue;
 		std::string name = entry.path().filename().string();
-		if (name.find("_cell_") != std::string::npos && name.size() >= 5 &&
+		if (name.find("_cell_") != std::string::npos &&
 		    name.substr(name.size() - 5) == ".gltf")
 		{
 			cell_files.push_back(scene_dir + "/" + name);

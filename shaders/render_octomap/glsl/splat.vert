@@ -19,28 +19,26 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // Per-splat attributes (instanced)
-layout(location = 0) in vec3 inPosition;      // Splat center position
-layout(location = 1) in vec4 inRotation;      // Quaternion rotation
-layout(location = 2) in vec3 inScale;         // 3D scale factors
-layout(location = 3) in float inOpacity;      // Opacity value
-layout(location = 4) in vec3 inColor;         // RGB color
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec4 inRotation;
+layout(location = 2) in vec3 inScale;
+layout(location = 3) in float inOpacity;
+layout(location = 4) in vec3 inColor;
 
-// Uniform buffer
+// Uniform buffer — layout must match the C++ splat_ubo struct
 layout(binding = 0) uniform UBO {
-    mat4 projection;
-    mat4 view;
-    vec2 viewport;      // Viewport dimensions
-    float focalX;       // Focal length X
-    float focalY;       // Focal length Y
+    mat4  projection;
+    mat4  view;
+    vec2  viewport;   // not used in this shader, kept for struct compatibility
+    float focalX;     // not used
+    float focalY;     // not used
 } ubo;
 
-// Outputs to fragment shader
 layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec2 outConic;       // 2D conic parameters for Gaussian
+layout(location = 1) out vec3 outConic;   // inverse 2D covariance (c/det, -b/det, a/det)
 layout(location = 2) out float outOpacity;
-layout(location = 3) out vec2 outCoord;       // Quad coordinate for Gaussian evaluation
+layout(location = 3) out vec2 outCoord;   // view-space offset from splat center
 
-// Quad vertices for billboard rendering
 const vec2 quadVertices[4] = vec2[4](
     vec2(-1.0, -1.0),
     vec2( 1.0, -1.0),
@@ -48,81 +46,85 @@ const vec2 quadVertices[4] = vec2[4](
     vec2( 1.0,  1.0)
 );
 
-// Convert quaternion to rotation matrix
 mat3 quaternionToMatrix(vec4 q) {
     float x = q.x, y = q.y, z = q.z, w = q.w;
+    float x2 = x * 2.0, y2 = y * 2.0, z2 = z * 2.0;
+    float xx = x * x2, xy = x * y2, xz = x * z2;
+    float yy = y * y2, yz = y * z2, zz = z * z2;
+    float wx = w * x2, wy = w * y2, wz = w * z2;
     return mat3(
-        1.0 - 2.0*(y*y + z*z), 2.0*(x*y - w*z), 2.0*(x*z + w*y),
-        2.0*(x*y + w*z), 1.0 - 2.0*(x*x + z*z), 2.0*(y*z - w*x),
-        2.0*(x*z - w*y), 2.0*(y*z + w*x), 1.0 - 2.0*(x*x + y*y)
+        1.0 - (yy + zz), xy - wz,         xz + wy,
+        xy + wz,         1.0 - (xx + zz), yz - wx,
+        xz - wy,         yz + wx,         1.0 - (xx + yy)
     );
 }
 
 void main() {
-    // Get quad vertex for this instance
-    int quadIdx = gl_VertexIndex % 4;
-    vec2 quadPos = quadVertices[quadIdx];
-    
+    vec2 quadPos = quadVertices[gl_VertexIndex % 4];
+
     // Transform splat center to view space
-    vec4 viewPos = ubo.view * vec4(inPosition, 1.0);
-    
-    // Build 3D covariance matrix from rotation and scale
-    mat3 R = quaternionToMatrix(inRotation);
-    mat3 S = mat3(
-        inScale.x, 0.0, 0.0,
-        0.0, inScale.y, 0.0,
-        0.0, 0.0, inScale.z
-    );
-    mat3 M = R * S;
-    mat3 cov3D = M * transpose(M);
-    
-    // Project 3D covariance to 2D screen space
-    // Jacobian of perspective projection
-    float z = viewPos.z;
-    float z2 = z * z;
-    mat3 J = mat3(
-        ubo.focalX / z, 0.0, -ubo.focalX * viewPos.x / z2,
-        0.0, ubo.focalY / z, -ubo.focalY * viewPos.y / z2,
-        0.0, 0.0, 0.0
-    );
-    
-    // 2D covariance in screen space
-    mat3 viewRot = mat3(ubo.view);
-    mat3 cov2D = J * viewRot * cov3D * transpose(viewRot) * transpose(J);
-    
-    // Extract 2D covariance parameters (symmetric matrix)
-    float a = cov2D[0][0] + 0.3;  // Add small value for numerical stability
-    float b = cov2D[0][1];
-    float c = cov2D[1][1] + 0.3;
-    
-    // Compute eigenvalues for splat size
+    vec4 viewCenter = ubo.view * vec4(inPosition, 1.0);
+
+    // Cull splats at or behind the near plane — they produce inverted/degenerate quads.
+    if (viewCenter.z >= -0.001) {
+        gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+        outColor    = vec4(0.0);
+        outConic    = vec3(0.0);
+        outOpacity  = 0.0;
+        outCoord    = vec2(0.0);
+        return;
+    }
+
+    float splatDepth = -viewCenter.z; // positive distance in front of camera
+
+    // Cull unconverged / degenerate splats whose world-scale exceeds their depth
+    float maxScale = max(inScale.x, max(inScale.y, inScale.z));
+    if (maxScale > splatDepth) {
+        gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+        outColor    = vec4(0.0);
+        outConic    = vec3(0.0);
+        outOpacity  = 0.0;
+        outCoord    = vec2(0.0);
+        return;
+    }
+
+    // Build 3D covariance from rotation and scale
+    mat3 R    = quaternionToMatrix(inRotation);
+    mat3 S    = mat3(inScale.x, 0.0, 0.0,
+                     0.0, inScale.y, 0.0,
+                     0.0, 0.0, inScale.z);
+    mat3 RS   = R * S;
+    mat3 cov3D = RS * transpose(RS);
+
+    // Project 3D covariance into view space and take the top-left 2x2
+    mat3 W         = mat3(ubo.view);
+    mat3 cov3D_view = W * cov3D * transpose(W);
+    cov3D_view[0][0] += 1e-4;
+    cov3D_view[1][1] += 1e-4;
+
+    // cov2D: a = [0][0], b = [0][1], c = [1][1]  (symmetric 2x2)
+    float a = cov3D_view[0][0];
+    float b = cov3D_view[0][1];
+    float c = cov3D_view[1][1];
+
+    // Per-axis billboard extents (3 sigma), clamped to depth to avoid screen-filling quads
+    float extentX = min(3.0 * sqrt(max(1e-6, a)), splatDepth);
+    float extentY = min(3.0 * sqrt(max(1e-6, c)), splatDepth);
+
+    // View-space coordinate for this quad vertex
+    outCoord = vec2(quadPos.x * extentX, quadPos.y * extentY);
+
+    // Place quad vertex in view space and project
+    vec3 quadViewPos = viewCenter.xyz + vec3(1.0, 0.0, 0.0) * outCoord.x
+                                      + vec3(0.0, 1.0, 0.0) * outCoord.y;
+    gl_Position = ubo.projection * vec4(quadViewPos, 1.0);
+
+    // Inverse 2D covariance for fragment-shader Gaussian evaluation
     float det = a * c - b * b;
-    float trace = a + c;
-    float gap = sqrt(max(0.0, trace * trace - 4.0 * det));
-    float lambda1 = (trace + gap) * 0.5;
-    float lambda2 = (trace - gap) * 0.5;
-    
-    // Splat radius (3 sigma covers 99.7% of Gaussian)
-    float radius = 3.0 * sqrt(max(lambda1, lambda2));
-    
-    // Project center to screen
-    vec4 clipPos = ubo.projection * viewPos;
-    vec2 screenPos = clipPos.xy / clipPos.w;
-    
-    // Offset by quad position scaled by radius
-    vec2 pixelOffset = quadPos * radius / ubo.viewport;
-    
-    // Final position
-    gl_Position = vec4(screenPos + pixelOffset, clipPos.z / clipPos.w, 1.0);
-    
-    // Pass to fragment shader
-    // Convert sRGB to linear (the GLTF specifies colorSpace: "BT.709-sRGB")
-    vec3 linearColor = pow(inColor, vec3(2.2));
-    outColor = vec4(linearColor, 1.0);
+    if (det < 1e-14) det = 1e-14;
+    outConic = vec3(c, -b, a) / det;   // (c/det, -b/det, a/det)
+
+    // Color is stored in display space — pass through without gamma modification
+    outColor   = vec4(inColor, 1.0);
     outOpacity = inOpacity;
-    outCoord = quadPos * radius;
-    
-    // Conic parameters for Gaussian evaluation (inverse of 2D covariance)
-    float invDet = 1.0 / det;
-    outConic = vec2(c * invDet, -b * invDet);  // Simplified for symmetric case
 }

@@ -287,6 +287,9 @@ void ImGUIUtil::init(float width, float height)
 	ImGuiIO &io                = ImGui::GetIO();
 	io.DisplaySize             = ImVec2(width, height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+
+	// Enable keyboard navigation
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 }
 
 void ImGUIUtil::setStyle(uint32_t index)
