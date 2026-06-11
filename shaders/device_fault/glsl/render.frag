@@ -1,5 +1,4 @@
-/* Copyright (c) 2025-2026, Arm Limited and Contributors
- * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,29 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
-#pragma once
+// Nothing interesting, just interpolate color from vertex.
+layout(location = 0) flat in vec4 in_color;
+layout(location = 0) out vec4 out_color;
 
-#include "common/vk_common.h"
-#include <vulkan/vulkan.hpp>
-
-namespace vkb
+void main()
 {
-template <vkb::BindingType bindingType, typename T>
-struct VulkanTypeMapping
-{
-};
-
-template <typename T>
-struct VulkanTypeMapping<vkb::BindingType::Cpp, T>
-{
-	using Type = T;
-};
-
-template <typename T>
-struct VulkanTypeMapping<vkb::BindingType::C, T>
-{
-	using Type = typename vk::CppType<T>::Type;
-};
-
-}        // namespace vkb
+    // DEFAULT FRAGMENT SHADER
+    out_color = in_color;
+}
