@@ -81,6 +81,7 @@ set(ORDER_LIST
     "shader_debugprintf"
     "synchronization_2"
     "buffer_device_address"
+    "device_address_commands"
     "descriptor_indexing"
     "portability"
     "vertex_dynamic_state"
