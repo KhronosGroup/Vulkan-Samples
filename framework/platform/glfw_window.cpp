@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,6 +49,11 @@ void window_size_callback(GLFWwindow *window, int width, int height)
 	if (auto platform = reinterpret_cast<Platform *>(glfwGetWindowUserPointer(window)))
 	{
 		platform->resize(width, height);
+
+#if defined(VK_USE_PLATFORM_WAYLAND_KHR)
+		// On Wayland, window may lose focus during resize. Force focus to ensure rendering continues.
+		platform->set_focus(true);
+#endif
 	}
 }
 
