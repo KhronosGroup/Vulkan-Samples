@@ -33,6 +33,7 @@ DeviceAddressCommands::DeviceAddressCommands()
 	// VK_KHR_device_address_commands.  We also request the KHR extension
 	// name so older loaders find it correctly.
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, /*optional=*/true);
+	add_device_extension(VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME);
 }
 
 DeviceAddressCommands::~DeviceAddressCommands()
@@ -89,7 +90,7 @@ void DeviceAddressCommands::request_gpu_features(vkb::core::PhysicalDeviceC &gpu
 	// because we also request drawIndirectCount from the same struct.  The spec
 	// forbids having both VkPhysicalDeviceVulkan12Features and the standalone
 	// VkPhysicalDeviceBufferDeviceAddressFeatures in the pNext chain at once.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
 
 	// The new extension feature that unlocks vkCmdBindIndexBuffer3KHR etc.
 	REQUEST_REQUIRED_FEATURE(gpu,
@@ -99,8 +100,6 @@ void DeviceAddressCommands::request_gpu_features(vkb::core::PhysicalDeviceC &gpu
 	// vkCmdPipelineBarrier2 (used for VkMemoryRangeBarrierKHR) requires this.
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 
-	// vkCmdDrawIndexedIndirectCount2KHR requires the count variant of indirect draw.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, drawIndirectCount);
 
 	// The compute shader sets firstInstance to the object index so the vertex
 	// shader can index the transform array.  Non-zero firstInstance requires
