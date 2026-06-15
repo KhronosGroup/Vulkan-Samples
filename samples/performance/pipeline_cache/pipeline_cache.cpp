@@ -70,7 +70,10 @@ PipelineCache::~PipelineCache()
 		vkDestroyPipelineCache(get_device().get_handle(), pipeline_cache, nullptr);
 	}
 
-	vkb::fs::write_temp(get_device().get_resource_cache().serialize(), "cache.data");
+	if (has_device())
+	{
+		vkb::fs::write_temp(get_device().get_resource_cache().serialize(), "cache.data");
+	}
 }
 
 bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
