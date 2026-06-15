@@ -39,7 +39,7 @@ Now, with our joined point cloud, we need to be able to recognize that sometimes
 
 The preceding high-level background describes how we get to a situation where there's plenty of desire to be able to work with and render point clouds that are dynamically generated. ARCore and ARKit are both able to create a point cloud map, and everything from drones to robots use this same basic system to register and deal with the world around them. To navigate a room, a drone/robot might need to be able to determine if a voxel is occupied or not by using an occupancy grid. This gives rise to solutions which are optimized for storing such maps that can be dynamically updated in real time.
 
-The library https://octomap.github.io/[octomap] provides just such a library.
+The library https://octomap.github.io/[octomap] provides such functionality.
 
 === How to Use the Sample
 
