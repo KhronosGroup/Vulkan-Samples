@@ -110,9 +110,7 @@ set(RENDERING_FILES
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
-    rendering/hpp_pipeline_state.h
     # Source files
-    rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
     rendering/postprocessing_pass.cpp
     rendering/postprocessing_renderpass.cpp

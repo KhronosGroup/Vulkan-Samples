@@ -66,8 +66,8 @@ class ResourceRecord
 	                            const std::vector<LoadStoreInfo>               &load_store_infos,
 	                            const std::vector<SubpassInfo>                 &subpasses);
 
-	size_t register_graphics_pipeline(VkPipelineCache pipeline_cache,
-	                                  PipelineState  &pipeline_state);
+	size_t register_graphics_pipeline(VkPipelineCache                 pipeline_cache,
+	                                  vkb::rendering::PipelineStateC &pipeline_state);
 
 	void set_shader_module(size_t index, const ShaderModule &shader_module);
 

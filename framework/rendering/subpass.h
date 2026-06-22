@@ -19,7 +19,6 @@
 #pragma once
 
 #include "buffer_pool.h"
-#include "rendering/hpp_pipeline_state.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "rendering/render_frame.h"
@@ -79,8 +78,7 @@ class Subpass
 	using ResolveModeFlagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ResolveModeFlagBits, VkResolveModeFlagBits>::type;
 	using SampleCountflagBitsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SampleCountFlagBits, VkSampleCountFlagBits>::type;
 
-	using DepthStencilStateType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
-	using ShaderSourceType      = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
+	using ShaderSourceType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 
   public:
 	Subpass(vkb::rendering::RenderContext<bindingType> &render_context, ShaderSourceType &&vertex_shader, ShaderSourceType &&fragment_shader);
@@ -117,7 +115,7 @@ class Subpass
 	const std::string                                         &get_debug_name() const;
 	const uint32_t                                            &get_depth_stencil_resolve_attachment() const;
 	ResolveModeFlagBitsType                                    get_depth_stencil_resolve_mode() const;
-	DepthStencilStateType                                     &get_depth_stencil_state();
+	vkb::rendering::DepthStencilState<bindingType>            &get_depth_stencil_state();
 	const bool                                                &get_disable_depth_stencil_attachment() const;
 	const ShaderSourceType                                    &get_fragment_shader() const;
 	const std::vector<uint32_t>                               &get_input_attachments() const;
@@ -144,12 +142,12 @@ class Subpass
 	void update_render_target_attachments(vkb::rendering::RenderTarget<bindingType> &render_target);
 
   protected:
-	vkb::rendering::HPPDepthStencilState get_depth_stencil_state_impl() const;
-	vkb::core::HPPShaderSource const    &get_fragment_shader_impl() const;
-	LightingStateCpp                    &get_lighting_state_impl();
-	vk::SampleCountFlagBits              get_sample_count_impl() const;
-	vkb::rendering::RenderContextCpp    &get_render_context_impl();
-	vkb::core::HPPShaderSource const    &get_vertex_shader_impl() const;
+	vkb::rendering::DepthStencilStateCpp const &get_depth_stencil_state_impl() const;
+	vkb::core::HPPShaderSource const           &get_fragment_shader_impl() const;
+	LightingStateCpp                           &get_lighting_state_impl();
+	vk::SampleCountFlagBits                     get_sample_count_impl() const;
+	vkb::rendering::RenderContextCpp           &get_render_context_impl();
+	vkb::core::HPPShaderSource const           &get_vertex_shader_impl() const;
 
   private:
 	/// Default to no color resolve attachments
@@ -164,7 +162,7 @@ class Subpass
 	 */
 	vk::ResolveModeFlagBits depth_stencil_resolve_mode{vk::ResolveModeFlagBits::eNone};
 
-	vkb::rendering::HPPDepthStencilState depth_stencil_state{};
+	vkb::rendering::DepthStencilStateCpp depth_stencil_state{};
 
 	/**
 	 * @brief When creating the renderpass, pDepthStencilAttachment will
@@ -401,7 +399,7 @@ inline typename Subpass<bindingType>::ResolveModeFlagBitsType Subpass<bindingTyp
 }
 
 template <vkb::BindingType bindingType>
-inline typename Subpass<bindingType>::DepthStencilStateType &Subpass<bindingType>::get_depth_stencil_state()
+inline vkb::rendering::DepthStencilState<bindingType> &Subpass<bindingType>::get_depth_stencil_state()
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -409,7 +407,7 @@ inline typename Subpass<bindingType>::DepthStencilStateType &Subpass<bindingType
 	}
 	else
 	{
-		return reinterpret_cast<vkb::DepthStencilState &>(depth_stencil_state);
+		return reinterpret_cast<vkb::rendering::DepthStencilStateC &>(depth_stencil_state);
 	}
 }
 
@@ -514,7 +512,7 @@ inline vk::SampleCountFlagBits Subpass<bindingType>::get_sample_count_impl() con
 }
 
 template <vkb::BindingType bindingType>
-inline vkb::rendering::HPPDepthStencilState Subpass<bindingType>::get_depth_stencil_state_impl() const
+inline vkb::rendering::DepthStencilStateCpp const &Subpass<bindingType>::get_depth_stencil_state_impl() const
 {
 	return depth_stencil_state;
 }

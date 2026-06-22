@@ -29,6 +29,7 @@
 #include "resource_record.h"
 
 #include "common/helpers.h"
+#include <vulkan/vulkan_hash.hpp>
 
 namespace std
 {
@@ -184,9 +185,9 @@ struct hash<vkb::SubpassInfo>
 };
 
 template <>
-struct hash<vkb::SpecializationConstantState>
+struct hash<vkb::rendering::SpecializationConstantState>
 {
-	std::size_t operator()(const vkb::SpecializationConstantState &specialization_constant_state) const
+	std::size_t operator()(const vkb::rendering::SpecializationConstantState &specialization_constant_state) const
 	{
 		std::size_t result = 0;
 
@@ -342,18 +343,27 @@ struct hash<VkVertexInputBindingDescription>
 };
 
 template <>
-struct hash<vkb::StencilOpState>
+struct hash<vkb::rendering::StencilOpStateCpp>
 {
-	std::size_t operator()(const vkb::StencilOpState &stencil) const
+	std::size_t operator()(const vkb::rendering::StencilOpStateCpp &stencil) const
 	{
 		std::size_t result = 0;
 
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkCompareOp>::type>(stencil.compare_op));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkStencilOp>::type>(stencil.depth_fail_op));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkStencilOp>::type>(stencil.fail_op));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkStencilOp>::type>(stencil.pass_op));
+		vkb::hash_combine(result, stencil.compare_op);
+		vkb::hash_combine(result, stencil.depth_fail_op);
+		vkb::hash_combine(result, stencil.fail_op);
+		vkb::hash_combine(result, stencil.pass_op);
 
 		return result;
+	}
+};
+
+template <>
+struct hash<vkb::rendering::StencilOpStateC>
+{
+	std::size_t operator()(const vkb::rendering::StencilOpStateC &stencil) const
+	{
+		return std::hash<vkb::rendering::StencilOpStateCpp>()(reinterpret_cast<vkb::rendering::StencilOpStateCpp const &>(stencil));
 	}
 };
 
@@ -418,22 +428,31 @@ struct hash<VkViewport>
 };
 
 template <>
-struct hash<vkb::ColorBlendAttachmentState>
+struct hash<vkb::rendering::ColorBlendAttachmentStateCpp>
 {
-	std::size_t operator()(const vkb::ColorBlendAttachmentState &color_blend_attachment) const
+	std::size_t operator()(const vkb::rendering::ColorBlendAttachmentStateCpp &color_blend_attachment) const
 	{
 		std::size_t result = 0;
 
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkBlendOp>::type>(color_blend_attachment.alpha_blend_op));
+		vkb::hash_combine(result, color_blend_attachment.alpha_blend_op);
 		vkb::hash_combine(result, color_blend_attachment.blend_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkBlendOp>::type>(color_blend_attachment.color_blend_op));
+		vkb::hash_combine(result, color_blend_attachment.color_blend_op);
 		vkb::hash_combine(result, color_blend_attachment.color_write_mask);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkBlendFactor>::type>(color_blend_attachment.dst_alpha_blend_factor));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkBlendFactor>::type>(color_blend_attachment.dst_color_blend_factor));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkBlendFactor>::type>(color_blend_attachment.src_alpha_blend_factor));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkBlendFactor>::type>(color_blend_attachment.src_color_blend_factor));
+		vkb::hash_combine(result, color_blend_attachment.dst_alpha_blend_factor);
+		vkb::hash_combine(result, color_blend_attachment.dst_color_blend_factor);
+		vkb::hash_combine(result, color_blend_attachment.src_alpha_blend_factor);
+		vkb::hash_combine(result, color_blend_attachment.src_color_blend_factor);
 
 		return result;
+	}
+};
+
+template <>
+struct hash<vkb::rendering::ColorBlendAttachmentStateC>
+{
+	std::size_t operator()(const vkb::rendering::ColorBlendAttachmentStateC &color_blend_attachment) const
+	{
+		return std::hash<vkb::rendering::ColorBlendAttachmentStateCpp>()(reinterpret_cast<vkb::rendering::ColorBlendAttachmentStateCpp const &>(color_blend_attachment));
 	}
 };
 
@@ -455,13 +474,55 @@ struct hash<vkb::rendering::RenderTargetC>
 };
 
 template <>
-struct hash<vkb::PipelineState>
+struct hash<vkb::rendering::PipelineStateCpp>
 {
-	std::size_t operator()(const vkb::PipelineState &pipeline_state) const
+	size_t operator()(const vkb::rendering::PipelineStateCpp &pipeline_state) const
 	{
 		std::size_t result = 0;
 
-		vkb::hash_combine(result, pipeline_state.get_pipeline_layout().get_handle());
+		auto const &color_blend_state = pipeline_state.get_color_blend_state();
+		vkb::hash_combine(result, color_blend_state.logic_op);
+		vkb::hash_combine(result, color_blend_state.logic_op_enable);
+		for (auto const &attachment : color_blend_state.attachments)
+		{
+			vkb::hash_combine(result, attachment);
+		}
+
+		auto const &depth_stencil_state = pipeline_state.get_depth_stencil_state();
+		vkb::hash_combine(result, depth_stencil_state.back);
+		vkb::hash_combine(result, depth_stencil_state.depth_bounds_test_enable);
+		vkb::hash_combine(result, depth_stencil_state.depth_compare_op);
+		vkb::hash_combine(result, depth_stencil_state.depth_test_enable);
+		vkb::hash_combine(result, depth_stencil_state.depth_write_enable);
+		vkb::hash_combine(result, depth_stencil_state.front);
+		vkb::hash_combine(result, depth_stencil_state.stencil_test_enable);
+
+		auto const &input_assembly_state = pipeline_state.get_input_assembly_state();
+		vkb::hash_combine(result, input_assembly_state.primitive_restart_enable);
+		vkb::hash_combine(result, input_assembly_state.topology);
+
+		auto const &multisample_state = pipeline_state.get_multisample_state();
+		vkb::hash_combine(result, multisample_state.alpha_to_coverage_enable);
+		vkb::hash_combine(result, multisample_state.alpha_to_one_enable);
+		vkb::hash_combine(result, multisample_state.min_sample_shading);
+		vkb::hash_combine(result, multisample_state.rasterization_samples);
+		vkb::hash_combine(result, multisample_state.sample_shading_enable);
+		vkb::hash_combine(result, multisample_state.sample_mask);
+
+		auto const &pipeline_layout = pipeline_state.get_pipeline_layout();
+		vkb::hash_combine(result, pipeline_layout.get_handle());
+		for (auto const &shader_module : pipeline_layout.get_shader_modules())
+		{
+			vkb::hash_combine(result, shader_module->get_id());
+		}
+
+		auto const &rasterization_state = pipeline_state.get_rasterization_state();
+		vkb::hash_combine(result, rasterization_state.cull_mode);
+		vkb::hash_combine(result, rasterization_state.depth_bias_enable);
+		vkb::hash_combine(result, rasterization_state.depth_clamp_enable);
+		vkb::hash_combine(result, rasterization_state.front_face);
+		vkb::hash_combine(result, rasterization_state.polygon_mode);
+		vkb::hash_combine(result, rasterization_state.rasterizer_discard_enable);
 
 		// For graphics only
 		if (auto render_pass = pipeline_state.get_render_pass())
@@ -473,65 +534,30 @@ struct hash<vkb::PipelineState>
 
 		vkb::hash_combine(result, pipeline_state.get_subpass_index());
 
-		for (auto shader_module : pipeline_state.get_pipeline_layout().get_shader_modules())
-		{
-			vkb::hash_combine(result, shader_module->get_id());
-		}
-
-		// VkPipelineVertexInputStateCreateInfo
-		for (auto &attribute : pipeline_state.get_vertex_input_state().attributes)
+		auto const &vertex_input_state = pipeline_state.get_vertex_input_state();
+		for (auto const &attribute : vertex_input_state.attributes)
 		{
 			vkb::hash_combine(result, attribute);
 		}
-
-		for (auto &binding : pipeline_state.get_vertex_input_state().bindings)
+		for (auto const &binding : vertex_input_state.bindings)
 		{
 			vkb::hash_combine(result, binding);
 		}
 
-		// VkPipelineInputAssemblyStateCreateInfo
-		vkb::hash_combine(result, pipeline_state.get_input_assembly_state().primitive_restart_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkPrimitiveTopology>::type>(pipeline_state.get_input_assembly_state().topology));
-
-		// VkPipelineViewportStateCreateInfo
-		vkb::hash_combine(result, pipeline_state.get_viewport_state().viewport_count);
-		vkb::hash_combine(result, pipeline_state.get_viewport_state().scissor_count);
-
-		// VkPipelineRasterizationStateCreateInfo
-		vkb::hash_combine(result, pipeline_state.get_rasterization_state().cull_mode);
-		vkb::hash_combine(result, pipeline_state.get_rasterization_state().depth_bias_enable);
-		vkb::hash_combine(result, pipeline_state.get_rasterization_state().depth_clamp_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkFrontFace>::type>(pipeline_state.get_rasterization_state().front_face));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkPolygonMode>::type>(pipeline_state.get_rasterization_state().polygon_mode));
-		vkb::hash_combine(result, pipeline_state.get_rasterization_state().rasterizer_discard_enable);
-
-		// VkPipelineMultisampleStateCreateInfo
-		vkb::hash_combine(result, pipeline_state.get_multisample_state().alpha_to_coverage_enable);
-		vkb::hash_combine(result, pipeline_state.get_multisample_state().alpha_to_one_enable);
-		vkb::hash_combine(result, pipeline_state.get_multisample_state().min_sample_shading);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkSampleCountFlagBits>::type>(pipeline_state.get_multisample_state().rasterization_samples));
-		vkb::hash_combine(result, pipeline_state.get_multisample_state().sample_shading_enable);
-		vkb::hash_combine(result, pipeline_state.get_multisample_state().sample_mask);
-
-		// VkPipelineDepthStencilStateCreateInfo
-		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().back);
-		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().depth_bounds_test_enable);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkCompareOp>::type>(pipeline_state.get_depth_stencil_state().depth_compare_op));
-		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().depth_test_enable);
-		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().depth_write_enable);
-		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().front);
-		vkb::hash_combine(result, pipeline_state.get_depth_stencil_state().stencil_test_enable);
-
-		// VkPipelineColorBlendStateCreateInfo
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkLogicOp>::type>(pipeline_state.get_color_blend_state().logic_op));
-		vkb::hash_combine(result, pipeline_state.get_color_blend_state().logic_op_enable);
-
-		for (auto &attachment : pipeline_state.get_color_blend_state().attachments)
-		{
-			vkb::hash_combine(result, attachment);
-		}
+		auto const &viewport_state = pipeline_state.get_viewport_state();
+		vkb::hash_combine(result, viewport_state.viewport_count);
+		vkb::hash_combine(result, viewport_state.scissor_count);
 
 		return result;
+	}
+};
+
+template <>
+struct hash<vkb::rendering::PipelineStateC>
+{
+	std::size_t operator()(const vkb::rendering::PipelineStateC &pipeline_state) const
+	{
+		return std::hash<vkb::rendering::PipelineStateCpp>()(reinterpret_cast<vkb::rendering::PipelineStateCpp const &>(pipeline_state));
 	}
 };
 }        // namespace std

@@ -76,7 +76,7 @@ void LightingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 	command_buffer.bind_input(normal_view, 0, 2, 0);
 
 	// Set cull mode to front as full screen triangle is clock-wise
-	RasterizationState rasterization_state;
+	vkb::rendering::RasterizationStateC rasterization_state;
 	rasterization_state.cull_mode = VK_CULL_MODE_FRONT_BIT;
 	command_buffer.set_rasterization_state(rasterization_state);
 

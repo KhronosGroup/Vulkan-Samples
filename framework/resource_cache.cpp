@@ -75,12 +75,12 @@ DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const uint32_t
 	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 }
 
-GraphicsPipeline &ResourceCache::request_graphics_pipeline(PipelineState &pipeline_state)
+GraphicsPipeline &ResourceCache::request_graphics_pipeline(vkb::rendering::PipelineStateC &pipeline_state)
 {
 	return request_resource(device, recorder, graphics_pipeline_mutex, state.graphics_pipelines, pipeline_cache, pipeline_state);
 }
 
-ComputePipeline &ResourceCache::request_compute_pipeline(PipelineState &pipeline_state)
+ComputePipeline &ResourceCache::request_compute_pipeline(vkb::rendering::PipelineStateC &pipeline_state)
 {
 	return request_resource(device, recorder, compute_pipeline_mutex, state.compute_pipelines, pipeline_cache, pipeline_state);
 }

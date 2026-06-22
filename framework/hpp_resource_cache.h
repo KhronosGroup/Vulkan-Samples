@@ -82,7 +82,7 @@ class HPPResourceCache
 	void                               clear_framebuffers();
 	void                               clear_pipelines();
 	const HPPResourceCacheState       &get_internal_state() const;
-	vkb::core::HPPComputePipeline     &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state);
+	vkb::core::HPPComputePipeline     &request_compute_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state);
 	vkb::core::HPPDescriptorSet       &request_descriptor_set(vkb::core::HPPDescriptorSetLayout          &descriptor_set_layout,
 	                                                          const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
 	                                                          const BindingMap<vk::DescriptorImageInfo>  &image_infos);
@@ -90,7 +90,7 @@ class HPPResourceCache
 	                                                                 const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
 	                                                                 const std::vector<vkb::core::HPPShaderResource> &set_resources);
 	vkb::core::HPPFramebuffer         &request_framebuffer(const vkb::rendering::RenderTargetCpp &render_target, const vkb::core::HPPRenderPass &render_pass);
-	vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state);
+	vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state);
 	vkb::core::HPPPipelineLayout      &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules);
 	vkb::core::HPPRenderPass          &request_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
 	                                                       const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
