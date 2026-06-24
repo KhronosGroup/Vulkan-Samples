@@ -86,10 +86,10 @@ bool DeviceAddressCommands::prepare(const vkb::ApplicationOptions &options)
 
 void DeviceAddressCommands::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Buffer device address — requested through VkPhysicalDeviceVulkan12Features
-	// because we also request drawIndirectCount from the same struct.  The spec
-	// forbids having both VkPhysicalDeviceVulkan12Features and the standalone
-	// VkPhysicalDeviceBufferDeviceAddressFeatures in the pNext chain at once.
+	// Buffer device address — requested via the standalone
+	// VkPhysicalDeviceBufferDeviceAddressFeatures struct.  drawIndirectCount is
+	// promoted through VK_KHR_DRAW_INDIRECT_COUNT_EXTENSION_NAME (added in the
+	// constructor); it is not requested here as a Vulkan 1.2 feature.
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
 
 	// The new extension feature that unlocks vkCmdBindIndexBuffer3KHR etc.
@@ -187,7 +187,9 @@ void DeviceAddressCommands::upload_buffer(GpuBuffer &dst, const void *data, VkDe
 
 	VkBufferMemoryBarrier barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER};
 	barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT;
+	barrier.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT |
+	                              VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+	                              VK_ACCESS_INDEX_READ_BIT;
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.buffer              = dst.handle;
@@ -195,7 +197,9 @@ void DeviceAddressCommands::upload_buffer(GpuBuffer &dst, const void *data, VkDe
 	barrier.size                = VK_WHOLE_SIZE;
 	vkCmdPipelineBarrier(cmd->get_handle(),
 	                     VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+	                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+	                         VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+	                         VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
 	                     0, 0, nullptr, 1, &barrier, 0, nullptr);
 
 	cmd->end();

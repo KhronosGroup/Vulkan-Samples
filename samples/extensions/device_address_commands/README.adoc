@@ -346,10 +346,12 @@ descriptor pools**.  The per-frame record loop is:
 [source,cpp]
 ----
 // 1. Write VP matrix by address (replaces vkCmdUpdateBuffer)
-vkCmdUpdateMemoryKHR(cmd, &{camera.address, sizeof(mat4)}, 0, 64, &vp);
+VkDeviceAddressRangeKHR cam_range{camera.address, sizeof(mat4)};
+vkCmdUpdateMemoryKHR(cmd, &cam_range, VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR, sizeof(mat4), &vp);
 
 // 2. Zero draw count by address (replaces vkCmdFillBuffer)
-vkCmdFillMemoryKHR(cmd, &{draw_count.address, 4}, 0, 0u);
+VkDeviceAddressRangeKHR count_range{draw_count.address, sizeof(uint32_t)};
+vkCmdFillMemoryKHR(cmd, &count_range, VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR, 0u);
 
 // 3. Barrier: transfer writes visible to compute / vertex
 // (VkMemoryRangeBarrierKHR × 2)
@@ -376,7 +378,7 @@ Because there are no descriptors, all buffer addresses flow into shaders via
 push constants.  The two push-constant structs mirror each other between the
 C++ host and the shader:
 
-.Compute push constants (56 bytes, matching `DeviceAddressCommands::PushCompute`)
+.Compute push constants (64 bytes, matching `DeviceAddressCommands::PushCompute`)
 [source,glsl]
 ----
 layout(push_constant) uniform PushCompute {

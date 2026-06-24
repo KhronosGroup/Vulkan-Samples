@@ -78,8 +78,8 @@ layout(push_constant) uniform PC
     TransformRef   transforms;    // 16
     DrawCmdsRef    draw_cmds;     // 24
     DrawCountRef   draw_count;    // 32
-    vec3           camera_pos;    // 40
-    float          _pad;          // 52
+    vec3           camera_pos;    // 48
+    float          _pad;          // 60
 } pc;
 
 layout(local_size_x = 64) in;

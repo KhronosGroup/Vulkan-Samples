@@ -38,8 +38,9 @@
  * The sample renders 256 animated octahedra arranged in a four-arm galaxy spiral.
  * A compute shader animates each object and writes VkDrawIndexedIndirectCommand records
  * into a GPU buffer entirely through device addresses and push constants — no descriptor
- * sets required.  A distance-based visibility test (also in the compute shader) sets
- * instanceCount=0 for far objects, while vkCmdDrawIndexedIndirectCount2KHR reads the
+ * sets required.  A distance-based visibility test in the compute shader culls far
+ * objects by returning early (no draw command is emitted for them), while
+ * vkCmdDrawIndexedIndirectCount2KHR reads the
  * draw count from a device address previously written by vkCmdFillMemoryKHR.
  */
 class DeviceAddressCommands : public ApiVulkanSample

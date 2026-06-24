@@ -37,7 +37,7 @@ struct OrbitParams
 struct DrawCmd
 {
     uint index_count;    // = 24
-    uint instance_count; // = 1 (visible) or 0 (culled)
+    uint instance_count; // always 1; culled objects do not emit a command
     uint first_index;    // = 0
     uint vertex_offset;  // = 0
     uint first_instance; // = object index
@@ -52,8 +52,8 @@ struct PushCompute
     float4x4*     transforms;    // 64-bit device address at offset 16
     DrawCmd*      draw_cmds;     // 64-bit device address at offset 24
     uint*         draw_count;    // 64-bit device address at offset 32
-    float3        camera_pos;    // offset 40
-    float         _pad;          // offset 52
+    float3        camera_pos;    // offset 48
+    float         _pad;          // offset 60
 };
 
 float4x4 translate_mat(float3 t)
