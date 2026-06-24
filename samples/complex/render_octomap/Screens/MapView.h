@@ -43,12 +43,8 @@ class MapView
 	// Flag to indicate view state changed
 	bool stateChanged = false;
 
+	// Called during initialization; MapView has no GPU resources of its own, so this always returns empty.
 	std::vector<VkWriteDescriptorSet> LoadAssets(ApiVulkanSample *base, const VkDescriptorSetAllocateInfo &allocInfo, VkQueue copyQueue);
-
-	bool DrawUI();
-
-  private:
-	void DrawSidebar();
 };
 
 #endif        // MAPVIEW_H

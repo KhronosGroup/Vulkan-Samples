@@ -59,7 +59,9 @@ add_sample_with_tags(
         NAME "Octmap rendering"
         DESCRIPTION "Demonstration of how to render an OctMap which was generated from ICP combining ARCore and ARKit SLAM maps"
         FILES
+            ImGUIUtil.h
             ImGUIUtil.cpp
+            Screens/MapView.h
             Screens/MapView.cpp
         SHADER_FILES_GLSL
         "render_octomap/glsl/render.vert"
