@@ -100,7 +100,6 @@ void DeviceAddressCommands::request_gpu_features(vkb::core::PhysicalDeviceC &gpu
 	// vkCmdPipelineBarrier2 (used for VkMemoryRangeBarrierKHR) requires this.
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 
-
 	// The compute shader sets firstInstance to the object index so the vertex
 	// shader can index the transform array.  Non-zero firstInstance requires
 	// this core feature (Vulkan 1.0, universally available on desktop).
@@ -119,11 +118,11 @@ void DeviceAddressCommands::load_extension_functions()
 {
 	VkDevice dev = get_device().get_handle();
 
-#define LOAD_PFN(name)                                                        \
-	name = reinterpret_cast<PFN_##name>(vkGetDeviceProcAddr(dev, #name));     \
-	if (!name)                                                                 \
-	{                                                                          \
-		throw std::runtime_error("Failed to load " #name);                    \
+#define LOAD_PFN(name)                                                    \
+	name = reinterpret_cast<PFN_##name>(vkGetDeviceProcAddr(dev, #name)); \
+	if (!name)                                                            \
+	{                                                                     \
+		throw std::runtime_error("Failed to load " #name);                \
 	}
 
 	LOAD_PFN(vkCmdFillMemoryKHR)
@@ -156,20 +155,20 @@ DeviceAddressCommands::GpuBuffer
 
 	// VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT is required to call
 	// vkGetBufferDeviceAddress on memory bound to this buffer.
-	VkMemoryAllocateFlagsInfo memory_allocate_flags_info{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+	VkMemoryAllocateFlagsInfo memory_allocate_flags_info{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO};
 	memory_allocate_flags_info.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
 
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.pNext                = &memory_allocate_flags_info;
 	memory_allocate_info.allocationSize       = memory_requirements.size;
 	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(
-	    memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	VK_CHECK(vkAllocateMemory(dev, &memory_allocate_info, nullptr, &buf.memory));
 	VK_CHECK(vkBindBufferMemory(dev, buf.handle, buf.memory, 0));
 
-	VkBufferDeviceAddressInfo buffer_device_address_info{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+	VkBufferDeviceAddressInfo buffer_device_address_info{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
 	buffer_device_address_info.buffer = buf.handle;
-	buf.address = vkGetBufferDeviceAddress(dev, &buffer_device_address_info);
+	buf.address                       = vkGetBufferDeviceAddress(dev, &buffer_device_address_info);
 
 	return buf;
 }
@@ -186,10 +185,10 @@ void DeviceAddressCommands::upload_buffer(GpuBuffer &dst, const void *data, VkDe
 	vkCmdCopyBuffer(cmd->get_handle(), staging.get_handle(), dst.handle, 1, &region);
 
 	VkBufferMemoryBarrier barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER};
-	barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask       = VK_ACCESS_SHADER_READ_BIT |
-	                              VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
-	                              VK_ACCESS_INDEX_READ_BIT;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT |
+	                        VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+	                        VK_ACCESS_INDEX_READ_BIT;
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.buffer              = dst.handle;
@@ -349,7 +348,7 @@ void DeviceAddressCommands::create_compute_pipeline()
 	VkComputePipelineCreateInfo compute_pipeline_create_info =
 	    vkb::initializers::compute_pipeline_create_info(compute_pipeline_layout);
 	compute_pipeline_create_info.stage = load_shader("device_address_commands", "update_objects.comp.spv",
-	                                                  VK_SHADER_STAGE_COMPUTE_BIT);
+	                                                 VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE,
 	                                  1, &compute_pipeline_create_info, nullptr, &compute_pipeline));
 }
