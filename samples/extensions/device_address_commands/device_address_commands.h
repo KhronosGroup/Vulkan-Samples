@@ -144,11 +144,11 @@ class DeviceAddressCommands : public ApiVulkanSample
 	// -------------------------------------------------------------------------
 	// VK_KHR_device_address_commands function pointers (loaded at runtime)
 	// -------------------------------------------------------------------------
-	PFN_vkCmdFillMemoryKHR                fn_vkCmdFillMemoryKHR{nullptr};
-	PFN_vkCmdUpdateMemoryKHR              fn_vkCmdUpdateMemoryKHR{nullptr};
-	PFN_vkCmdBindIndexBuffer3KHR          fn_vkCmdBindIndexBuffer3KHR{nullptr};
-	PFN_vkCmdBindVertexBuffers3KHR        fn_vkCmdBindVertexBuffers3KHR{nullptr};
-	PFN_vkCmdDrawIndexedIndirectCount2KHR fn_vkCmdDrawIndexedIndirectCount2KHR{nullptr};
+	PFN_vkCmdFillMemoryKHR                vkCmdFillMemoryKHR{nullptr};
+	PFN_vkCmdUpdateMemoryKHR              vkCmdUpdateMemoryKHR{nullptr};
+	PFN_vkCmdBindIndexBuffer3KHR          vkCmdBindIndexBuffer3KHR{nullptr};
+	PFN_vkCmdBindVertexBuffers3KHR        vkCmdBindVertexBuffers3KHR{nullptr};
+	PFN_vkCmdDrawIndexedIndirectCount2KHR vkCmdDrawIndexedIndirectCount2KHR{nullptr};
 
 	float accumulated_time{0.0f};
 };

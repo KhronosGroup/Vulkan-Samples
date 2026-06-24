@@ -119,11 +119,11 @@ void DeviceAddressCommands::load_extension_functions()
 {
 	VkDevice dev = get_device().get_handle();
 
-#define LOAD_PFN(name)                                                         \
-	fn_##name = reinterpret_cast<PFN_##name>(vkGetDeviceProcAddr(dev, #name)); \
-	if (!fn_##name)                                                            \
+#define LOAD_PFN(name)                                                        \
+	name = reinterpret_cast<PFN_##name>(vkGetDeviceProcAddr(dev, #name));     \
+	if (!name)                                                                 \
 	{                                                                          \
-		throw std::runtime_error("Failed to load " #name);                     \
+		throw std::runtime_error("Failed to load " #name);                    \
 	}
 
 	LOAD_PFN(vkCmdFillMemoryKHR)
@@ -147,29 +147,29 @@ DeviceAddressCommands::GpuBuffer
 	VkDevice dev = get_device().get_handle();
 
 	// SHADER_DEVICE_ADDRESS_BIT is required to query a buffer's device address.
-	VkBufferCreateInfo bci = vkb::initializers::buffer_create_info(
+	VkBufferCreateInfo buffer_create_info = vkb::initializers::buffer_create_info(
 	    usage | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, size);
-	VK_CHECK(vkCreateBuffer(dev, &bci, nullptr, &buf.handle));
+	VK_CHECK(vkCreateBuffer(dev, &buffer_create_info, nullptr, &buf.handle));
 
-	VkMemoryRequirements req;
-	vkGetBufferMemoryRequirements(dev, buf.handle, &req);
+	VkMemoryRequirements memory_requirements;
+	vkGetBufferMemoryRequirements(dev, buf.handle, &memory_requirements);
 
 	// VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT is required to call
 	// vkGetBufferDeviceAddress on memory bound to this buffer.
-	VkMemoryAllocateFlagsInfo mafi{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO};
-	mafi.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+	VkMemoryAllocateFlagsInfo memory_allocate_flags_info{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO };
+	memory_allocate_flags_info.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
 
-	VkMemoryAllocateInfo mai = vkb::initializers::memory_allocate_info();
-	mai.pNext                = &mafi;
-	mai.allocationSize       = req.size;
-	mai.memoryTypeIndex      = get_device().get_gpu().get_memory_type(
-        req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(dev, &mai, nullptr, &buf.memory));
+	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
+	memory_allocate_info.pNext                = &memory_allocate_flags_info;
+	memory_allocate_info.allocationSize       = memory_requirements.size;
+	memory_allocate_info.memoryTypeIndex      = get_device().get_gpu().get_memory_type(
+	    memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(dev, &memory_allocate_info, nullptr, &buf.memory));
 	VK_CHECK(vkBindBufferMemory(dev, buf.handle, buf.memory, 0));
 
-	VkBufferDeviceAddressInfo bdai{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
-	bdai.buffer = buf.handle;
-	buf.address = vkGetBufferDeviceAddress(dev, &bdai);
+	VkBufferDeviceAddressInfo buffer_device_address_info{ VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO };
+	buffer_device_address_info.buffer = buf.handle;
+	buf.address = vkGetBufferDeviceAddress(dev, &buffer_device_address_info);
 
 	return buf;
 }
@@ -342,12 +342,12 @@ void DeviceAddressCommands::create_compute_pipeline()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_ci, nullptr,
 	                                &compute_pipeline_layout));
 
-	VkComputePipelineCreateInfo ci =
+	VkComputePipelineCreateInfo compute_pipeline_create_info =
 	    vkb::initializers::compute_pipeline_create_info(compute_pipeline_layout);
-	ci.stage = load_shader("device_address_commands", "update_objects.comp.spv",
-	                       VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("device_address_commands", "update_objects.comp.spv",
+	                                                  VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE,
-	                                  1, &ci, nullptr, &compute_pipeline));
+	                                  1, &compute_pipeline_create_info, nullptr, &compute_pipeline));
 }
 
 void DeviceAddressCommands::create_graphics_pipeline()
@@ -363,60 +363,60 @@ void DeviceAddressCommands::create_graphics_pipeline()
 	// Vertex input: position (vec3, binding 0).
 	// vkCmdBindVertexBuffers3KHR supplies the actual buffer address; the pipeline
 	// only needs to know the attribute format and stride.
-	VkVertexInputBindingDescription   vib{0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX};
-	VkVertexInputAttributeDescription via{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
+	VkVertexInputBindingDescription   vertex_input_binding{0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX};
+	VkVertexInputAttributeDescription vertex_input_attribute{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
 
-	VkPipelineVertexInputStateCreateInfo vis = vkb::initializers::pipeline_vertex_input_state_create_info();
-	vis.vertexBindingDescriptionCount        = 1;
-	vis.pVertexBindingDescriptions           = &vib;
-	vis.vertexAttributeDescriptionCount      = 1;
-	vis.pVertexAttributeDescriptions         = &via;
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+	vertex_input_state.vertexBindingDescriptionCount        = 1;
+	vertex_input_state.pVertexBindingDescriptions           = &vertex_input_binding;
+	vertex_input_state.vertexAttributeDescriptionCount      = 1;
+	vertex_input_state.pVertexAttributeDescriptions         = &vertex_input_attribute;
 
-	VkPipelineInputAssemblyStateCreateInfo ias =
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
 	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rast =
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(
 	        VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_att =
+	VkPipelineColorBlendAttachmentState color_blend_attachment =
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo blend =
-	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_att);
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(1, &color_blend_attachment);
 
-	VkPipelineDepthStencilStateCreateInfo ds =
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
 
-	VkPipelineViewportStateCreateInfo vps =
+	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo ms =
+	VkPipelineMultisampleStateCreateInfo multisample_state =
 	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState>      dyn_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	VkPipelineDynamicStateCreateInfo dyn        = vkb::initializers::pipeline_dynamic_state_create_info(dyn_states);
+	std::vector<VkDynamicState>      dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	VkPipelineDynamicStateCreateInfo dynamic_state  = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states);
 
-	VkGraphicsPipelineCreateInfo ci = vkb::initializers::pipeline_create_info(graphics_pipeline_layout, render_pass);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(graphics_pipeline_layout, render_pass);
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> stages;
 	stages[0] = load_shader("device_address_commands", "render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 	stages[1] = load_shader("device_address_commands", "render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	ci.pVertexInputState   = &vis;
-	ci.pInputAssemblyState = &ias;
-	ci.pRasterizationState = &rast;
-	ci.pColorBlendState    = &blend;
-	ci.pDepthStencilState  = &ds;
-	ci.pViewportState      = &vps;
-	ci.pMultisampleState   = &ms;
-	ci.pDynamicState       = &dyn;
-	ci.pStages             = stages.data();
-	ci.stageCount          = static_cast<uint32_t>(stages.size());
+	pipeline_create_info.pVertexInputState   = &vertex_input_state;
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &rasterization_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.pStages             = stages.data();
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(stages.size());
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE,
-	                                   1, &ci, nullptr, &graphics_pipeline));
+	                                   1, &pipeline_create_info, nullptr, &graphics_pipeline));
 }
 
 // ============================================================================
@@ -460,12 +460,10 @@ void DeviceAddressCommands::render(float delta_time)
 	//     back through a buffer_reference pointer (no descriptor sets required).
 	//     This is the address-based replacement for vkCmdUpdateBuffer.
 	// ===========================================================================
-	{
-		VkDeviceAddressRangeKHR cam_range{camera_buffer.address, sizeof(glm::mat4)};
-		fn_vkCmdUpdateMemoryKHR(cmd, &cam_range,
-		                        VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR,
-		                        sizeof(glm::mat4), glm::value_ptr(vp));
-	}
+	VkDeviceAddressRangeKHR cam_range{camera_buffer.address, sizeof(glm::mat4)};
+	vkCmdUpdateMemoryKHR(cmd, &cam_range,
+	                     VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR,
+	                     sizeof(glm::mat4), glm::value_ptr(vp));
 
 	// ===========================================================================
 	// [2] vkCmdFillMemoryKHR — zero the GPU draw-count at its device address.
@@ -473,11 +471,9 @@ void DeviceAddressCommands::render(float delta_time)
 	//     The compute shader will atomically increment this value for each
 	//     visible object; vkCmdDrawIndexedIndirectCount2KHR reads the final count.
 	// ===========================================================================
-	{
-		VkDeviceAddressRangeKHR count_range{draw_count_buffer.address, sizeof(uint32_t)};
-		fn_vkCmdFillMemoryKHR(cmd, &count_range,
-		                      VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR, 0u);
-	}
+	VkDeviceAddressRangeKHR count_range{draw_count_buffer.address, sizeof(uint32_t)};
+	vkCmdFillMemoryKHR(cmd, &count_range,
+	                   VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR, 0u);
 
 	// ===========================================================================
 	// [3] VkMemoryRangeBarrierKHR (pre-compute)
@@ -489,40 +485,38 @@ void DeviceAddressCommands::render(float delta_time)
 	//     operates on raw [address, size] ranges and is therefore usable when the
 	//     caller holds only a device address.
 	// ===========================================================================
-	{
-		std::array<VkMemoryRangeBarrierKHR, 2> pre_barriers{};
+	std::array<VkMemoryRangeBarrierKHR, 2> pre_barriers{};
 
-		// camera VP: TRANSFER_WRITE → VERTEX_SHADER_READ
-		pre_barriers[0].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
-		pre_barriers[0].srcStageMask        = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-		pre_barriers[0].srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-		pre_barriers[0].dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
-		pre_barriers[0].dstAccessMask       = VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
-		pre_barriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		pre_barriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		pre_barriers[0].addressRange        = {camera_buffer.address, camera_buffer.size};
-		pre_barriers[0].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	// camera VP: TRANSFER_WRITE → VERTEX_SHADER_READ
+	pre_barriers[0].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
+	pre_barriers[0].srcStageMask        = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+	pre_barriers[0].srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+	pre_barriers[0].dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
+	pre_barriers[0].dstAccessMask       = VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
+	pre_barriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	pre_barriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	pre_barriers[0].addressRange        = {camera_buffer.address, camera_buffer.size};
+	pre_barriers[0].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
 
-		// draw count: TRANSFER_WRITE → COMPUTE_SHADER (atomicAdd)
-		pre_barriers[1].sType         = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
-		pre_barriers[1].srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-		pre_barriers[1].srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-		pre_barriers[1].dstStageMask  = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-		pre_barriers[1].dstAccessMask = VK_ACCESS_2_SHADER_STORAGE_READ_BIT |
-		                                VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
-		pre_barriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		pre_barriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		pre_barriers[1].addressRange        = {draw_count_buffer.address, draw_count_buffer.size};
-		pre_barriers[1].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	// draw count: TRANSFER_WRITE → COMPUTE_SHADER (atomicAdd)
+	pre_barriers[1].sType         = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
+	pre_barriers[1].srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+	pre_barriers[1].srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+	pre_barriers[1].dstStageMask  = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+	pre_barriers[1].dstAccessMask = VK_ACCESS_2_SHADER_STORAGE_READ_BIT |
+	                                VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+	pre_barriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	pre_barriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	pre_barriers[1].addressRange        = {draw_count_buffer.address, draw_count_buffer.size};
+	pre_barriers[1].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
 
-		VkMemoryRangeBarriersInfoKHR mri{VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIERS_INFO_KHR};
-		mri.memoryRangeBarrierCount = static_cast<uint32_t>(pre_barriers.size());
-		mri.pMemoryRangeBarriers    = pre_barriers.data();
+	VkMemoryRangeBarriersInfoKHR pre_barriers_info{VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIERS_INFO_KHR};
+	pre_barriers_info.memoryRangeBarrierCount = static_cast<uint32_t>(pre_barriers.size());
+	pre_barriers_info.pMemoryRangeBarriers    = pre_barriers.data();
 
-		VkDependencyInfo dep{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
-		dep.pNext = &mri;
-		vkCmdPipelineBarrier2(cmd, &dep);
-	}
+	VkDependencyInfo pre_dep{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+	pre_dep.pNext = &pre_barriers_info;
+	vkCmdPipelineBarrier2(cmd, &pre_dep);
 
 	// ===========================================================================
 	// [4] Compute pass — animate objects and build draw commands entirely on GPU.
@@ -553,50 +547,48 @@ void DeviceAddressCommands::render(float delta_time)
 	//     Three range barriers in one call: transforms, draw commands, and draw
 	//     count must all be visible before the graphics pass consumes them.
 	// ===========================================================================
-	{
-		std::array<VkMemoryRangeBarrierKHR, 3> post_barriers{};
+	std::array<VkMemoryRangeBarrierKHR, 3> post_barriers{};
 
-		// transforms: COMPUTE_WRITE → VERTEX_SHADER_READ
-		post_barriers[0].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
-		post_barriers[0].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-		post_barriers[0].srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
-		post_barriers[0].dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
-		post_barriers[0].dstAccessMask       = VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
-		post_barriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		post_barriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		post_barriers[0].addressRange        = {transforms_buffer.address, transforms_buffer.size};
-		post_barriers[0].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	// transforms: COMPUTE_WRITE → VERTEX_SHADER_READ
+	post_barriers[0].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
+	post_barriers[0].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+	post_barriers[0].srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+	post_barriers[0].dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
+	post_barriers[0].dstAccessMask       = VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
+	post_barriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	post_barriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	post_barriers[0].addressRange        = {transforms_buffer.address, transforms_buffer.size};
+	post_barriers[0].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
 
-		// draw commands: COMPUTE_WRITE → INDIRECT_COMMAND_READ
-		post_barriers[1].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
-		post_barriers[1].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-		post_barriers[1].srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
-		post_barriers[1].dstStageMask        = VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
-		post_barriers[1].dstAccessMask       = VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
-		post_barriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		post_barriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		post_barriers[1].addressRange        = {draw_cmds_buffer.address, draw_cmds_buffer.size};
-		post_barriers[1].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	// draw commands: COMPUTE_WRITE → INDIRECT_COMMAND_READ
+	post_barriers[1].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
+	post_barriers[1].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+	post_barriers[1].srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+	post_barriers[1].dstStageMask        = VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
+	post_barriers[1].dstAccessMask       = VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
+	post_barriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	post_barriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	post_barriers[1].addressRange        = {draw_cmds_buffer.address, draw_cmds_buffer.size};
+	post_barriers[1].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
 
-		// draw count: COMPUTE_WRITE → INDIRECT_COMMAND_READ
-		post_barriers[2].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
-		post_barriers[2].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-		post_barriers[2].srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
-		post_barriers[2].dstStageMask        = VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
-		post_barriers[2].dstAccessMask       = VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
-		post_barriers[2].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		post_barriers[2].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		post_barriers[2].addressRange        = {draw_count_buffer.address, draw_count_buffer.size};
-		post_barriers[2].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	// draw count: COMPUTE_WRITE → INDIRECT_COMMAND_READ
+	post_barriers[2].sType               = VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIER_KHR;
+	post_barriers[2].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+	post_barriers[2].srcAccessMask       = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+	post_barriers[2].dstStageMask        = VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT;
+	post_barriers[2].dstAccessMask       = VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
+	post_barriers[2].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	post_barriers[2].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	post_barriers[2].addressRange        = {draw_count_buffer.address, draw_count_buffer.size};
+	post_barriers[2].addressFlags        = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
 
-		VkMemoryRangeBarriersInfoKHR mri{VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIERS_INFO_KHR};
-		mri.memoryRangeBarrierCount = static_cast<uint32_t>(post_barriers.size());
-		mri.pMemoryRangeBarriers    = post_barriers.data();
+	VkMemoryRangeBarriersInfoKHR post_barriers_info{VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIERS_INFO_KHR};
+	post_barriers_info.memoryRangeBarrierCount = static_cast<uint32_t>(post_barriers.size());
+	post_barriers_info.pMemoryRangeBarriers    = post_barriers.data();
 
-		VkDependencyInfo dep{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
-		dep.pNext = &mri;
-		vkCmdPipelineBarrier2(cmd, &dep);
-	}
+	VkDependencyInfo post_dep{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+	post_dep.pNext = &post_barriers_info;
+	vkCmdPipelineBarrier2(cmd, &post_dep);
 
 	// ===========================================================================
 	// [6] Graphics pass
@@ -630,28 +622,24 @@ void DeviceAddressCommands::render(float delta_time)
 	// [7] vkCmdBindIndexBuffer3KHR — bind the index buffer by its device address.
 	//     This is the address-based replacement for vkCmdBindIndexBuffer.
 	// ===========================================================================
-	{
-		VkBindIndexBuffer3InfoKHR idx_info{VK_STRUCTURE_TYPE_BIND_INDEX_BUFFER_3_INFO_KHR};
-		idx_info.addressRange = {index_buffer.address, index_buffer.size};
-		idx_info.addressFlags = 0;
-		idx_info.indexType    = VK_INDEX_TYPE_UINT16;
-		fn_vkCmdBindIndexBuffer3KHR(cmd, &idx_info);
-	}
+	VkBindIndexBuffer3InfoKHR idx_info{VK_STRUCTURE_TYPE_BIND_INDEX_BUFFER_3_INFO_KHR};
+	idx_info.addressRange = {index_buffer.address, index_buffer.size};
+	idx_info.addressFlags = 0;
+	idx_info.indexType    = VK_INDEX_TYPE_UINT16;
+	vkCmdBindIndexBuffer3KHR(cmd, &idx_info);
 
 	// ===========================================================================
 	// [8] vkCmdBindVertexBuffers3KHR — bind the vertex buffer by device address.
 	//     This is the address-based replacement for vkCmdBindVertexBuffers.
 	//     setStride=VK_FALSE means the stride comes from the pipeline state.
 	// ===========================================================================
-	{
-		VkBindVertexBuffer3InfoKHR vtx_info{VK_STRUCTURE_TYPE_BIND_VERTEX_BUFFER_3_INFO_KHR};
-		// setStride=VK_FALSE: stride comes from the pipeline vertex binding (sizeof vec3).
-		// The stride field in the range must be 0 when setStride is VK_FALSE.
-		vtx_info.setStride    = VK_FALSE;
-		vtx_info.addressRange = {vertex_buffer.address, vertex_buffer.size, 0};
-		vtx_info.addressFlags = 0;
-		fn_vkCmdBindVertexBuffers3KHR(cmd, 0, 1, &vtx_info);
-	}
+	VkBindVertexBuffer3InfoKHR vtx_info{VK_STRUCTURE_TYPE_BIND_VERTEX_BUFFER_3_INFO_KHR};
+	// setStride=VK_FALSE: stride comes from the pipeline vertex binding (sizeof vec3).
+	// The stride field in the range must be 0 when setStride is VK_FALSE.
+	vtx_info.setStride    = VK_FALSE;
+	vtx_info.addressRange = {vertex_buffer.address, vertex_buffer.size, 0};
+	vtx_info.addressFlags = 0;
+	vkCmdBindVertexBuffers3KHR(cmd, 0, 1, &vtx_info);
 
 	// ===========================================================================
 	// [9] vkCmdDrawIndexedIndirectCount2KHR — GPU-driven indexed draw.
@@ -659,18 +647,16 @@ void DeviceAddressCommands::render(float delta_time)
 	//     address; neither requires a VkBuffer handle.
 	//     This is the address-based replacement for vkCmdDrawIndexedIndirectCount.
 	// ===========================================================================
-	{
-		VkDrawIndirectCount2InfoKHR draw_info{VK_STRUCTURE_TYPE_DRAW_INDIRECT_COUNT_2_INFO_KHR};
-		draw_info.addressRange = {
-		    draw_cmds_buffer.address,
-		    draw_cmds_buffer.size,
-		    sizeof(VkDrawIndexedIndirectCommand)};
-		draw_info.addressFlags      = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
-		draw_info.countAddressRange = {draw_count_buffer.address, sizeof(uint32_t)};
-		draw_info.countAddressFlags = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
-		draw_info.maxDrawCount      = kObjectCount;
-		fn_vkCmdDrawIndexedIndirectCount2KHR(cmd, &draw_info);
-	}
+	VkDrawIndirectCount2InfoKHR draw_info{VK_STRUCTURE_TYPE_DRAW_INDIRECT_COUNT_2_INFO_KHR};
+	draw_info.addressRange = {
+	    draw_cmds_buffer.address,
+	    draw_cmds_buffer.size,
+	    sizeof(VkDrawIndexedIndirectCommand)};
+	draw_info.addressFlags      = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	draw_info.countAddressRange = {draw_count_buffer.address, sizeof(uint32_t)};
+	draw_info.countAddressFlags = VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR;
+	draw_info.maxDrawCount      = kObjectCount;
+	vkCmdDrawIndexedIndirectCount2KHR(cmd, &draw_info);
 
 	draw_ui(cmd);
 	vkCmdEndRenderPass(cmd);
