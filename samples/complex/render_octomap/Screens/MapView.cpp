@@ -23,9 +23,3 @@ MapView::MapView() :
 }
 
 MapView::~MapView() = default;
-
-std::vector<VkWriteDescriptorSet> MapView::LoadAssets(ApiVulkanSample *, const VkDescriptorSetAllocateInfo &, VkQueue)
-{
-	// MapView holds only UI state — no GPU resources needed.
-	return {};
-}

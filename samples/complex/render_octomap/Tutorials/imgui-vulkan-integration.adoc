@@ -223,18 +223,18 @@ void onCharEvent(uint32_t codepoint) {
 
 === Adding Custom Widgets
 
-The `MapView` class demonstrates how to extend the UI with custom views:
+The `MapView` class holds only UI state — no GPU resources of its own:
 
 [source,cpp]
 ----
 class MapView {
 public:
-    std::vector<VkWriteDescriptorSet> LoadAssets(
-        ApiVulkanSample* base,
-        VkDescriptorSetAllocateInfo allocInfo,
-        VkQueue copyQueue);
-    
-    void Draw();  // Called during newFrame()
+    enum class ViewState { Octomap, GLTFRegular, GLTFSplats };
+
+    glm::vec2 mapPos;
+    glm::vec2 mapSize;
+    ViewState currentState = ViewState::Octomap;
+    bool      stateChanged = false;
 };
 ----
 
@@ -245,6 +245,8 @@ One key feature of this `ImGUIUtil` implementation is the ability to render imag
 * Displaying render target previews
 * Showing texture thumbnails
 * Creating viewport windows within the UI
+
+To add button or panel textures, upload each image to a `VkImage` inside `initResources` (following the same pattern as the font texture upload), build a `VkWriteDescriptorSet`, and append it to `writeDescriptorSets` before calling `vkUpdateDescriptorSets`. The resulting `VkDescriptorSet` can then be passed as `ImDrawCmd::TextureId` and rendered with `ImGui::Image()` or `ImGui::ImageButton()`.
 
 == Best Practices
 

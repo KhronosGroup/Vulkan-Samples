@@ -18,7 +18,7 @@
 #ifndef MAPVIEW_H
 #define MAPVIEW_H
 
-#include "api_vulkan_sample.h"
+#include <glm/glm.hpp>
 
 class MapView
 {
@@ -26,9 +26,9 @@ class MapView
 	// View states for different rendering modes
 	enum class ViewState
 	{
-		Octomap,            // Default octomap rendering
-		GLTFRegular,        // Regular GLTF map
-		GLTFSplats          // Gaussian splats GLTF
+		Octomap,       // Default octomap rendering
+		GLTFRegular,   // Regular GLTF map
+		GLTFSplats     // Gaussian splats GLTF
 	};
 
 	MapView();
@@ -42,9 +42,6 @@ class MapView
 
 	// Flag to indicate view state changed
 	bool stateChanged = false;
-
-	// Called during initialization; MapView has no GPU resources of its own, so this always returns empty.
-	std::vector<VkWriteDescriptorSet> LoadAssets(ApiVulkanSample *base, const VkDescriptorSetAllocateInfo &allocInfo, VkQueue copyQueue);
 };
 
 #endif        // MAPVIEW_H

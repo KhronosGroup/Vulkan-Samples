@@ -439,11 +439,11 @@ void ImGUIUtil::initResources(VkRenderPass renderPass, VkQueue copyQueue)
 	    vkb::initializers::write_descriptor_set(descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0,
 	                                            &fontDescriptor)};
 
-	std::vector<VkWriteDescriptorSet> liveMapDescriptorSets = MapsView.LoadAssets(base, allocInfo, copyQueue);
-	if (liveMapDescriptorSets.size() > 0)
-	{
-		writeDescriptorSets.insert(liveMapDescriptorSets.end(), liveMapDescriptorSets.begin(), liveMapDescriptorSets.end());
-	}
+	// To add button images (jpg/png textures) for the GUI, upload each image to a VkImage here
+	// following the same pattern as the font texture upload above, create a
+	// VkDescriptorImageInfo for it, and append a write_descriptor_set to writeDescriptorSets.
+	// The returned VkDescriptorSet can then be passed as ImDrawCmd::TextureId so ImGui
+	// renders the texture via ImGui::Image() / ImGui::ImageButton().
 
 	vkUpdateDescriptorSets(base->get_render_context().get_device().get_handle(), static_cast<uint32_t>(writeDescriptorSets.size()),
 	                       writeDescriptorSets.data(),
