@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#extension GL_EXT_nonuniform_qualifier : require
+
 layout (set = 1, binding = 0) uniform texture2D textureImage[2];
 layout (set = 2, binding = 0) uniform sampler textureSampler[2];
 
@@ -31,5 +33,5 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
-	outFragColor = texture(sampler2D(textureImage[inInstanceIndex], textureSampler[pushConsts.samplerIndex]), inUV);
+	outFragColor = texture(sampler2D(textureImage[nonuniformEXT(inInstanceIndex)], textureSampler[pushConsts.samplerIndex]), inUV);
 }

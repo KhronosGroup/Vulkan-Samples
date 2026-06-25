@@ -28,5 +28,5 @@ struct VSOutput
 [shader("fragment")]
 float4 main(VSOutput input, uniform int samplerIndex, uniform int frameIndex)
 {
-    return textureImage[input.InstanceIndex].Sample(textureSampler[samplerIndex], input.UV);
+    return textureImage[NonUniformResourceIndex(input.InstanceIndex)].Sample(textureSampler[samplerIndex], input.UV);
 }

@@ -36,5 +36,5 @@ struct PushConsts
 
 float4 main(VSOutput input) : SV_TARGET0
 {
-    return textureImage[input.InstanceIndex].Sample(textureSampler[pushConsts.samplerIndex], input.UV);
+    return textureImage[NonUniformResourceIndex(input.InstanceIndex)].Sample(textureSampler[pushConsts.samplerIndex], input.UV);
 }

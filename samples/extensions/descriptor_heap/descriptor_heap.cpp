@@ -26,6 +26,7 @@ DescriptorHeap::DescriptorHeap()
 	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
 	add_device_extension(VK_EXT_DESCRIPTOR_HEAP_EXTENSION_NAME);
+	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 }
 
 DescriptorHeap::~DescriptorHeap()
@@ -73,6 +74,8 @@ void DescriptorHeap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 
 	// We need to enable the descriptor heap feature to make use of them
 	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorHeapFeaturesEXT, descriptorHeap);
+	// The way we index inside the shader also requires use of non-uniform indexing
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
