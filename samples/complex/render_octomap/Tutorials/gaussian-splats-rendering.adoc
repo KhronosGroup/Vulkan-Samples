@@ -21,6 +21,7 @@
 :toc:
 :toclevels: 3
 :sectnums:
+:stem: latexmath
 
 == Introduction
 
@@ -111,7 +112,9 @@ And here's a bonus: GLTF already has extensions for compression (`KHR_mesh_quant
       "extensions": {
         "KHR_gaussian_splatting": {
           "kernel": "ellipse",
-          "colorSpace": "sRGB"
+          "colorSpace": "sRGB",
+          "antialiased": false,
+          "shDegree": 0
         }
       },
       "mode": 0
@@ -276,7 +279,7 @@ Even spherical harmonics coefficients can be quantized down to 8 or 16 bits per 
 
 Here's the real story about compression in the GLTF standard: the `KHR_gaussian_splatting` extension works alongside a companion extension called `KHR_gaussian_splatting_compression_spz` that handles compression using the SPZ format.
 
-SPZ (Splat compression format) was specifically designed for Gaussian splats and achieves up to **90% compression compared to uncompressed PLY** while preserving visual fidelity and performance. This isn't a repurposed mesh compression format - it's purpose-built for splat data.
+SPZ (Splat compression format) was specifically designed for Gaussian splats and achieves up to **90% compression compared to uncompressed PLY** while preserving visual fidelity and performance. PLY (Polygon File Format) is the original file format used to store raw Gaussian splat data before standardization in GLTF - it's essentially a flat binary dump of all splat attributes without any compression. This isn't a repurposed mesh compression format - it's purpose-built for splat data.
 
 ==== How SPZ Works
 
@@ -357,15 +360,17 @@ When you use the `KHR_gaussian_splatting_compression_spz` extension, the GLTF st
       "mode": 0,  // POINTS
       "attributes": {
         "POSITION": 0,
-        "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0": 1,
-        "KHR_gaussian_splatting:ROTATION": 2,
-        "KHR_gaussian_splatting:SCALE": 3,
-        "KHR_gaussian_splatting:OPACITY": 4
+        "KHR_gaussian_splatting:ROTATION": 1,
+        "KHR_gaussian_splatting:SCALE": 2,
+        "KHR_gaussian_splatting:OPACITY": 3,
+        "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0": 4
       },
       "extensions": {
         "KHR_gaussian_splatting": {
           "kernel": "ellipse",
-          "colorSpace": "sRGB"
+          "colorSpace": "sRGB",
+          "antialiased": false,
+          "shDegree": 0
         },
         "KHR_gaussian_splatting_compression_spz": {
           "buffer": 5,  // Points to SPZ blob
@@ -393,31 +398,40 @@ This flexibility means renderers can choose the approach that works best for the
 
 The Vulkan-Samples framework has been extended to support gaussian splats:
 
-=== GaussianSplat Component
+=== SplatInstance Layout
 
-A new scene graph component (`scene_graph/components/gaussian_splat.h`) stores splat data:
+Rather than using a separate scene-graph component, the sample stores splat data directly as a packed array of `SplatInstance` structs (Array of Structures layout):
 
 [source,cpp]
 ----
-class GaussianSplat : public Component
+// From render_octomap.h
+struct SplatInstance
 {
-public:
-    uint32_t splat_count = 0;
-    uint32_t sh_degree = 0;
-    bool antialiased = false;
-    std::string kernel = "base_ellipsoid";
-    std::string color_space = "sRGB";
-    std::string projection = "perspective";
-    std::string sorting_method = "cameraDistance";
-
-    // GPU buffers
-    std::unique_ptr<vkb::core::BufferC> position_buffer;
-    std::unique_ptr<vkb::core::BufferC> rotation_buffer;
-    std::unique_ptr<vkb::core::BufferC> scale_buffer;
-    std::unique_ptr<vkb::core::BufferC> opacity_buffer;
-    std::unique_ptr<vkb::core::BufferC> color_buffer;
-    std::unique_ptr<vkb::core::BufferC> sh_buffer;
+    float pos[3];
+    float rot[4];
+    float scale[3];
+    float opacity;
+    float color[3];
+    float _pad;  // padding to 16-byte alignment
 };
+
+std::vector<SplatInstance>          splat_instances_cpu;
+std::unique_ptr<vkb::core::BufferC> splat_instance_buffer;
+uint32_t                            splat_count{0};
+----
+
+All splat attributes are interleaved in a single buffer, which the GPU reads using a single instanced vertex binding. The UBO contains the matrices and focal lengths for the projection math:
+
+[source,cpp]
+----
+struct
+{
+    glm::mat4 projection;
+    glm::mat4 view;
+    glm::vec2 viewport;
+    float     focalX;
+    float     focalY;
+} splat_ubo;
 ----
 
 === GLTF Loader Extension
@@ -439,6 +453,8 @@ std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
 == Reading Gaussian Splats from GLTF
 
 Loading Gaussian splats from GLTF involves several steps: parsing the JSON structure, reading binary buffers, and creating GPU resources.
+
+NOTE: The code snippets in this section illustrate the general loading pattern. The actual sample (`render_octomap.cpp`, function `loadGaussianSplatsData`) uses a simpler, more direct approach: it reads all accessor data in a single pass into `SplatInstance` structs without a generic template, and only handles float-component accessors since that is what our GLTF files contain. The conceptual pattern below is useful when writing a more general-purpose loader.
 
 === Step 1: Detecting Gaussian Splat Data
 
@@ -537,6 +553,9 @@ GLTF stores data in buffers accessed through accessors:
 
 [source,cpp]
 ----
+// T must be float or a plain struct of floats (e.g. glm::vec3, glm::vec4).
+// The function assumes float component type; integer or normalized integer
+// accessors require their own dequantization path.
 template<typename T>
 std::vector<T> read_accessor_data(const tinygltf::Model& model, int accessor_idx)
 {
@@ -799,11 +818,11 @@ Before we dive into shader code, let's understand the pipeline:
 
 **Step 3 - Fragment Shader:** For each pixel, we evaluate the 2D Gaussian function. This gives us a smooth falloff from the center to the edges. We multiply by the opacity and color, output premultiplied alpha, and we're done.
 
-**Step 4 - Blending:** The GPU blends all the quads together using alpha blending. Since we're outputting premultiplied alpha, the standard blend equation `src + dst * (1 - src.alpha)` does exactly what we want.
+**Step 4 - Blending:** The GPU blends all the quads together using alpha blending. Since we're outputting premultiplied alpha, the blend equation is `result = src + dst * (1 - src.alpha)` — this is correct because `src.rgb` already has alpha baked in. This only produces the right result when splats are drawn back-to-front (depth sorted), which is why sorting is a required step before rendering.
 
 === The Projection Math (Don't Worry, I'll Explain)
 
-Here's the tricky part: we have a 3D Gaussian blob floating in space with its 3D covariance matrix `Σ₃D`. We need to project it onto the 2D screen and figure out what its 2D covariance matrix `Σ₂D` should be. If we get this wrong, the splat will look stretched or squashed on screen.
+Here's the tricky part: we have a 3D Gaussian blob floating in space with its 3D covariance matrix stem:[\Sigma_{3D}]. We need to project it onto the 2D screen and figure out what its 2D covariance matrix stem:[\Sigma_{2D}] should be. If we get this wrong, the splat will look stretched or squashed on screen.
 
 The good news? There's a closed-form solution using the Jacobian of the perspective projection. The formula is:
 
@@ -812,7 +831,7 @@ The good news? There's a closed-form solution using the Jacobian of the perspect
 \Sigma_{2D} = J W \Sigma_{3D} W^T J^T
 ++++
 
-Let's break this down in English: `W` is the rotation part of the view matrix (how the camera is oriented). `J` is the Jacobian, which captures how perspective projection distorts things - objects closer to the camera project larger than distant objects.
+Let's break this down in English: stem:[W] is the rotation part of the view matrix (how the camera is oriented). stem:[J] is the Jacobian, which captures how perspective projection distorts things — objects closer to the camera project larger than distant objects.
 
 The Jacobian looks like this:
 
@@ -1049,16 +1068,23 @@ Beautiful! That's only 20 lines of actual code. We compute how far we are from t
 
 Notice the output `vec4(inColor * alpha, alpha)` instead of the more common `vec4(inColor, alpha)`. This is called premultiplied alpha (or associated alpha), and it's crucial for correct Gaussian splat rendering.
 
-Here's why: when you blend multiple semi-transparent Gaussians on top of each other, you want them to additively accumulate. The standard GPU blend equation with premultiplied alpha is:
+Here's why: when you blend multiple semi-transparent Gaussians on top of each other, you want them to additively accumulate. With premultiplied alpha (where `source.rgb` already contains `color × alpha`), the blend equation is:
 
 [source]
 ----
-result = source + destination * (1 - source.alpha)
+result = source.rgb + destination.rgb * (1 - source.alpha)
 ----
 
-This is perfect for Gaussians. Each splat adds its contribution, and the `(1 - source.alpha)` term lets the background show through in proportion to how transparent the splat is.
+With straight (non-premultiplied) alpha it would be:
 
-If we used straight alpha (non-premultiplied), we'd need a different blend equation, and we'd have problems with color bleeding - the color values from fully transparent areas would affect the result, which is wrong. Premultiplied alpha solves this elegantly: a fully transparent pixel contributes (0, 0, 0, 0), which adds nothing. Perfect.
+[source]
+----
+result = source.rgb * source.alpha + destination.rgb * (1 - source.alpha)
+----
+
+Premultiplied alpha eliminates that extra multiply. More importantly, a fully transparent pixel contributes `(0, 0, 0, 0)`, which adds nothing — there is no color bleeding from transparent regions. This is why premultiplied alpha is the correct choice for Gaussian splats.
+
+Note: this equation only composites correctly when fragments are drawn back-to-front (furthest splat first). That is why depth sorting is a mandatory step in the pipeline, not an optional optimisation.
 
 Plus, there's a performance bonus: the blend equation is simpler without that extra multiply for the source color.
 
