@@ -26,9 +26,9 @@ class MapView
 	// View states for different rendering modes
 	enum class ViewState
 	{
-		Octomap,       // Default octomap rendering
-		GLTFRegular,   // Regular GLTF map
-		GLTFSplats     // Gaussian splats GLTF
+		Octomap,            // Default octomap rendering
+		GLTFRegular,        // Regular GLTF map
+		GLTFSplats          // Gaussian splats GLTF
 	};
 
 	MapView();
