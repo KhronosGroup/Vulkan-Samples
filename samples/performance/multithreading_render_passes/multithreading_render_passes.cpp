@@ -444,7 +444,7 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::core::CommandBufferC &comma
 MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                              &render_context,
                                                      vkb::ShaderSource                                          &&vertex_source,
                                                      vkb::ShaderSource                                          &&fragment_source,
-                                                     vkb::sg::Scene                                              &scene,
+                                                     vkb::scene_graph::SceneC                                    &scene,
                                                      vkb::sg::Camera                                             &camera,
                                                      vkb::sg::Camera                                             &shadowmap_camera,
                                                      std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets) :
@@ -501,7 +501,7 @@ void MultithreadingRenderPasses::MainSubpass::draw(vkb::core::CommandBufferC &co
 MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::rendering::RenderContextC &render_context,
                                                          vkb::ShaderSource             &&vertex_source,
                                                          vkb::ShaderSource             &&fragment_source,
-                                                         vkb::sg::Scene                 &scene,
+                                                         vkb::scene_graph::SceneC       &scene,
                                                          vkb::sg::Camera                &camera) :
     vkb::rendering::subpasses::GeometrySubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
 {

@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2025, Arm Limited and Contributors
+ Copyright (c) 2019-2026, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -78,10 +78,10 @@ if(APPLE)
 		else()
 			message(FATAL_ERROR "Can't find MoltenVK library. Please install the Vulkan SDK or MoltenVK project and set VULKAN_SDK.")
 		endif()
-	#elseif(OTHER_VULKAN_DRIVER)
-		# handle any special processing here for other Vulkan driver (e.g. KosmicKrisp) for standalone usage on macOS or deployment to iOS
-		# would likely require extensions to CMake find_package() OPTIONAL_COMPONENTS and library variables to identify & use other driver
-	#else()
+	elseif(IOS AND NOT Vulkan_Layer_VALIDATION)
+		# if building for iOS devices (not iOS Simulator as above) and Vulkan_Layer_VALIDATION is not defined or found, search in the Vulkan SDK
+		find_library(Vulkan_Layer_VALIDATION NAMES VkLayer_khronos_validation HINTS "$ENV{VULKAN_SDK}/lib")
+	else()
 		# if not using standalone driver, retain find_package() results for Vulkan driver, Vulkan loader, and Validation Layer library variables
 		# no need to override with _HPP_VULKAN_LIBRARY in this case since Vulkan DynamicLoader will find/load Vulkan library on macOS & iOS
 	endif()
@@ -120,6 +120,7 @@ set(VKB_VALIDATION_LAYERS_BEST_PRACTICES OFF CACHE BOOL "Enable best practices v
 set(VKB_VALIDATION_LAYERS_SYNCHRONIZATION OFF CACHE BOOL "Enable synchronization validation layers for every application (implicitly enables VKB_VALIDATION_LAYERS).")
 set(VKB_VULKAN_DEBUG ON CACHE BOOL "Enable VK_EXT_debug_utils or VK_EXT_debug_marker if supported.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
+set(VKB_BUILD_SHADERS ON CACHE BOOL "Enable shader compilation for all supported shading languages.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")

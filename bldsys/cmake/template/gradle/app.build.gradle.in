@@ -2,7 +2,7 @@ plugins {
 	id 'com.android.application'
 }
 
-ext.vvl_version='1.4.321.0'
+ext.vvl_version='1.4.341.0'
 apply from: "./download_vvl.gradle"
 
 android {
@@ -68,7 +68,7 @@ android {
 		abortOnError false
 		checkReleaseBuilds false
 	}
-	
+
 	buildFeatures {
 		viewBinding true
 		prefab true

@@ -29,9 +29,9 @@ class DynamicMultisampleRasterization : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC> vertex_buffer = nullptr;
 	std::unique_ptr<vkb::core::BufferC> index_buffer  = nullptr;
 
-	std::unique_ptr<vkb::sg::Scene>    scene;
-	std::vector<VkDescriptorImageInfo> image_infos;
-	std::map<std::string, int32_t>     name_to_texture_id;
+	std::unique_ptr<vkb::scene_graph::SceneC> scene;
+	std::vector<VkDescriptorImageInfo>        image_infos;
+	std::map<std::string, int32_t>            name_to_texture_id;
 
 	struct SceneNode
 	{

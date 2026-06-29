@@ -825,7 +825,7 @@ std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 
 AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
                                                      vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-                                                     vkb::sg::Scene &scene, vkb::sg::Camera &camera) :
+                                                     vkb::scene_graph::SceneC &scene, vkb::sg::Camera &camera) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 {
 	// PCF, so need depth bias to avoid (most) shadow acne.
@@ -843,7 +843,7 @@ void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBufferC &comman
 
 AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
                                                                      vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
-                                                                     vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera_) :
+                                                                     vkb::scene_graph::SceneC &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera_) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera),
     shadow_camera(shadow_camera_)
 {

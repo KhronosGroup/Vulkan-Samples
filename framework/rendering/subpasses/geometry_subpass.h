@@ -26,7 +26,6 @@
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/hpp_scene.h"
 #include "scene_graph/scene.h"
 
 namespace vkb
@@ -91,7 +90,6 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	using MeshType               = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPMesh, vkb::sg::Mesh>::type;
 	using PipelineLayoutType     = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
 	using RasterizationStateType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRasterizationState, vkb::RasterizationState>::type;
-	using SceneType              = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
 	using ShaderModuleType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderModule, vkb::ShaderModule>::type;
 	using ShaderSourceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
 	using SubMeshType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPSubMesh, vkb::sg::SubMesh>::type;
@@ -108,7 +106,7 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
 	                ShaderSourceType                          &&vertex_shader,
 	                ShaderSourceType                          &&fragment_shader,
-	                SceneType                                  &scene,
+	                vkb::scene_graph::Scene<bindingType>       &scene,
 	                sg::Camera                                 &camera);
 
 	virtual ~GeometrySubpass() = default;
@@ -127,12 +125,12 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	void set_thread_index(uint32_t index);
 
   protected:
-	void                           draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
-	virtual void                   draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
-	vkb::sg::Camera const         &get_camera() const;
-	std::vector<MeshType *> const &get_meshes() const;
-	RasterizationStateType const  &get_rasterization_state() const;
-	SceneType const               &get_scene() const;
+	void                                        draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
+	virtual void                                draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
+	vkb::sg::Camera const                      &get_camera() const;
+	std::vector<MeshType *> const              &get_meshes() const;
+	RasterizationStateType const               &get_rasterization_state() const;
+	vkb::scene_graph::Scene<bindingType> const &get_scene() const;
 
 	/**
 	 * @brief Sorts objects based on distance from camera and classifies them
@@ -168,7 +166,7 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	vkb::rendering::HPPRasterizationState                base_rasterization_state;
 	vkb::sg::Camera                                     &camera;
 	std::vector<vkb::scene_graph::components::HPPMesh *> meshes;
-	vkb::scene_graph::HPPScene                          *scene;
+	vkb::scene_graph::SceneCpp                          *scene;
 	uint32_t                                             thread_index = 0;
 };
 
@@ -181,7 +179,7 @@ template <vkb::BindingType bindingType>
 inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
                                                      ShaderSourceType                          &&vertex_source,
                                                      ShaderSourceType                          &&fragment_source,
-                                                     SceneType                                  &scene_,
+                                                     vkb::scene_graph::Scene<bindingType>       &scene_,
                                                      sg::Camera                                 &camera) :
     Subpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source)}, camera{camera}
 {
@@ -191,7 +189,7 @@ inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderConte
 	}
 	else
 	{
-		scene = reinterpret_cast<vkb::scene_graph::HPPScene *>(&scene_);
+		scene = reinterpret_cast<vkb::scene_graph::SceneCpp *>(&scene_);
 	}
 	meshes = scene->get_components<vkb::scene_graph::components::HPPMesh>();
 }
@@ -369,7 +367,7 @@ inline typename GeometrySubpass<bindingType>::RasterizationStateType const &Geom
 }
 
 template <vkb::BindingType bindingType>
-inline typename GeometrySubpass<bindingType>::SceneType const &GeometrySubpass<bindingType>::get_scene() const
+inline vkb::scene_graph::Scene<bindingType> const &GeometrySubpass<bindingType>::get_scene() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -377,7 +375,7 @@ inline typename GeometrySubpass<bindingType>::SceneType const &GeometrySubpass<b
 	}
 	else
 	{
-		return *reinterpret_cast<vkb::sg::Scene const *>(scene);
+		return *reinterpret_cast<vkb::scene_graph::SceneC const *>(scene);
 	}
 }
 

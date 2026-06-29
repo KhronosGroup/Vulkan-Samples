@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 #pragma once
 
 #include "buffer_pool.h"
-#include "rendering/subpass.h"
-
 #include "common/glm_common.h"
+#include "rendering/subpass.h"
+#include "scene_graph/scene.h"
 
 // This value is per type of light that we feed into the shader
 #define MAX_DEFERRED_LIGHT_COUNT 48
@@ -66,7 +66,7 @@ class LightingSubpass : public vkb::rendering::SubpassC
 {
   public:
 	LightingSubpass(
-	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);
+	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, vkb::scene_graph::SceneC &scene);
 
 	virtual void prepare() override;
 
@@ -75,7 +75,7 @@ class LightingSubpass : public vkb::rendering::SubpassC
   private:
 	sg::Camera &camera;
 
-	sg::Scene &scene;
+	vkb::scene_graph::SceneC &scene;
 
 	ShaderVariant lighting_variant;
 };

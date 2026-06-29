@@ -49,6 +49,7 @@ set(FRAMEWORK_FILES
     hpp_resource_record.h
     hpp_resource_replay.h
     hpp_semaphore_pool.h
+    structure_chain_builder.h
     # Source Files
     drawer.cpp
     spirv_reflection.cpp
@@ -131,10 +132,8 @@ set(SCENE_GRAPH_FILES
     scene_graph/node.h
     scene_graph/scene.h
     scene_graph/script.h
-    scene_graph/hpp_scene.h
     # Source Files
     scene_graph/component.cpp
-    scene_graph/scene.cpp
     scene_graph/script.cpp)
 
 set(SCENE_GRAPH_COMPONENT_FILES
@@ -195,10 +194,8 @@ set(STATS_FILES
     stats/stats_provider.h
     stats/frame_time_stats_provider.h
     stats/vulkan_stats_provider.h
-    stats/hpp_stats.h
 
     # Source Files
-    stats/stats.cpp
     stats/stats_provider.cpp
     stats/frame_time_stats_provider.cpp
     stats/vulkan_stats_provider.cpp)

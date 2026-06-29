@@ -26,7 +26,10 @@
 #include "platform/application.h"
 #include "platform/window.h"
 #include "rendering/render_pipeline.h"
-#include "stats/hpp_stats.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/animation.h"
+#include "stats/stats.h"
 
 #if defined(PLATFORM__MACOS)
 #	include <TargetConditionals.h>
@@ -116,11 +119,6 @@ template <vkb::BindingType bindingType>
 class RenderContext;
 }        // namespace rendering
 
-namespace stats
-{
-class HPPStats;
-}
-
 template <vkb::BindingType bindingType>
 class VulkanSample : public vkb::Application
 {
@@ -133,13 +131,14 @@ class VulkanSample : public vkb::Application
 	VulkanSample() = default;
 	~VulkanSample() override;
 
-	using SceneType = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::HPPScene, vkb::sg::Scene>::type;
-	using StatsType = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
+	template <typename AnchorStructType>
+	using StructureChainBuilderType = typename std::conditional<bindingType == BindingType::Cpp, vkb::StructureChainBuilder<BindingType::Cpp, AnchorStructType>, vkb::StructureChainBuilder<BindingType::C, AnchorStructType>>::type;
 
 	using Extent2DType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
 	using DebugReportCallbackCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugReportCallbackCreateInfoEXT, VkDebugReportCallbackCreateInfoEXT>::type;
 	using DebugUtilsMessengerCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugUtilsMessengerCreateInfoEXT, VkDebugUtilsMessengerCreateInfoEXT>::type;
 	using InstanceCreateFlagsType           = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
+	using InstanceCreateInfoType            = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateInfo, VkInstanceCreateInfo>::type;
 	using LayerSettingType                  = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
 	using PhysicalDeviceType                = typename std::conditional<bindingType == BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
 	using SurfaceFormatType                 = typename std::conditional<bindingType == BindingType::Cpp, vk::SurfaceFormatKHR, VkSurfaceFormatKHR>::type;
@@ -198,11 +197,11 @@ class VulkanSample : public vkb::Application
 	 */
 	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
+	virtual void                                     extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &create_info) const;
 	virtual uint32_t                                 get_api_version() const;
 	virtual DebugReportCallbackCreateInfoType const *get_debug_report_callback_create_info() const;
 	virtual DebugUtilsMessengerCreateInfoType const *get_debug_utils_messenger_create_info() const;
 	virtual InstanceCreateFlagsType                  get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
-	virtual void const                              *get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) const;
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -222,7 +221,7 @@ class VulkanSample : public vkb::Application
 
 	virtual void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const;
 	virtual void request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const;
-	virtual void request_layer_settings(std::vector<LayerSettingType> &requested_layer_settings) const;
+	virtual void request_layer_settings(std::vector<LayerSettingType> &requested_layer_settings, StructureChainBuilderType<InstanceCreateInfoType> &scb) const;
 	virtual void request_validation_feature_enables(std::vector<ValidationFeatureEnableType> &requested_validation_feature_enables) const;
 
 	/**
@@ -247,7 +246,7 @@ class VulkanSample : public vkb::Application
 	 */
 	void add_device_extension(const char *extension, bool optional = false);
 
-	void create_gui(const Window &window, StatsType const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
+	void create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief A helper to create a render context
@@ -262,8 +261,8 @@ class VulkanSample : public vkb::Application
 	vkb::core::Instance<bindingType> const            &get_instance() const;
 	vkb::rendering::RenderPipeline<bindingType>       &get_render_pipeline();
 	vkb::rendering::RenderPipeline<bindingType> const &get_render_pipeline() const;
-	SceneType                                         &get_scene();
-	StatsType                                         &get_stats();
+	vkb::scene_graph::Scene<bindingType>              &get_scene();
+	vkb::stats::Stats<bindingType>                    &get_stats();
 	SurfaceType                                        get_surface() const;
 	std::vector<SurfaceFormatType>                    &get_surface_priority_list();
 	std::vector<SurfaceFormatType> const              &get_surface_priority_list() const;
@@ -336,8 +335,9 @@ class VulkanSample : public vkb::Application
 	size_t      determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const;
 	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
 	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
+	void        extend_instance_create_info_impl(vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &create_info) const;
 	void        render_impl(vkb::core::CommandBufferCpp &command_buffer);
-	void        request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings) const;
+	void        request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &scb) const;
 	static void set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent);
 
 	/**
@@ -382,11 +382,11 @@ class VulkanSample : public vkb::Application
 	/**
 	 * @brief Holds all scene information
 	 */
-	std::unique_ptr<vkb::scene_graph::HPPScene> scene;
+	std::unique_ptr<vkb::scene_graph::SceneCpp> scene;
 
 	std::unique_ptr<vkb::GuiCpp> gui;
 
-	std::unique_ptr<vkb::stats::HPPStats> stats;
+	std::unique_ptr<vkb::stats::StatsCpp> stats;
 
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 
@@ -494,7 +494,6 @@ inline std::unique_ptr<vkb::core::Instance<bindingType>> VulkanSample<bindingTyp
 	    get_api_version(),
 	    requested_layers,
 	    requested_extensions,
-	    [this](std::vector<std::string> const &enabled_layers, std::vector<std::string> const &enabled_extensions) { return get_instance_create_info_extensions(enabled_layers, enabled_extensions); },
 	    [this](std::vector<std::string> const &enabled_extensions) {
 		    if constexpr (bindingType == BindingType::Cpp)
 		    {
@@ -504,7 +503,8 @@ inline std::unique_ptr<vkb::core::Instance<bindingType>> VulkanSample<bindingTyp
 		    {
 			    return static_cast<VkInstanceCreateFlags>(get_instance_create_flags(enabled_extensions));
 		    }
-	    });
+	    },
+	    [this](vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &scb) { return extend_instance_create_info(scb); });
 }
 
 template <vkb::BindingType bindingType>
@@ -703,19 +703,27 @@ inline void VulkanSample<bindingType>::finish()
 }
 
 template <vkb::BindingType bindingType>
-inline uint32_t VulkanSample<bindingType>::get_api_version() const
+inline void VulkanSample<bindingType>::extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &scb) const
 {
-	return VK_API_VERSION_1_1;
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		extend_instance_create_info_impl(scb);
+	}
+	else
+	{
+		extend_instance_create_info_impl(reinterpret_cast<vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &>(scb));
+	}
 }
 
 inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_layer_setting,
-                                 std::vector<std::string> const   &enabled_layers,
+                                 uint32_t                          enabled_layers_count,
+                                 char const *const                *enabled_layers,
                                  std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
 {
 	// We are checking if the layer is available.
 	// Vulkan does not provide a reflection API for layer settings. Layer settings are described in each layer JSON manifest.
-	bool is_available = std::ranges::any_of(
-	    enabled_layers, [&requested_layer_setting](auto const &enabled_layer) { return enabled_layer == requested_layer_setting.pLayerName; });
+	bool is_available = std::any_of(
+	    enabled_layers, enabled_layers + enabled_layers_count, [&requested_layer_setting](auto const &enabled_layer) { return strcmp(enabled_layer, requested_layer_setting.pLayerName) == 0; });
 
 #if defined(PLATFORM__MACOS)
 	// On Apple the MoltenVK driver configuration layer is implicitly enabled and available, and cannot be explicitly added or checked via enabled_layers.
@@ -755,25 +763,97 @@ inline bool enable_layer_setting(vk::LayerSettingEXT const        &requested_lay
 }
 
 inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_layer_setting,
-                                 std::vector<std::string> const   &enabled_layers,
+                                 uint32_t                          enabled_layers_count,
+                                 char const *const                *enabled_layers,
                                  std::vector<vk::LayerSettingEXT> &enabled_layer_settings)
 {
-	return enable_layer_setting(reinterpret_cast<vk::LayerSettingEXT const &>(requested_layer_setting), enabled_layers, enabled_layer_settings);
+	return enable_layer_setting(
+	    reinterpret_cast<vk::LayerSettingEXT const &>(requested_layer_setting), enabled_layers_count, enabled_layers, enabled_layer_settings);
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::extend_instance_create_info_impl(vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &scb) const
+{
+	vk::InstanceCreateInfo const *create_info = scb.get_struct<vk::InstanceCreateInfo>();
+	assert(create_info);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+		                                                                       .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+		                                                                       .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
+		scb.add_struct(debug_utils_messenger_create_info);
+	}
+	else if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+	{
+		vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+		                                                                       .pfnCallback = vkb::core::debug_callback};
+		scb.add_struct(debug_report_callback_create_info);
+	}
+#endif
+
+	if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME))
+	{
+		std::vector<vk::LayerSettingEXT> requested_layer_settings;
+		if constexpr (bindingType == vkb::BindingType::Cpp)
+		{
+			request_layer_settings(requested_layer_settings, scb);
+		}
+		else
+		{
+			request_layer_settings(reinterpret_cast<std::vector<VkLayerSettingEXT> &>(requested_layer_settings),
+			                       reinterpret_cast<vkb::StructureChainBuilderC<VkInstanceCreateInfo> &>(scb));
+		}
+
+		std::vector<vk::LayerSettingEXT> enabled_layer_settings;
+		for (auto const &layer_setting : requested_layer_settings)
+		{
+			enable_layer_setting(layer_setting, create_info->enabledLayerCount, create_info->ppEnabledLayerNames, enabled_layer_settings);
+		}
+
+		if (!enabled_layer_settings.empty())
+		{
+			// If layer settings are defined, then activate the sample's required layer settings during instance creation
+			vk::LayerSettingsCreateInfoEXT layer_settings_create_info_ext{.settingCount = static_cast<uint32_t>(enabled_layer_settings.size()),
+			                                                              .pSettings    = scb.add_chain_data(enabled_layer_settings).data()};
+			scb.add_struct(layer_settings_create_info_ext);
+		}
+	}
+	else if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME))
+	{
+		std::vector<ValidationFeatureEnableType> requested_validation_feature_enables;
+		request_validation_feature_enables(requested_validation_feature_enables);
+
+		if (!requested_validation_feature_enables.empty())
+		{
+			vk::ValidationFeaturesEXT validation_features_ext{
+			    .enabledValidationFeatureCount = static_cast<uint32_t>(requested_validation_feature_enables.size()),
+			    .pEnabledValidationFeatures    = reinterpret_cast<vk::ValidationFeatureEnableEXT const *>(scb.add_chain_data(requested_validation_feature_enables).data())};
+			scb.add_struct(validation_features_ext);
+		};
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline uint32_t VulkanSample<bindingType>::get_api_version() const
+{
+	return VK_API_VERSION_1_1;
 }
 
 template <vkb::BindingType bindingType>
 inline typename VulkanSample<bindingType>::DebugReportCallbackCreateInfoType const *VulkanSample<bindingType>::get_debug_report_callback_create_info() const
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_createInfo{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-	                                                                             .pfnCallback = vkb::core::debug_callback};
+	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	                                                                              .pfnCallback = vkb::core::debug_callback};
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return &debug_report_callback_createInfo;
+		return &debug_report_callback_create_info;
 	}
 	else
 	{
-		return reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&debug_report_callback_createInfo);
+		return reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&debug_report_callback_create_info);
 	}
 #else
 	return nullptr;
@@ -819,61 +899,6 @@ inline typename VulkanSample<bindingType>::InstanceCreateFlagsType VulkanSample<
 	{
 		return static_cast<VkInstanceCreateFlags>(flags);
 	}
-}
-
-template <vkb::BindingType bindingType>
-inline void const *VulkanSample<bindingType>::get_instance_create_info_extensions(std::vector<std::string> const &enabled_layers,
-                                                                                  std::vector<std::string> const &enabled_extensions) const
-{
-	void const *pNext = nullptr;
-
-	if (contains(enabled_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-	{
-		pNext = get_debug_utils_messenger_create_info();
-	}
-	else if (contains(enabled_extensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
-	{
-		pNext = get_debug_report_callback_create_info();
-	}
-
-	if (contains(enabled_extensions, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME))
-	{
-		std::vector<LayerSettingType> requested_layer_settings;
-		request_layer_settings(requested_layer_settings);
-
-		static std::vector<vk::LayerSettingEXT> enabled_layer_settings;
-		// since enabled_layer_settings is static, clear on every get_instance_create_info_extensions() call to support batch mode
-		enabled_layer_settings.clear();
-		for (auto const &layer_setting : requested_layer_settings)
-		{
-			enable_layer_setting(layer_setting, enabled_layers, enabled_layer_settings);
-		}
-
-		if (!enabled_layer_settings.empty())
-		{
-			// If layer settings are defined, then activate the sample's required layer settings during instance creation
-			static vk::LayerSettingsCreateInfoEXT layer_settings_create_info_ext{.pNext        = pNext,
-			                                                                     .settingCount = static_cast<uint32_t>(enabled_layer_settings.size()),
-			                                                                     .pSettings    = enabled_layer_settings.data()};
-			pNext = &layer_settings_create_info_ext;
-		}
-	}
-	else if (contains(enabled_extensions, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME))
-	{
-		static std::vector<ValidationFeatureEnableType> requested_validation_feature_enables;
-		request_validation_feature_enables(requested_validation_feature_enables);
-
-		if (!requested_validation_feature_enables.empty())
-		{
-			static vk::ValidationFeaturesEXT validation_features_ext{
-			    .pNext                         = pNext,
-			    .enabledValidationFeatureCount = static_cast<uint32_t>(requested_validation_feature_enables.size()),
-			    .pEnabledValidationFeatures    = reinterpret_cast<vk::ValidationFeatureEnableEXT const *>(requested_validation_feature_enables.data())};
-			pNext = &validation_features_ext;
-		}
-	}
-
-	return pNext;
 }
 
 template <vkb::BindingType bindingType>
@@ -1049,7 +1074,7 @@ inline vkb::rendering::RenderPipeline<bindingType> &VulkanSample<bindingType>::g
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::SceneType &VulkanSample<bindingType>::get_scene()
+inline vkb::scene_graph::Scene<bindingType> &VulkanSample<bindingType>::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	if constexpr (bindingType == BindingType::Cpp)
@@ -1058,12 +1083,12 @@ inline typename VulkanSample<bindingType>::SceneType &VulkanSample<bindingType>:
 	}
 	else
 	{
-		return reinterpret_cast<vkb::sg::Scene &>(*scene);
+		return reinterpret_cast<vkb::scene_graph::SceneC &>(*scene);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::StatsType &VulkanSample<bindingType>::get_stats()
+inline vkb::stats::Stats<bindingType> &VulkanSample<bindingType>::get_stats()
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1071,7 +1096,7 @@ inline typename VulkanSample<bindingType>::StatsType &VulkanSample<bindingType>:
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Stats &>(*stats);
+		return reinterpret_cast<vkb::stats::StatsC &>(*stats);
 	}
 }
 
@@ -1341,7 +1366,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	create_render_context();
 	prepare_render_context();
 
-	stats = std::make_unique<vkb::stats::HPPStats>(*render_context);
+	stats = std::make_unique<vkb::stats::StatsCpp>(*render_context);
 
 	// Start the sample in the first GUI configuration
 	configuration.reset();
@@ -1350,7 +1375,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsType const *stats, const float font_size, bool explicit_update)
+inline void VulkanSample<bindingType>::create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats, const float font_size, bool explicit_update)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1360,7 +1385,7 @@ inline void VulkanSample<bindingType>::create_gui(const Window &window, StatsTyp
 	{
 		gui = std::make_unique<vkb::GuiCpp>(reinterpret_cast<vkb::rendering::RenderContextCpp &>(get_render_context()),
 		                                    window,
-		                                    reinterpret_cast<vkb::stats::HPPStats const *>(stats),
+		                                    reinterpret_cast<vkb::stats::StatsCpp const *>(stats),
 		                                    font_size,
 		                                    explicit_update);
 	}
@@ -1439,56 +1464,53 @@ inline void VulkanSample<bindingType>::request_instance_extensions(std::unordere
 template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#if defined(VKB_VALIDATION_LAYERS)
 	requested_layers["VK_LAYER_KHRONOS_validation"] = vkb::RequestMode::Required;
+#elif defined(VKB_DEBUG)
+	// VK_LAYER_KHRONOS_validation must be optional for debug builds in case layer not available (e.g. running with no SDK installed or on iOS Simulator)
+	requested_layers["VK_LAYER_KHRONOS_validation"] = vkb::RequestMode::Optional;
 #endif
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::request_layer_settings(std::vector<LayerSettingType> &requested_layer_settings) const
+inline void VulkanSample<bindingType>::request_layer_settings(std::vector<LayerSettingType> &requested_layer_settings, StructureChainBuilderType<InstanceCreateInfoType> &scb) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		request_layer_settings_impl(requested_layer_settings);
+		request_layer_settings_impl(requested_layer_settings, scb);
 	}
 	else
 	{
-		request_layer_settings_impl(reinterpret_cast<std::vector<vk::LayerSettingEXT> &>(requested_layer_settings));
+		request_layer_settings_impl(reinterpret_cast<std::vector<vk::LayerSettingEXT> &>(requested_layer_settings), reinterpret_cast<vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &>(scb));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings) const
+inline void VulkanSample<bindingType>::request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &scb) const
 {
 #if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
-	static const vk::Bool32 setting_validate_gpuav = true;
-	requested_layer_settings.push_back({"VK_LAYER_KHRONOS_validation", "gpuav_enable", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_gpuav});
+	requested_layer_settings.push_back({"VK_LAYER_KHRONOS_validation", "gpuav_enable", vk::LayerSettingTypeEXT::eBool32, 1, &scb.add_chain_data<vk::Bool32>(true)});
 #endif
 
 #if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
-	static const vk::Bool32 setting_validate_best_practices        = true;
-	static const vk::Bool32 setting_validate_best_practices_amd    = true;
-	static const vk::Bool32 setting_validate_best_practices_arm    = true;
-	static const vk::Bool32 setting_validate_best_practices_img    = true;
-	static const vk::Bool32 setting_validate_best_practices_nvidia = true;
+	std::array<vk::Bool32, 5> &best_practices_values = scb.add_chain_data<std::array<vk::Bool32, 5>>({true, true, true, true, true});
 	requested_layer_settings.push_back(
-	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices});
+	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices", vk::LayerSettingTypeEXT::eBool32, 1, &best_practices_values[0]});
 	requested_layer_settings.push_back(
-	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_amd", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_amd});
+	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_amd", vk::LayerSettingTypeEXT::eBool32, 1, &best_practices_values[1]});
 	requested_layer_settings.push_back(
-	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_arm", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_arm});
+	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_arm", vk::LayerSettingTypeEXT::eBool32, 1, &best_practices_values[2]});
 	requested_layer_settings.push_back(
-	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_img", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_img});
+	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_img", vk::LayerSettingTypeEXT::eBool32, 1, &best_practices_values[3]});
 	requested_layer_settings.push_back(
-	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_nvidia", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_best_practices_nvidia});
+	    {"VK_LAYER_KHRONOS_validation", "validate_best_practices_nvidia", vk::LayerSettingTypeEXT::eBool32, 1, &best_practices_values[4]});
 #endif
 
 #if defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
-	static const vk::Bool32 setting_validate_sync            = true;
-	static const vk::Bool32 setting_validate_sync_heuristics = true;
-	requested_layer_settings.push_back({"VK_LAYER_KHRONOS_validation", "validate_sync", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_sync});
+	std::array<vk::Bool32, 2> &synchronization_values = scb.add_chain_data<std::array<vk::Bool32, 2>>({true, true});
+	requested_layer_settings.push_back({"VK_LAYER_KHRONOS_validation", "validate_sync", vk::LayerSettingTypeEXT::eBool32, 1, &synchronization_values[0]});
 	requested_layer_settings.push_back(
-	    {"VK_LAYER_KHRONOS_validation", "syncval_shader_accesses_heuristic", vk::LayerSettingTypeEXT::eBool32, 1, &setting_validate_sync_heuristics});
+	    {"VK_LAYER_KHRONOS_validation", "syncval_shader_accesses_heuristic", vk::LayerSettingTypeEXT::eBool32, 1, &synchronization_values[1]});
 #endif
 }
 

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "structure_chain_builder.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
@@ -39,11 +40,6 @@ typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCrea
 		return 0;
 	}
 }
-
-void const *get_default_pNext(std::vector<std::string> const &, std::vector<std::string> const &)
-{
-	return nullptr;
-}
 }        // namespace
 
 /**
@@ -57,6 +53,7 @@ class Instance
 {
   public:
 	using InstanceCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
+	using InstanceCreateInfoType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::InstanceCreateInfo, VkInstanceCreateInfo>::type;
 	using InstanceType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Instance, VkInstance>::type;
 
   public:
@@ -66,17 +63,17 @@ class Instance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @param requested_layers The requested layers to be enabled
 	 * @param requested_extensions The requested extensions to be enabled
-	 * @param get_pNext A function pointer returning the pNext pointer for the InstanceCreateInfo
 	 * @param get_create_flags A function pointer returning the InstanceCreateFlags for the InstanceCreateInfo
+	 * @param extend_instance_create_info A function pointer to extend the InstanceCreateInfo with additional structures in the pNext chain
 	 * @throws runtime_error if a required layer or extension is not available
 	 */
 	Instance(
-	    std::string const                                                                                     &application_name,
-	    uint32_t                                                                                               api_version          = VK_API_VERSION_1_1,
-	    std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_layers     = {},
-	    std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_extensions = {},
-	    std::function<void const *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext            = get_default_pNext,
-	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const                        &get_create_flags     = get_default_create_flags);
+	    std::string const                                                                            &application_name,
+	    uint32_t                                                                                      api_version                 = VK_API_VERSION_1_1,
+	    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_layers            = {},
+	    std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_extensions        = {},
+	    std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const               &get_create_flags            = get_default_create_flags,
+	    std::function<void(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &)> const &extend_instance_create_info = [](vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> const &) {});
 
 	Instance(vk::Instance instance, std::vector<char const *> const &externally_enabled_extensions = {}, bool needsToInitializeDispatcher = false);
 	Instance(VkInstance instance, std::vector<char const *> const &externally_enabled_extensions = {});
@@ -158,12 +155,12 @@ inline bool
 }        // namespace
 
 template <vkb::BindingType bindingType>
-inline Instance<bindingType>::Instance(std::string const                                                                                     &application_name,
-                                       uint32_t                                                                                               api_version,
-                                       std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_layers,
-                                       std::unordered_map<std::string, vkb::RequestMode> const                                               &requested_extensions,
-                                       std::function<void const *(std::vector<std::string> const &, std::vector<std::string> const &)> const &get_pNext,
-                                       std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const                        &get_create_flags)
+inline Instance<bindingType>::Instance(std::string const                                                                            &application_name,
+                                       uint32_t                                                                                      api_version,
+                                       std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_layers,
+                                       std::unordered_map<std::string, vkb::RequestMode> const                                      &requested_extensions,
+                                       std::function<InstanceCreateFlagsType(std::vector<std::string> const &)> const               &get_create_flags,
+                                       std::function<void(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &)> const &extend_instance_create_info)
 {
 	// check API version
 	LOGI("Requesting Vulkan API version {}.{}", VK_VERSION_MAJOR(api_version), VK_VERSION_MINOR(api_version));
@@ -243,16 +240,26 @@ inline Instance<bindingType>::Instance(std::string const                        
 
 	vk::ApplicationInfo app_info{.pApplicationName = application_name.c_str(), .pEngineName = "Vulkan Samples", .apiVersion = api_version};
 
-	vk::InstanceCreateInfo create_info{.pNext                   = get_pNext(enabled_layers, enabled_extensions),
-	                                   .flags                   = static_cast<vk::InstanceCreateFlags>(get_create_flags(enabled_extensions)),
+	vk::InstanceCreateInfo create_info{.flags                   = static_cast<vk::InstanceCreateFlags>(get_create_flags(enabled_extensions)),
 	                                   .pApplicationInfo        = &app_info,
 	                                   .enabledLayerCount       = static_cast<uint32_t>(enabled_layers_cstr.size()),
 	                                   .ppEnabledLayerNames     = enabled_layers_cstr.data(),
 	                                   .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions_cstr.size()),
 	                                   .ppEnabledExtensionNames = enabled_extensions_cstr.data()};
 
+	vkb::StructureChainBuilder<vkb::BindingType::Cpp, vk::InstanceCreateInfo> scb;
+	scb.set_anchor_struct(create_info);
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		extend_instance_create_info(scb);
+	}
+	else
+	{
+		extend_instance_create_info(reinterpret_cast<vkb::StructureChainBuilder<vkb::BindingType::C, VkInstanceCreateInfo> &>(scb));
+	}
+
 	// Create the Vulkan instance
-	handle = vk::createInstance(create_info);
+	handle = vk::createInstance(*scb.get_struct<vk::InstanceCreateInfo>());
 
 	// initialize the Vulkan-Hpp default dispatcher on the instance
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(handle);

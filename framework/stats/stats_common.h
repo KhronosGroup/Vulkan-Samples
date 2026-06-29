@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
- * Copyright (c) 2020-2022, Broadcom Inc.
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@
 namespace vkb
 {
 /**
- * @brief Handles of stats to be optionally enabled in @ref vkb::Stats
+ * @brief Handles of stats to be optionally enabled in @ref vkb::stats::Stats
  */
 enum class StatIndex
 {
@@ -123,7 +123,14 @@ class StatGraphData
 	              const std::string &format,
 	              float              scale_factor  = 1.0f,
 	              bool               has_fixed_max = false,
-	              float              max_value     = 0.0f);
+	              float              max_value     = 0.0f) :
+	    name(name),
+	    format{format},
+	    scale_factor{scale_factor},
+	    has_fixed_max{has_fixed_max},
+	    max_value{max_value}
+	{
+	}
 
 	StatGraphData() = default;
 

@@ -43,6 +43,8 @@ CalibratedTimestamps::CalibratedTimestamps() :
 {
 	title = "Calibrated Timestamps";
 
+	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
+
 	// NOTICE THAT: calibrated timestamps is a DEVICE extension!
 	add_device_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 }
@@ -90,6 +92,8 @@ void CalibratedTimestamps::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
+
+	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 }
 
 void CalibratedTimestamps::build_command_buffers()
@@ -151,8 +155,38 @@ void CalibratedTimestamps::build_command_buffers()
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
+		// Insert a pipeline barrier to ensure that the offscreen color attachment writes are finished before sampling from it in the filter and composition passes
+		VkImageMemoryBarrier2KHR image_memory_barrier = {
+		    .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR,
+		    .pNext               = nullptr,
+		    .srcStageMask        = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+		    .srcAccessMask       = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR,
+		    .dstStageMask        = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR,
+		    .dstAccessMask       = VK_ACCESS_2_SHADER_READ_BIT_KHR,
+		    .oldLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		    .newLayout           = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+		    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		    .image               = offscreen.color[0].image,
+		    .subresourceRange    = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1}};
+		VkDependencyInfoKHR dependency_info = {
+		    .sType                    = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR,
+		    .pNext                    = nullptr,
+		    .dependencyFlags          = VK_DEPENDENCY_BY_REGION_BIT,
+		    .memoryBarrierCount       = 0,
+		    .pMemoryBarriers          = nullptr,
+		    .bufferMemoryBarrierCount = 0,
+		    .pBufferMemoryBarriers    = nullptr,
+		    .imageMemoryBarrierCount  = 1,
+		    .pImageMemoryBarriers     = &image_memory_barrier};
+		vkCmdPipelineBarrier2KHR(draw_cmd_buffers[i], &dependency_info);
+
 		if (bloom)
 		{
+			// Insert a pipeline barrier to ensure that the offscreen color attachment writes are finished before sampling from it in the filter pass
+			image_memory_barrier.image = offscreen.color[1].image;
+			vkCmdPipelineBarrier2KHR(draw_cmd_buffers[i], &dependency_info);
+
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &filter_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &filter_viewport);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &filter_scissor);
@@ -160,6 +194,10 @@ void CalibratedTimestamps::build_command_buffers()
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
+
+			// Insert a pipeline barrier to ensure that the filter pass color attachment writes are finished before sampling from it in the composition pass
+			image_memory_barrier.image = filter_pass.color[0].image;
+			vkCmdPipelineBarrier2KHR(draw_cmd_buffers[i], &dependency_info);
 		}
 
 		{
@@ -305,16 +343,16 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
 		dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-		dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 		dependencies[1].srcSubpass      = 0;
 		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 

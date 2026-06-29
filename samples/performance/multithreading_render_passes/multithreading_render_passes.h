@@ -64,7 +64,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 		ShadowSubpass(vkb::rendering::RenderContextC &render_context,
 		              vkb::ShaderSource             &&vertex_source,
 		              vkb::ShaderSource             &&fragment_source,
-		              vkb::sg::Scene                 &scene,
+		              vkb::scene_graph::SceneC       &scene,
 		              vkb::sg::Camera                &camera);
 
 	  protected:
@@ -86,7 +86,7 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 		MainSubpass(vkb::rendering::RenderContextC                              &render_context,
 		            vkb::ShaderSource                                          &&vertex_source,
 		            vkb::ShaderSource                                          &&fragment_source,
-		            vkb::sg::Scene                                              &scene,
+		            vkb::scene_graph::SceneC                                    &scene,
 		            vkb::sg::Camera                                             &camera,
 		            vkb::sg::Camera                                             &shadowmap_camera,
 		            std::vector<std::unique_ptr<vkb::rendering::RenderTargetC>> &shadow_render_targets);

@@ -120,13 +120,11 @@ void ShaderDebugPrintf::request_instance_extensions(std::unordered_map<std::stri
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void ShaderDebugPrintf::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const
+void ShaderDebugPrintf::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
-	// Make this static so layer setting reference remains valid after leaving the current scope
-	static const VkBool32 printf_enable = VK_TRUE;
-
-	ApiVulkanSample::request_layer_settings(requested_layer_settings);
-	requested_layer_settings.push_back({validation_layer_name, "printf_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &printf_enable});
+	ApiVulkanSample::request_layer_settings(requested_layer_settings, scb);
+	requested_layer_settings.push_back(
+	    {validation_layer_name, "printf_enable", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &scb.add_chain_data<VkBool32>(VK_TRUE)});
 }
 
 void ShaderDebugPrintf::request_validation_feature_enables(std::vector<VkValidationFeatureEnableEXT> &requested_layer_settings) const
@@ -458,6 +456,18 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	build_command_buffers();
 	prepared = true;
 	return true;
+}
+
+void ShaderDebugPrintf::extend_instance_create_info(vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+{
+	ApiVulkanSample::extend_instance_create_info(scb);
+
+	// Register a sample specific debug utils callback in addition to the one registered by the base class
+	VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+	                                                                     .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT,
+	                                                                     .messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT,
+	                                                                     .pfnUserCallback = debug_utils_message_callback};
+	scb.add_struct(debug_utils_messenger_create_info);
 }
 
 VkDebugUtilsMessengerCreateInfoEXT const *ShaderDebugPrintf::get_debug_utils_messenger_create_info() const

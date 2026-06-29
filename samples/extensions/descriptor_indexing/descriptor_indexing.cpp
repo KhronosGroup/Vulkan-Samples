@@ -533,13 +533,10 @@ void DescriptorIndexing::request_instance_extensions(std::unordered_map<std::str
 	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void DescriptorIndexing::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings) const
+void DescriptorIndexing::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
 {
-	// Make this static so layer setting reference remains valid after leaving the current scope
-	static const int32_t useMetalArgumentBuffers = 1;
-
-	ApiVulkanSample::request_layer_settings(requested_layer_settings);
-	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &useMetalArgumentBuffers});
+	ApiVulkanSample::request_layer_settings(requested_layer_settings, scb);
+	requested_layer_settings.push_back({"MoltenVK", "MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", VK_LAYER_SETTING_TYPE_INT32_EXT, 1, &scb.add_chain_data<int32_t>(1)});
 }
 #endif
 
