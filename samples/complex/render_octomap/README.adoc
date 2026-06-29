@@ -110,7 +110,7 @@ Key implementation points:
 * **Descriptor pool and layout** — `ImGUIUtil` creates its own `VkDescriptorPool` and `VkDescriptorSetLayout` with a combined image sampler binding at set 0, binding 0. Additional descriptor sets for scene images are allocated from the same pool.
 * **Push constants for scale/translate** — the pipeline uses a small push constant block (`PushConstBlock`) containing a 2D scale and translate, allowing the UI to be mapped to any sub-region of the framebuffer without a separate uniform buffer.
 * **Image rendering in the GUI** — to display a Vulkan render target inside ImGui, a `VkDescriptorSet` is allocated for the target's `VkImageView`, then passed to `ImGui::Image()` as an `ImTextureID`. This is the standard pattern for embedding Vulkan render targets in ImGui and is demonstrated here as a reusable utility.
-* **Font management** — the wrapper loads custom Montserrat fonts (ExtraBold, Bold, Regular) at multiple sizes and uploads them as a single font atlas texture, demonstrating how to use custom fonts with a Vulkan ImGui backend.
+* **Font management** — the wrapper uploads the default ImGui font atlas as a single texture, demonstrating the standard Vulkan font-upload pattern. Custom fonts can be added by calling `ImGui::GetIO().Fonts->AddFontFromFileTTF()` before `initResources()`.
 
 [source,cpp]
 ----

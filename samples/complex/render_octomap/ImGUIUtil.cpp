@@ -582,7 +582,7 @@ bool ImGUIUtil::newFrame(bool updateFrameGraph)
 		                 ImGuiWindowFlags_NoSavedSettings);
 
 		auto sidebar_button = [&](const char *label, MapView::ViewState state, const char *id) {
-			ImVec4 c = (MapsView.currentState == state) ? buttonActiveColor : buttonColor;
+			ImVec4 c = (map_view.currentState == state) ? buttonActiveColor : buttonColor;
 			ImGui::PushStyleColor(ImGuiCol_Button, c);
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, c);
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, c);
@@ -592,8 +592,8 @@ bool ImGUIUtil::newFrame(bool updateFrameGraph)
 			ImGui::PopStyleColor(3);
 			if (pressed)
 			{
-				MapsView.currentState = state;
-				MapsView.stateChanged = true;
+				map_view.currentState = state;
+				map_view.stateChanged = true;
 			}
 			ImGui::Dummy(ImVec2(0.0f, gap));
 		};
@@ -607,15 +607,15 @@ bool ImGUIUtil::newFrame(bool updateFrameGraph)
 		ImGui::PopStyleVar();
 
 		// Compute 3D viewport rectangle (right side)
-		MapsView.mapPos  = {sidebar_width, padding};
-		MapsView.mapSize = {io.DisplaySize.x - sidebar_width - padding, io.DisplaySize.y - padding * 2.0f};
+		map_view.mapPos  = {sidebar_width, padding};
+		map_view.mapSize = {io.DisplaySize.x - sidebar_width - padding, io.DisplaySize.y - padding * 2.0f};
 
 		// Draw a non-interactive map panel background.
 		// In splats mode suppress the panel entirely — the Vulkan clear (black) is the background
 		// and the panel would overdraw the splats regardless of draw order.
-		bool isSplats = (MapsView.currentState == MapView::ViewState::GLTFSplats);
-		ImGui::SetNextWindowPos(ImVec2(MapsView.mapPos.x, MapsView.mapPos.y), ImGuiCond_Always);
-		ImGui::SetNextWindowSize(ImVec2(MapsView.mapSize.x, MapsView.mapSize.y), ImGuiCond_Always);
+		bool isSplats = (map_view.currentState == MapView::ViewState::GLTFSplats);
+		ImGui::SetNextWindowPos(ImVec2(map_view.mapPos.x, map_view.mapPos.y), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(map_view.mapSize.x, map_view.mapSize.y), ImGuiCond_Always);
 		if (!isSplats)
 		{
 			ImGui::SetNextWindowBgAlpha(0.35f);
@@ -781,7 +781,7 @@ void ImGUIUtil::drawFrame(VkCommandBuffer commandBuffer)
 	}
 }
 
-void ImGUIUtil::TextColorAlign(int align, const ImVec4 &col, const char *text, ...)
+void ImGUIUtil::text_color_align(int align, const ImVec4 &col, const char *text, ...)
 {
 	va_list vaList;
 	va_start(vaList, text);
@@ -828,13 +828,13 @@ void ImGUIUtil::handle_key_event(vkb::KeyCode code, vkb::KeyAction action)
 	io.KeyAlt   = io.KeysDown[static_cast<int>(vkb::KeyCode::LeftAlt)] || io.KeysDown[static_cast<int>(vkb::KeyCode::RightAlt)];
 }
 
-bool ImGUIUtil::GetWantKeyCapture()
+bool ImGUIUtil::get_want_key_capture()
 {
 	ImGuiIO &io = ImGui::GetIO();
 	return io.WantCaptureKeyboard;
 }
 
-void ImGUIUtil::charPressed(uint32_t key)
+void ImGUIUtil::char_pressed(uint32_t key)
 {
 	ImGuiIO &io = ImGui::GetIO();
 	io.AddInputCharacter(key);

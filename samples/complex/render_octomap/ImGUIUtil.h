@@ -50,21 +50,10 @@ class ImGUIUtil
 	VkPhysicalDeviceDriverProperties      driverProperties = {};
 	ApiVulkanSample                      *base;
 	ImGuiStyle                            vulkanStyle;
-	ImFont                               *montserratExtraBoldNormal;
-	ImFont                               *montserratExtraBoldSmall;
-	ImFont                               *montserratBoldNormal;
-	ImFont                               *montserratRegularNormal;
-	int                                   selectedStyle = 0;
-	float                                 windowWidth, windowHeight;
 	bool                                  needsUpdateBuffers = false;
 
   public:
-	enum ViewState
-	{
-		LIVEMAPS_ACTIVE,
-	} state;
-
-	MapView MapsView;
+	MapView map_view;
 
 	// UI params are set via push constants
 	struct PushConstBlock
@@ -79,7 +68,7 @@ class ImGUIUtil
 	// Initialize styles, keys, etc.
 	void        init(float width, float height);
 	void        setStyle(uint32_t index);
-	static void TextColorAlign(int align, const ImVec4 &col, const char *text, ...);
+	static void text_color_align(int align, const ImVec4 &col, const char *text, ...);
 
 	// Initialize all Vulkan resources used by the ui
 	void initResources(VkRenderPass renderPass, VkQueue copyQueue);
@@ -97,9 +86,9 @@ class ImGUIUtil
 	// Framework input path (platform-agnostic, incl. Direct-to-Display)
 	static void handle_key_event(vkb::KeyCode code, vkb::KeyAction action);
 
-	static bool GetWantKeyCapture();
+	static bool get_want_key_capture();
 
-	static void charPressed(uint32_t key);
+	static void char_pressed(uint32_t key);
 };
 
 #endif        // IMGUI_UTIL_H

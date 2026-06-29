@@ -33,8 +33,7 @@
 // KHR_gaussian_splatting extension name
 #define GLTF_KHR_GAUSSIAN_SPLATTING_EXTENSION "KHR_gaussian_splatting"
 
-render_octomap::render_octomap() :
-    vertices(), indexCount(), pipelineCache(VK_NULL_HANDLE), pipelineLayout(VK_NULL_HANDLE), pipeline(VK_NULL_HANDLE), descriptorPool(VK_NULL_HANDLE), descriptorSetLayout(VK_NULL_HANDLE), descriptorSet(VK_NULL_HANDLE), gui(nullptr), mMaxTreeDepth(16), m_zMin(), m_zMax(), lastMapBuildSize()
+render_octomap::render_octomap()
 {
 	title = "Octomap Viewer";
 	map   = new octomap::OcTree(0.1f);
@@ -60,6 +59,39 @@ render_octomap::~render_octomap()
 	delete map;
 	map = nullptr;
 }
+// Standard HSV→RGB conversion (h in [0,1], s and v in [0,1]).
+static glm::vec3 hsv_to_rgb(float h, float s, float v)
+{
+	h -= std::floor(h);
+	h *= 6.0f;
+	int   i = static_cast<int>(std::floor(h));
+	float f = h - static_cast<float>(i);
+	if (!(i & 1))
+	{
+		f = 1.0f - f;
+	}
+	float m = v * (1.0f - s);
+	float n = v * (1.0f - s * f);
+	switch (i)
+	{
+		case 6:
+		case 0:
+			return {v, n, m};
+		case 1:
+			return {n, v, m};
+		case 2:
+			return {m, v, n};
+		case 3:
+			return {m, n, v};
+		case 4:
+			return {n, m, v};
+		case 5:
+			return {v, m, n};
+		default:
+			return {1.0f, 0.5f, 0.5f};
+	}
+}
+
 void render_octomap::BuildCubes()
 {
 	const octomap::OcTree *tree = map;
@@ -67,7 +99,7 @@ void render_octomap::BuildCubes()
 	{
 		return;
 	}
-	float nextBuildSize = static_cast<float>(lastMapBuildSize) + (static_cast<float>(lastMapBuildSize) * 0.05f);
+	float nextBuildSize = static_cast<float>(lastMapBuildSize) * 1.05f;
 	if (static_cast<float>(tree->size()) < nextBuildSize)
 	{
 		return;
@@ -81,8 +113,8 @@ void render_octomap::BuildCubes()
 	m_zMin = static_cast<float>(minZ);
 	m_zMax = static_cast<float>(maxZ);
 
-	// this is to get just grey; doing full color heightmap for now.
-	// h = std::min(std::max((h-m_zMin)/ (m_zMax - m_zMin), 0.0f), 1.0f) * 0.4f + 0.3f; // h \in [0.3, 0.7]
+	// Hue uses 80% of the [0,1] range so high-altitude voxels don't wrap back to red.
+	const float zRange = m_zMax - m_zMin;
 
 	instances.clear();
 	for (auto it = tree->begin_tree(mMaxTreeDepth), end = tree->end_tree(); it != end; ++it)
@@ -95,78 +127,21 @@ void render_octomap::BuildCubes()
 			instance.pos[0] = coords[0];
 			instance.pos[1] = coords[1];
 			instance.pos[2] = coords[2];
-			float h         = coords[2];
-			if (m_zMin >= m_zMax)
+
+			float h;
+			if (zRange <= 0.0f)
 			{
 				h = 0.5f;
 			}
 			else
 			{
-				h = (1.0f - std::min(std::max((h - m_zMin) / (m_zMax - m_zMin), 0.0f), 1.0f)) * 0.8f;
+				h = (1.0f - std::clamp((coords[2] - m_zMin) / zRange, 0.0f, 1.0f)) * 0.8f;
 			}
 
-			// blend over HSV-values (more colors)
-			float r, g, b;
-			float s = 1.0f;
-			float v = 1.0f;
-
-			h -= floor(h);
-			h *= 6;
-			int   i;
-			float m, n, f;
-
-			i = floor(h);
-			f = h - static_cast<float>(i);
-			if (!(i & 1))
-			{
-				f = 1 - f;        // if "i" is even
-			}
-			m = v * (1 - s);
-			n = v * (1 - s * f);
-
-			switch (i)
-			{
-				case 6:
-				case 0:
-					r = v;
-					g = n;
-					b = m;
-					break;
-				case 1:
-					r = n;
-					g = v;
-					b = m;
-					break;
-				case 2:
-					r = m;
-					g = v;
-					b = n;
-					break;
-				case 3:
-					r = m;
-					g = n;
-					b = v;
-					break;
-				case 4:
-					r = n;
-					g = m;
-					b = v;
-					break;
-				case 5:
-					r = v;
-					g = m;
-					b = n;
-					break;
-				default:
-					r = 1;
-					g = 0.5f;
-					b = 0.5f;
-					break;
-			}
-
-			instance.col[0] = r;
-			instance.col[1] = g;
-			instance.col[2] = b;
+			glm::vec3 rgb   = hsv_to_rgb(h, 1.0f, 1.0f);
+			instance.col[0] = rgb.r;
+			instance.col[1] = rgb.g;
+			instance.col[2] = rgb.b;
 			instance.col[3] = 1.0f;
 			instance.scale  = static_cast<float>(it.getSize());
 			instances.push_back(instance);
@@ -175,17 +150,17 @@ void render_octomap::BuildCubes()
 	// Create buffers
 	if (!instances.empty())
 	{
+		auto staging   = vkb::core::BufferC::create_staging_buffer(get_device(), instances);
 		instanceBuffer = std::make_unique<vkb::core::BufferC>(get_device(),
 		                                                      instances.size() * sizeof(InstanceData),
-		                                                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		                                                      VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-		auto buf = instanceBuffer->map();
-		memcpy(buf, instances.data(), instances.size() * sizeof(InstanceData));
-		instanceBuffer->flush();
-		instanceBuffer->unmap();
+		                                                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		                                                      VMA_MEMORY_USAGE_GPU_ONLY);
+		with_command_buffer([&](VkCommandBuffer cmd) {
+			VkBufferCopy copy{};
+			copy.size = instances.size() * sizeof(InstanceData);
+			vkCmdCopyBuffer(cmd, staging.get_handle(), instanceBuffer->get_handle(), 1, &copy);
+		});
 	}
-	// instance buffer
 
 	lastBuildTime    = std::chrono::system_clock::now();
 	lastMapBuildSize = tree->size();
@@ -217,15 +192,15 @@ void render_octomap::build_command_buffers()
 		// This ensures the opaque `mapDisplay` background doesn't overdraw the 3D content.
 		gui->drawFrame(draw_cmd_buffers[i]);
 
-		VkViewport viewport = vkb::initializers::viewport(gui->MapsView.mapSize.x, gui->MapsView.mapSize.y, 0.0f, 1.0f);
-		viewport.x          = gui->MapsView.mapPos.x;
-		viewport.y          = gui->MapsView.mapPos.y;
+		VkViewport viewport = vkb::initializers::viewport(gui->map_view.mapSize.x, gui->map_view.mapSize.y, 0.0f, 1.0f);
+		viewport.x          = gui->map_view.mapPos.x;
+		viewport.y          = gui->map_view.mapPos.y;
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 		VkRect2D scissorRect;
-		scissorRect.offset.x      = static_cast<int32_t>(gui->MapsView.mapPos.x);
-		scissorRect.offset.y      = static_cast<int32_t>(gui->MapsView.mapPos.y);
-		scissorRect.extent.width  = static_cast<uint32_t>(gui->MapsView.mapSize.x);
-		scissorRect.extent.height = static_cast<uint32_t>(gui->MapsView.mapSize.y);
+		scissorRect.offset.x      = static_cast<int32_t>(gui->map_view.mapPos.x);
+		scissorRect.offset.y      = static_cast<int32_t>(gui->map_view.mapPos.y);
+		scissorRect.extent.width  = static_cast<uint32_t>(gui->map_view.mapSize.x);
+		scissorRect.extent.height = static_cast<uint32_t>(gui->map_view.mapSize.y);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissorRect);
 
 		VkDeviceSize offsets[1] = {0};
@@ -237,7 +212,6 @@ void render_octomap::build_command_buffers()
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], indexBuffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
 		vkCmdDrawIndexed(draw_cmd_buffers[i], indexCount, instances.size(), 0, 0, 0);
-		// draw_ui(draw_cmd_buffers[i]);
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
@@ -260,7 +234,7 @@ bool render_octomap::prepare(const vkb::ApplicationOptions &options)
 	gui = new ImGUIUtil(this);
 	gui->init(static_cast<float>(width), static_cast<float>(height));
 	gui->initResources(render_pass, queue);
-	createPipelines(render_pass);
+	create_octomap_pipeline(render_pass);
 	// Initialize ImGui frame state before first command buffer build
 	gui->newFrame(true);
 	gui->updateBuffers();
@@ -269,7 +243,7 @@ bool render_octomap::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void render_octomap::createPipelines(VkRenderPass renderPass)
+void render_octomap::create_octomap_pipeline(VkRenderPass renderPass)
 {
 	SetupVertexDescriptions();
 	prepareUBO();
@@ -552,26 +526,33 @@ void render_octomap::generateMasterCube()
 	    1, 3, 7, 7, 5, 1};
 	indexCount = static_cast<uint32_t>(indices.size());
 
-	// Create buffers
-	// Vertex buffer
-	vertexBuffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                    verticesLoc.size() * sizeof(Vertex),
-	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+	// Vertex buffer — static geometry, upload once via staging
+	{
+		auto staging = vkb::core::BufferC::create_staging_buffer(get_device(), verticesLoc);
+		vertexBuffer = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                    verticesLoc.size() * sizeof(Vertex),
+		                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		                                                    VMA_MEMORY_USAGE_GPU_ONLY);
+		with_command_buffer([&](VkCommandBuffer cmd) {
+			VkBufferCopy copy{};
+			copy.size = verticesLoc.size() * sizeof(Vertex);
+			vkCmdCopyBuffer(cmd, staging.get_handle(), vertexBuffer->get_handle(), 1, &copy);
+		});
+	}
 
-	auto buf = vertexBuffer->map();
-	memcpy(buf, verticesLoc.data(), verticesLoc.size() * sizeof(Vertex));
-	vertexBuffer->flush();
-	vertexBuffer->unmap();
-	// Index buffer
-	indexBuffer = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                   indices.size() * sizeof(uint32_t),
-	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
-	buf         = indexBuffer->map();
-	memcpy(buf, indices.data(), indices.size() * sizeof(uint32_t));
-	indexBuffer->flush();
-	indexBuffer->unmap();
+	// Index buffer — static geometry, upload once via staging
+	{
+		auto staging = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
+		indexBuffer  = std::make_unique<vkb::core::BufferC>(get_device(),
+		                                                   indices.size() * sizeof(uint32_t),
+		                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		                                                   VMA_MEMORY_USAGE_GPU_ONLY);
+		with_command_buffer([&](VkCommandBuffer cmd) {
+			VkBufferCopy copy{};
+			copy.size = indices.size() * sizeof(uint32_t);
+			vkCmdCopyBuffer(cmd, staging.get_handle(), indexBuffer->get_handle(), 1, &copy);
+		});
+	}
 }
 
 void render_octomap::SetupVertexDescriptions()
@@ -658,11 +639,11 @@ void render_octomap::render(float delta_time)
 	gui->newFrame(frame_count == 0);
 	bool ui_buffers_recreated = gui->updateBuffers();
 
-	const bool view_state_changed = gui->MapsView.stateChanged;
+	const bool view_state_changed = gui->map_view.stateChanged;
 	if (view_state_changed)
 	{
-		gui->MapsView.stateChanged = false;
-		onViewStateChanged(gui->MapsView.currentState);
+		gui->map_view.stateChanged = false;
+		onViewStateChanged(gui->map_view.currentState);
 	}
 
 	// (Re)build 3D instance data and UBOs before recording.
@@ -694,15 +675,15 @@ void render_octomap::render(float delta_time)
 	vkCmdBeginRenderPass(cmd, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 	// Draw the 3D map into the viewport.
-	VkViewport viewport = vkb::initializers::viewport(gui->MapsView.mapSize.x, gui->MapsView.mapSize.y, 0.0f, 1.0f);
-	viewport.x          = gui->MapsView.mapPos.x;
-	viewport.y          = gui->MapsView.mapPos.y;
+	VkViewport viewport = vkb::initializers::viewport(gui->map_view.mapSize.x, gui->map_view.mapSize.y, 0.0f, 1.0f);
+	viewport.x          = gui->map_view.mapPos.x;
+	viewport.y          = gui->map_view.mapPos.y;
 	vkCmdSetViewport(cmd, 0, 1, &viewport);
 	VkRect2D scissorRect;
-	scissorRect.offset.x      = static_cast<int32_t>(gui->MapsView.mapPos.x);
-	scissorRect.offset.y      = static_cast<int32_t>(gui->MapsView.mapPos.y);
-	scissorRect.extent.width  = static_cast<uint32_t>(gui->MapsView.mapSize.x);
-	scissorRect.extent.height = static_cast<uint32_t>(gui->MapsView.mapSize.y);
+	scissorRect.offset.x      = static_cast<int32_t>(gui->map_view.mapPos.x);
+	scissorRect.offset.y      = static_cast<int32_t>(gui->map_view.mapPos.y);
+	scissorRect.extent.width  = static_cast<uint32_t>(gui->map_view.mapSize.x);
+	scissorRect.extent.height = static_cast<uint32_t>(gui->map_view.mapSize.y);
 	vkCmdSetScissor(cmd, 0, 1, &scissorRect);
 
 	VkDeviceSize offsets[2] = {0, 0};
@@ -714,7 +695,7 @@ void render_octomap::render(float delta_time)
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 			vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->get_handle(), offsets);
-			if (instanceBuffer)
+			if (instanceBuffer && indexBuffer)
 			{
 				vkCmdBindVertexBuffers(cmd, 1, 1, &instanceBuffer->get_handle(), offsets);
 				vkCmdBindIndexBuffer(cmd, indexBuffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
@@ -796,13 +777,14 @@ void render_octomap::render(float delta_time)
 			}
 			if (splat_pipeline == VK_NULL_HANDLE)
 			{
+				LOGE("Failed to create splat pipeline; skipping splat draw");
 				break;
 			}
 
 			// Update splat UBO
 			splat_ubo.projection = camera.matrices.perspective;
 			splat_ubo.view       = camera.matrices.view;
-			splat_ubo.viewport   = glm::vec2(gui->MapsView.mapSize.x, gui->MapsView.mapSize.y);
+			splat_ubo.viewport   = glm::vec2(gui->map_view.mapSize.x, gui->map_view.mapSize.y);
 			splat_ubo.focalX     = camera.matrices.perspective[0][0] * splat_ubo.viewport.x * 0.5f;
 			splat_ubo.focalY     = camera.matrices.perspective[1][1] * splat_ubo.viewport.y * 0.5f;
 			splat_uniform_buffer->convert_and_update(splat_ubo);
@@ -924,7 +906,7 @@ void render_octomap::input_event(const vkb::InputEvent &input_event)
 		if (gui)
 		{
 			gui->handle_key_event(code, key_event.get_action());
-			if (gui->GetWantKeyCapture())
+			if (gui->get_want_key_capture())
 			{
 				return;
 			}
@@ -1022,7 +1004,7 @@ void render_octomap::loadGaussianSplatsScene(const std::string &scene_dir)
 			continue;
 		std::string name = entry.path().filename().string();
 		if (name.find("_cell_") != std::string::npos &&
-		    name.substr(name.size() - 5) == ".gltf")
+		    name.ends_with(".gltf"))
 		{
 			cell_files.push_back(scene_dir + "/" + name);
 		}

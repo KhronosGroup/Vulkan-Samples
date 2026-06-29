@@ -70,8 +70,8 @@ public:
     
     // Input handling
     static void handleKey(int key, int scancode, int action, int mode);
-    static bool GetWantKeyCapture();
-    static void charPressed(uint32_t key);
+    static bool get_want_key_capture();
+    static void char_pressed(uint32_t key);
 };
 ----
 
@@ -199,7 +199,7 @@ void onKeyEvent(int key, int scancode, int action, int mods) {
     ImGUIUtil::handleKey(key, scancode, action, mods);
     
     // Check if ImGui wants keyboard input
-    if (ImGUIUtil::GetWantKeyCapture()) {
+    if (ImGUIUtil::get_want_key_capture()) {
         // Don't process key for application
         return;
     }
@@ -215,7 +215,7 @@ For text input:
 [source,cpp]
 ----
 void onCharEvent(uint32_t codepoint) {
-    ImGUIUtil::charPressed(codepoint);
+    ImGUIUtil::char_pressed(codepoint);
 }
 ----
 

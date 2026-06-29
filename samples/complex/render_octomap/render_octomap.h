@@ -58,7 +58,7 @@ class render_octomap : public ApiVulkanSample
 	void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
 	void render(float delta_time) override;
 	void input_event(const vkb::InputEvent &input_event) override;
-	void createPipelines(VkRenderPass renderPass);
+	void create_octomap_pipeline(VkRenderPass renderPass);
 	void create_gltf_pipeline(VkRenderPass renderPass);
 	void create_splat_pipeline(VkRenderPass renderPass);
 	void prepareUBO();
@@ -95,20 +95,20 @@ class render_octomap : public ApiVulkanSample
 	std::unique_ptr<vkb::core::BufferC> indexBuffer;
 	std::unique_ptr<vkb::core::BufferC> instanceBuffer;
 	std::unique_ptr<vkb::core::BufferC> uniformBufferVS;
-	uint32_t                            indexCount;
-	VkPipelineCache                     pipelineCache;
-	VkPipelineLayout                    pipelineLayout;
-	VkPipeline                          pipeline;
-	VkDescriptorPool                    descriptorPool;
-	VkDescriptorSetLayout               descriptorSetLayout;
-	VkDescriptorSet                     descriptorSet;
-	octomap::OcTree                    *map;
-	ImGUIUtil                          *gui;
-	unsigned int                        mMaxTreeDepth;
+	uint32_t                            indexCount{0};
+	VkPipelineCache                     pipelineCache{VK_NULL_HANDLE};
+	VkPipelineLayout                    pipelineLayout{VK_NULL_HANDLE};
+	VkPipeline                          pipeline{VK_NULL_HANDLE};
+	VkDescriptorPool                    descriptorPool{VK_NULL_HANDLE};
+	VkDescriptorSetLayout               descriptorSetLayout{VK_NULL_HANDLE};
+	VkDescriptorSet                     descriptorSet{VK_NULL_HANDLE};
+	octomap::OcTree                    *map{nullptr};
+	ImGUIUtil                          *gui{nullptr};
+	unsigned int                        mMaxTreeDepth{16};
 
-	float                                              m_zMin;
-	float                                              m_zMax;
-	uint64_t                                           lastMapBuildSize;
+	float                                              m_zMin{0.0f};
+	float                                              m_zMax{0.0f};
+	uint64_t                                           lastMapBuildSize{0};
 	std::chrono::time_point<std::chrono::system_clock> lastBuildTime;
 	std::vector<InstanceData>                          instances;
 
