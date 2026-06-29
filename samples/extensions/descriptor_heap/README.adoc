@@ -205,6 +205,8 @@ The extension lets us access descriptors in shaders in two different ways:
 
 link:https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorSetAndBindingMappingEXT.html[VkDescriptorSetAndBindingMappingEXT] can be used to simplify porting existing codebases to descriptor heaps. By using this, existing shaders can be used without having to modify them. The syntax for binding descriptors, regardless of shading language, stays the same.
 
+This sample uses link:https://docs.vulkan.org/spec/latest/chapters/descriptorheaps.html#VkDescriptorMappingSourceEXT[VK_DESCRIPTOR_MAPPING_SOURCE_HEAP_WITH_CONSTANT_OFFSET_EXT] for mapping the bindings, but there are other options available. A good overview on the different mapping options and when to use them can be found in the link:https://docs.vulkan.org/guide/latest/descriptor_heap.html#_mapping_the_heap_to_exisiting_shaders[guide].
+
 [,glsl]
 ----
 // Vertex shader
