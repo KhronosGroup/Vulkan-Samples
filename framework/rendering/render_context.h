@@ -604,8 +604,18 @@ inline bool RenderContext<bindingType>::handle_surface_changes(bool force_update
 	}
 
 	vk::SurfaceCapabilitiesKHR surface_properties = device.get_gpu().get_handle().getSurfaceCapabilitiesKHR(swapchain->get_surface());
+	vk::Extent2D               cur_extent;
 
-	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+#if defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	// On Wayland, currentExtent is typically {0xFFFFFFFF, 0xFFFFFFFF}, meaning
+	// the application determines the surface size. We need to get the size from
+	// the window instead.
+	cur_extent = vk::Extent2D{window.get_extent().width, window.get_extent().height};
+#else
+	cur_extent = surface_properties.currentExtent;
+#endif
+
+	if (cur_extent.width == 0xFFFFFFFF || cur_extent.height == 0xFFFFFFFF)
 	{
 		return false;
 	}
@@ -613,14 +623,14 @@ inline bool RenderContext<bindingType>::handle_surface_changes(bool force_update
 	// Only recreate the swapchain if the dimensions have changed;
 	// handle_surface_changes() is called on VK_SUBOPTIMAL_KHR,
 	// which might not be due to a surface resize
-	if (surface_properties.currentExtent.width != surface_extent.width || surface_properties.currentExtent.height != surface_extent.height || force_update)
+	if (cur_extent.width != surface_extent.width || cur_extent.height != surface_extent.height || force_update)
 	{
 		// Recreate swapchain
 		device.get_handle().waitIdle();
 
-		update_swapchain_impl(surface_properties.currentExtent, pre_transform);
+		update_swapchain_impl(cur_extent, pre_transform);
 
-		surface_extent = surface_properties.currentExtent;
+		surface_extent = cur_extent;
 
 		return true;
 	}
