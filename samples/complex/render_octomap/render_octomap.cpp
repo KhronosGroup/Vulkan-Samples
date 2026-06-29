@@ -544,9 +544,9 @@ void render_octomap::generateMasterCube()
 	{
 		auto staging = vkb::core::BufferC::create_staging_buffer(get_device(), indices);
 		indexBuffer  = std::make_unique<vkb::core::BufferC>(get_device(),
-		                                                   indices.size() * sizeof(uint32_t),
-		                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		                                                   VMA_MEMORY_USAGE_GPU_ONLY);
+		                                                    indices.size() * sizeof(uint32_t),
+		                                                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		                                                    VMA_MEMORY_USAGE_GPU_ONLY);
 		with_command_buffer([&](VkCommandBuffer cmd) {
 			VkBufferCopy copy{};
 			copy.size = indices.size() * sizeof(uint32_t);
