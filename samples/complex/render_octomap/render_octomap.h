@@ -19,8 +19,6 @@
 
 #include "api_vulkan_sample.h"
 #include "scene_graph/node.h"
-#include <ImGUIUtil.h>
-#include <Screens/MapView.h>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -50,35 +48,43 @@ class SubMesh;
 class render_octomap : public ApiVulkanSample
 {
   public:
+	// Which of the three demo views is currently being rendered.
+	enum class ViewState
+	{
+		Octomap,
+		GLTFRegular,
+		GLTFSplats
+	};
+
 	render_octomap();
 	~render_octomap() override;
-	void BuildCubes();
+	void build_cubes();
 	void build_command_buffers() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
-	void update_overlay(float delta_time, const std::function<void()> &additional_ui) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 	void input_event(const vkb::InputEvent &input_event) override;
 	void create_octomap_pipeline(VkRenderPass renderPass);
 	void create_gltf_pipeline(VkRenderPass renderPass);
 	void create_splat_pipeline(VkRenderPass renderPass);
-	void prepareUBO();
-	void updateUBO();
-	void generateMasterCube();
-	void SetupVertexDescriptions();
+	void prepare_ubo();
+	void update_ubo();
+	void generate_master_cube();
+	void setup_vertex_descriptions();
 	bool resize(const uint32_t width, const uint32_t height) override;
 
 	// View state handling
-	void onViewStateChanged(MapView::ViewState newState);
-	void loadGLTFScene(const std::string &filename);
-	void loadGaussianSplatsScene(const std::string &filename);
-	void loadGaussianSplatsData(const std::string &filename);
+	void on_view_state_changed(ViewState new_state);
+	void load_gltf_scene(const std::string &filename);
+	void load_gaussian_splats_scene(const std::string &filename);
+	void load_gaussian_splats_data(const std::string &filename);
 
   private:
 	struct
 	{
-		VkPipelineVertexInputStateCreateInfo           inputState;
-		std::vector<VkVertexInputBindingDescription>   bindingDescriptions;
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+		VkPipelineVertexInputStateCreateInfo           input_state;
+		std::vector<VkVertexInputBindingDescription>   binding_descriptions;
+		std::vector<VkVertexInputAttributeDescription> attribute_descriptions;
 	} vertices;
 	struct InstanceData
 	{
@@ -91,25 +97,24 @@ class render_octomap : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 camera;
 	} uboVS;
-	std::unique_ptr<vkb::core::BufferC> vertexBuffer;
-	std::unique_ptr<vkb::core::BufferC> indexBuffer;
-	std::unique_ptr<vkb::core::BufferC> instanceBuffer;
-	std::unique_ptr<vkb::core::BufferC> uniformBufferVS;
-	uint32_t                            indexCount{0};
-	VkPipelineCache                     pipelineCache{VK_NULL_HANDLE};
-	VkPipelineLayout                    pipelineLayout{VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::BufferC> vertex_buffer;
+	std::unique_ptr<vkb::core::BufferC> index_buffer;
+	std::unique_ptr<vkb::core::BufferC> instance_buffer;
+	std::unique_ptr<vkb::core::BufferC> uniform_buffer_vs;
+	uint32_t                            index_count{0};
+	VkPipelineCache                     pipeline_cache{VK_NULL_HANDLE};
+	VkPipelineLayout                    pipeline_layout{VK_NULL_HANDLE};
 	VkPipeline                          pipeline{VK_NULL_HANDLE};
-	VkDescriptorPool                    descriptorPool{VK_NULL_HANDLE};
-	VkDescriptorSetLayout               descriptorSetLayout{VK_NULL_HANDLE};
-	VkDescriptorSet                     descriptorSet{VK_NULL_HANDLE};
+	VkDescriptorPool                    descriptor_pool{VK_NULL_HANDLE};
+	VkDescriptorSetLayout               descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet                     descriptor_set{VK_NULL_HANDLE};
 	octomap::OcTree                    *map{nullptr};
-	ImGUIUtil                          *gui{nullptr};
-	unsigned int                        mMaxTreeDepth{16};
+	unsigned int                        max_tree_depth{16};
 
-	float                                              m_zMin{0.0f};
-	float                                              m_zMax{0.0f};
-	uint64_t                                           lastMapBuildSize{0};
-	std::chrono::time_point<std::chrono::system_clock> lastBuildTime;
+	float                                              z_min{0.0f};
+	float                                              z_max{0.0f};
+	uint64_t                                           last_map_build_size{0};
+	std::chrono::time_point<std::chrono::system_clock> last_build_time;
 	std::vector<InstanceData>                          instances;
 
 	// Numpad look state (KP_4/6 = yaw left/right, KP_8/2 = pitch up/down)
@@ -122,9 +127,8 @@ class render_octomap : public ApiVulkanSample
 	} numpad_look;
 
 	// View state management
-	MapView::ViewState                        currentViewState = MapView::ViewState::Octomap;
-	std::unique_ptr<vkb::scene_graph::SceneC> gltfScene;
-	std::unique_ptr<vkb::scene_graph::SceneC> splatsScene;
+	ViewState                                 current_view_state = ViewState::Octomap;
+	std::unique_ptr<vkb::scene_graph::SceneC> gltf_scene;
 
 	struct GltfNodeDraw
 	{

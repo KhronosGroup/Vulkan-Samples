@@ -139,7 +139,6 @@
 ** xref:samples/complex/render_octomap/README.adoc[Gausssian Splat and Octomap Rendering]
 *** xref:samples/complex/render_octomap/Tutorials/capturing-gaussian-splats.adoc[Capturing Gaussian Splats]
 *** xref:samples/complex/render_octomap/Tutorials/gaussian-splats-rendering.adoc[Rendering Gaussian Splats]
-*** xref:samples/complex/render_octomap/Tutorials/imgui-vulkan-integration.adoc[ImGUI Vulkan integration]
 * xref:docs/README.adoc[General documentation]
 ** xref:docs/build.adoc[Build guide]
 ** xref:docs/memory_limits.adoc[Memory limits]

@@ -716,5 +716,4 @@ The most important factors for success:
 **Related Tutorials:**
 
 - link:gaussian-splats-rendering.adoc[Gaussian Splats Rendering Tutorial] - How to render what you've captured
-- link:imgui-vulkan-integration.adoc[ImGui Vulkan Integration Tutorial]
 - link:../README.adoc[render_octomap Sample README]

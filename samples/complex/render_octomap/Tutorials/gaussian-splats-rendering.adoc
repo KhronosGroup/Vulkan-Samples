@@ -454,7 +454,7 @@ std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
 
 Loading Gaussian splats from GLTF involves several steps: parsing the JSON structure, reading binary buffers, and creating GPU resources.
 
-NOTE: The code snippets in this section illustrate the general loading pattern. The actual sample (`render_octomap.cpp`, function `loadGaussianSplatsData`) uses a simpler, more direct approach: it reads all accessor data in a single pass into `SplatInstance` structs without a generic template, and only handles float-component accessors since that is what our GLTF files contain. The conceptual pattern below is useful when writing a more general-purpose loader.
+NOTE: The code snippets in this section illustrate the general loading pattern. The actual sample (`render_octomap.cpp`, function `load_gaussian_splats_data`) uses a simpler, more direct approach: it reads all accessor data in a single pass into `SplatInstance` structs without a generic template, and only handles float-component accessors since that is what our GLTF files contain. The conceptual pattern below is useful when writing a more general-purpose loader.
 
 === Step 1: Detecting Gaussian Splat Data
 
@@ -553,11 +553,22 @@ GLTF stores data in buffers accessed through accessors:
 
 [source,cpp]
 ----
-// T must be float or a plain struct of floats (e.g. glm::vec3, glm::vec4).
-// The function assumes float component type; integer or normalized integer
+// Number of float components per accessor.type ("SCALAR", "VEC3", ...).
+size_t componentCount(const std::string& type)
+{
+    if (type == "SCALAR") return 1;
+    if (type == "VEC2")   return 2;
+    if (type == "VEC3")   return 3;
+    if (type == "VEC4")   return 4;
+    if (type == "MAT3")   return 9;
+    if (type == "MAT4")   return 16;
+    return 0;
+}
+
+// Returns accessor.count * componentCount(accessor.type) floats.
+// Assumes a float component type; integer or normalized integer
 // accessors require their own dequantization path.
-template<typename T>
-std::vector<T> read_accessor_data(const tinygltf::Model& model, int accessor_idx)
+std::vector<float> read_accessor_data(const tinygltf::Model& model, int accessor_idx)
 {
     if (accessor_idx < 0 || accessor_idx >= model.accessors.size())
         return {};
@@ -566,7 +577,8 @@ std::vector<T> read_accessor_data(const tinygltf::Model& model, int accessor_idx
     const auto& buffer_view = model.bufferViews[accessor.bufferView];
     const auto& buffer = model.buffers[buffer_view.buffer];
 
-    std::vector<T> data(accessor.count);
+    size_t num_components = componentCount(accessor.type);
+    std::vector<float> data(accessor.count * num_components);
 
     // Calculate byte stride
     size_t byte_stride = buffer_view.byteStride;
@@ -580,20 +592,22 @@ std::vector<T> read_accessor_data(const tinygltf::Model& model, int accessor_idx
 
     for (size_t i = 0; i < accessor.count; i++)
     {
+        float* dst = &data[i * num_components];
+
         // Handle different component types and normalization
         if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT)
         {
-            memcpy(&data[i], src + i * byte_stride, sizeof(T));
+            memcpy(dst, src + i * byte_stride, num_components * sizeof(float));
         }
         else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
         {
             // Dequantize if normalized
-            uint16_t* quantized = (uint16_t*)(src + i * byte_stride);
+            const uint16_t* quantized = reinterpret_cast<const uint16_t*>(src + i * byte_stride);
             if (accessor.normalized)
             {
                 // Convert [0, 65535] to [0.0, 1.0]
-                for (int j = 0; j < sizeof(T)/sizeof(float); j++)
-                    ((float*)&data[i])[j] = quantized[j] / 65535.0f;
+                for (size_t j = 0; j < num_components; j++)
+                    dst[j] = quantized[j] / 65535.0f;
             }
         }
         // Handle other component types...
@@ -722,85 +736,81 @@ glm::vec3 dequantize_position(uint16_t x, uint16_t y, uint16_t z,
 
 === Complete Loading Example
 
-Here's a complete example of loading Gaussian splats from a GLTF file:
+The sample doesn't route splats through a scene-graph component at all. Instead, `render_octomap::load_gaussian_splats_data()` parses each cell's GLTF directly and appends the result into a single flat `std::vector<SplatInstance>` (see "Framework Integration" above), and `render_octomap::load_gaussian_splats_scene()` collects the per-cell GLTF files and drives the loop:
 
 [source,cpp]
 ----
-void render_octomap::load_gaussian_splats_gltf(const std::string& filename)
+void render_octomap::load_gaussian_splats_scene(const std::string &scene_dir)
 {
-    tinygltf::Model model;
-    tinygltf::TinyGLTF loader;
-    std::string err, warn;
+    splat_instances_cpu.clear();
+    splat_instance_buffer.reset();
 
-    // Load GLTF file
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, filename);
-    if (!ret)
+    // Collect all *_cell_*.gltf files in the directory, then sort for
+    // deterministic order (the scene is stored as tiled grid cells).
+    std::vector<std::string> cell_files;
+    for (auto &entry : std::filesystem::directory_iterator(full_dir))
     {
-        LOGE("Failed to load GLTF: {}", err);
-        return;
+        std::string name = entry.path().filename().string();
+        if (name.find("_cell_") != std::string::npos && name.ends_with(".gltf"))
+            cell_files.push_back(scene_dir + "/" + name);
     }
+    std::sort(cell_files.begin(), cell_files.end());
 
-    // Check for Gaussian splat extension
-    if (!has_gaussian_splats(model))
-    {
-        LOGE("GLTF file does not contain Gaussian splats");
-        return;
-    }
+    for (auto &f : cell_files)
+        load_gaussian_splats_data(f);        // appends into splat_instances_cpu
 
-    // Iterate through meshes and primitives
-    for (const auto& mesh : model.meshes)
-    {
-        for (const auto& primitive : mesh.primitives)
-        {
-            // Check if this primitive has Gaussian splats
-            auto ext_it = primitive.extensions.find("KHR_gaussian_splatting");
-            if (ext_it == primitive.extensions.end())
-                continue;
+    splat_count           = static_cast<uint32_t>(splat_instances_cpu.size());
+    splat_instance_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
+                                                                 splat_instances_cpu.size() * sizeof(SplatInstance),
+                                                                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
+    auto *buf = splat_instance_buffer->map();
+    memcpy(buf, splat_instances_cpu.data(), splat_instances_cpu.size() * sizeof(SplatInstance));
+    splat_instance_buffer->flush();
+    splat_instance_buffer->unmap();
 
-            // Create Gaussian splat component
-            auto splat = create_gaussian_splat_from_gltf(
-                model, primitive, get_device());
-
-            if (splat)
-            {
-                LOGI("Loaded {} Gaussian splats", splat->splat_count);
-
-                // Add to scene graph
-                auto node = scene->create_child_node();
-                node->add_component(std::move(splat));
-            }
-        }
-    }
-
-    // Rebuild command buffers to render new splats
-    rebuild_command_buffers();
+    create_splat_pipeline(render_pass);
 }
 ----
 
+`load_gaussian_splats_data()` reads the POSITION/ROTATION/SCALE/OPACITY/COLOR_0 accessors for a single cell straight out of the GLTF buffers (using the same accessor-decoding approach as "Step 3: Reading Buffer Data" above) and appends the resulting `SplatInstance` entries to `splat_instances_cpu`; the GPU buffer is only (re)built once, after all cells have loaded, in `load_gaussian_splats_scene()` above.
+
 === Error Handling and Validation
 
-Always validate loaded data:
+The loader validates as it goes, logging and bailing out of the current cell rather than asserting, since a malformed cell shouldn't take down the whole map:
 
 [source,cpp]
 ----
-bool validate_gaussian_splat_data(const GaussianSplat& splat)
+if (model.meshes.empty() || model.meshes[0].primitives.empty())
 {
-    if (splat.splat_count == 0)
-    {
-        LOGE("No splats loaded");
-        return false;
-    }
+    LOGE("Splats gltf has no meshes/primitives: {}", filename);
+    return;
+}
 
-    // Check quaternion normalization
-    // Rotations should be unit quaternions
+// ... resolve POSITION / ROTATION / SCALE / OPACITY / COLOR_0 accessors ...
 
-    // Check scale values (should be positive)
+if (rot_accessor < 0 || scale_accessor < 0 || opacity_accessor < 0 || col_accessor < 0)
+{
+    LOGE("Splats gltf missing required KHR_gaussian_splatting accessors (ROTATION/SCALE/OPACITY/COLOR_0): {}", filename);
+    return;
+}
 
-    // Check opacity range [0, 1]
+const size_t count = model.accessors[pos_accessor].count;
+if (count == 0)
+{
+    LOGE("Splats gltf has 0 splats: {}", filename);
+    return;
+}
+----
 
-    // Validate buffer sizes match splat count
+After all cells are loaded, `load_gaussian_splats_scene()` checks that at least one splat was found before creating GPU resources:
 
-    return true;
+[source,cpp]
+----
+if (splat_instances_cpu.empty())
+{
+    LOGE("No splat data loaded from {}", scene_dir);
+    return;
 }
 ----
 
@@ -1258,24 +1268,30 @@ The render_octomap sample demonstrates switching between different view modes:
 
 [source,cpp]
 ----
-void render_octomap::onViewStateChanged(MapView::ViewState newState)
+void render_octomap::on_view_state_changed(MapView::ViewState newState)
 {
+    if (current_view_state == newState)
+        return;
+
+    current_view_state = newState;
+
     switch (newState)
     {
         case MapView::ViewState::Octomap:
-            // Render octomap cubes
+            // Octomap is already loaded, just need to rebuild command buffers
             break;
-            
+
         case MapView::ViewState::GLTFRegular:
-            // Render standard GLTF mesh
-            loadGLTFScene("scenes/octmap_and_splats/savedMap_v1.1.0.gltf");
+            if (!gltf_scene)
+                load_gltf_scene("scenes/octmap_and_splats/savedMap_v1.2.0.gltf");
             break;
-            
+
         case MapView::ViewState::GLTFSplats:
-            // Render gaussian splats
-            loadGaussianSplatsScene("scenes/octmap_and_splats/savedMap_v1.1.0_splats_c0_-1_-1.gltf");
+            if (!splat_instance_buffer)
+                load_gaussian_splats_scene("scenes/octmap_and_splats");
             break;
     }
+
     rebuild_command_buffers();
 }
 ----
@@ -1308,8 +1324,6 @@ For large scenes, implement tile-based streaming of splat data.
 * https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/[3D Gaussian Splatting for Real-Time Radiance Field Rendering]
 * https://github.com/KhronosGroup/glTF/pull/2446[KHR_gaussian_splatting GLTF Extension Proposal]
 * link:../README.adoc[render_octomap Sample README]
-* link:imgui-vulkan-integration.adoc[ImGui Vulkan Integration Tutorial]
-
 
 === What This Sample Demonstrates
 

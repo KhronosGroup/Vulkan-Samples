@@ -60,16 +60,9 @@ add_sample_with_tags(
         AUTHOR "Holochip"
         NAME "Octmap rendering"
         DESCRIPTION "Demonstration of how to render an OctMap which was generated from ICP combining ARCore and ARKit SLAM maps"
-        FILES
-            ImGUIUtil.h
-            ImGUIUtil.cpp
-            Screens/MapView.h
-            Screens/MapView.cpp
         SHADER_FILES_GLSL
         "render_octomap/glsl/render.vert"
         "render_octomap/glsl/render.frag"
-        "render_octomap/glsl/imgui.vert"
-        "render_octomap/glsl/imgui.frag"
         "render_octomap/glsl/gltf.vert"
         "render_octomap/glsl/gltf.frag"
         "render_octomap/glsl/splat.vert"
