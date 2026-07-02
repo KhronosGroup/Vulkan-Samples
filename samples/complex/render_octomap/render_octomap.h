@@ -45,7 +45,7 @@ class SubMesh;
 
 }        // namespace vkb
 
-class render_octomap : public ApiVulkanSample
+class RenderOctomap : public ApiVulkanSample
 {
   public:
 	// Which of the three demo views is currently being rendered.
@@ -56,8 +56,8 @@ class render_octomap : public ApiVulkanSample
 		GLTFSplats
 	};
 
-	render_octomap();
-	~render_octomap() override;
+	RenderOctomap();
+	~RenderOctomap() override;
 	void build_cubes();
 	void build_command_buffers() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;

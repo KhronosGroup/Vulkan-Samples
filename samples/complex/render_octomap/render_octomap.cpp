@@ -33,12 +33,12 @@
 // KHR_gaussian_splatting extension name
 #define GLTF_KHR_GAUSSIAN_SPLATTING_EXTENSION "KHR_gaussian_splatting"
 
-render_octomap::render_octomap()
+RenderOctomap::RenderOctomap()
 {
 	title = "Octomap Viewer";
 	map   = new octomap::OcTree(0.1f);
 }
-render_octomap::~render_octomap()
+RenderOctomap::~RenderOctomap()
 {
 	if (has_device())
 	{
@@ -90,7 +90,7 @@ static glm::vec3 hsv_to_rgb(float h, float s, float v)
 	}
 }
 
-void render_octomap::build_cubes()
+void RenderOctomap::build_cubes()
 {
 	const octomap::OcTree *tree = map;
 	if (tree->size() == 0)
@@ -105,13 +105,13 @@ void render_octomap::build_cubes()
 		return;
 	}
 
-	double minX, minY, minZ, maxX, maxY, maxZ;
-	tree->getMetricMin(minX, minY, minZ);
-	tree->getMetricMax(maxX, maxY, maxZ);
+	double min_x, min_y, min_z, max_x, max_y, max_z;
+	tree->getMetricMin(min_x, min_y, min_z);
+	tree->getMetricMax(max_x, max_y, max_z);
 
 	// set min/max Z for color height map
-	z_min = static_cast<float>(minZ);
-	z_max = static_cast<float>(maxZ);
+	z_min = static_cast<float>(min_z);
+	z_max = static_cast<float>(max_z);
 
 	// Hue uses 80% of the [0,1] range so high-altitude voxels don't wrap back to red.
 	const float z_range = z_max - z_min;
@@ -166,7 +166,7 @@ void render_octomap::build_cubes()
 	last_map_build_size = tree->size();
 }
 
-void render_octomap::build_command_buffers()
+void RenderOctomap::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -191,8 +191,8 @@ void render_octomap::build_command_buffers()
 
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-		VkRect2D scissorRect = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissorRect);
+		VkRect2D scissor_rect = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
+		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor_rect);
 
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
@@ -216,7 +216,7 @@ void render_octomap::build_command_buffers()
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
-bool render_octomap::prepare(const vkb::ApplicationOptions &options)
+bool RenderOctomap::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!ApiVulkanSample::prepare(options))
 	{
@@ -227,8 +227,8 @@ bool render_octomap::prepare(const vkb::ApplicationOptions &options)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
 	camera.set_rotation({0.0f, 0.0f, 0.0f});
 	camera.set_translation({0.0f, 0.0f, -1.0f});
-	std::string octomapPath = vkb::fs::path::get(vkb::fs::path::Type::Assets, "scenes/octmap_and_splats/octMap.bin");
-	map->readBinary(octomapPath);
+	std::string octomap_path = vkb::fs::path::get(vkb::fs::path::Type::Assets, "scenes/octmap_and_splats/octMap.bin");
+	map->readBinary(octomap_path);
 	build_cubes();
 	create_octomap_pipeline(render_pass);
 	build_command_buffers();
@@ -236,79 +236,80 @@ bool render_octomap::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void render_octomap::create_octomap_pipeline(VkRenderPass renderPass)
+void RenderOctomap::create_octomap_pipeline(VkRenderPass renderPass)
 {
 	setup_vertex_descriptions();
 	prepare_ubo();
-	auto inputAssemblyState   = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	auto raster_State         = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
-	auto blendAttachmentState = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	auto colorBlendState      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blendAttachmentState);
-	auto depthStencilState    = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
-	auto viewportState        = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-	auto multisampleState     = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	auto input_assembly_state   = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	auto raster_state           = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	auto blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+	auto color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+	auto depth_stencil_state    = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	auto viewport_state         = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	auto multisample_state      = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector dynamicStateEnables = {
+	// Only VIEWPORT/SCISSOR are used by this pipeline; polygon mode is FILL, so there is
+	// no line width to set dynamically.
+	std::vector dynamic_state_enables = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_LINE_WIDTH};
+	    VK_DYNAMIC_STATE_SCISSOR};
 
-	auto dynamicState = vkb::initializers::pipeline_dynamic_state_create_info(dynamicStateEnables.data(), dynamicStateEnables.size(), 0);
+	auto dynamic_state = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), dynamic_state_enables.size(), 0);
 
-	VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
-	pipelineCacheCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-	VK_CHECK(vkCreatePipelineCache(get_device().get_handle(), &pipelineCacheCreateInfo, nullptr, &pipeline_cache));
+	VkPipelineCacheCreateInfo pipeline_cache_create_info = {};
+	pipeline_cache_create_info.sType                     = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	VK_CHECK(vkCreatePipelineCache(get_device().get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 
 	// Rendering pipeline
-	std::vector poolSizes = {
+	std::vector pool_sizes = {
 	    // Graphics pipelines uniform buffers
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2)};
-	VkDescriptorPoolCreateInfo descriptorPoolInfo = vkb::initializers::descriptor_pool_create_info(poolSizes, 3);
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool));
+	VkDescriptorPoolCreateInfo descriptor_pool_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 3);
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_info, nullptr, &descriptor_pool));
 
-	std::vector setLayoutBindings = {
+	std::vector set_layout_bindings = {
 	    // Binding 0: Vertex shader uniform buffer
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0)};
 
-	auto descriptorLayout = vkb::initializers::descriptor_set_layout_create_info(setLayoutBindings);
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptorLayout, nullptr, &descriptor_set_layout));
+	auto descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 
-	auto pPipelineLayoutCreateInfo = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pPipelineLayoutCreateInfo, nullptr, &pipeline_layout));
+	auto pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
 	// Load shaders
-	std::vector shaderStages = {
+	std::vector shader_stages = {
 	    load_shader("render_octomap", "render.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 	    load_shader("render_octomap", "render.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
-	auto pipelineCreateInfo = vkb::initializers::pipeline_create_info(pipeline_layout, renderPass, 0);
+	auto pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, renderPass, 0);
 
-	pipelineCreateInfo.pVertexInputState   = &vertices.input_state;
-	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-	pipelineCreateInfo.pRasterizationState = &raster_State;
-	pipelineCreateInfo.pColorBlendState    = &colorBlendState;
-	pipelineCreateInfo.pMultisampleState   = &multisampleState;
-	pipelineCreateInfo.pViewportState      = &viewportState;
-	pipelineCreateInfo.pDepthStencilState  = &depthStencilState;
-	pipelineCreateInfo.pDynamicState       = &dynamicState;
-	pipelineCreateInfo.stageCount          = shaderStages.size();
-	pipelineCreateInfo.pStages             = shaderStages.data();
-	pipelineCreateInfo.renderPass          = renderPass;
+	pipeline_create_info.pVertexInputState   = &vertices.input_state;
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &raster_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = shader_stages.size();
+	pipeline_create_info.pStages             = shader_stages.data();
+	pipeline_create_info.renderPass          = renderPass;
 
 	VK_CHECK(
-	    vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipelineCreateInfo, nullptr, &pipeline));
+	    vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 
-	auto allocInfo = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &descriptor_set));
-	VkDescriptorBufferInfo            buffer_descriptor            = create_descriptor(*uniform_buffer_vs);
-	std::vector<VkWriteDescriptorSet> baseImageWriteDescriptorSets = {
+	auto alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+	VkDescriptorBufferInfo            buffer_descriptor     = create_descriptor(*uniform_buffer_vs);
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0,
 	                                            &buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), baseImageWriteDescriptorSets.size(), baseImageWriteDescriptorSets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(get_device().get_handle(), write_descriptor_sets.size(), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void render_octomap::create_gltf_pipeline(VkRenderPass renderPass)
+void RenderOctomap::create_gltf_pipeline(VkRenderPass renderPass)
 {
 	if (gltf_pipeline != VK_NULL_HANDLE)
 	{
@@ -333,7 +334,7 @@ void render_octomap::create_gltf_pipeline(VkRenderPass renderPass)
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &gltf_pipeline_layout));
 
 	// Shaders
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStages = {
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
 	    load_shader("render_octomap", "gltf.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 	    load_shader("render_octomap", "gltf.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
@@ -344,40 +345,40 @@ void render_octomap::create_gltf_pipeline(VkRenderPass renderPass)
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),             // POSITION at offset 0
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32A32_SFLOAT, 12)};        // COLOR_0 at offset 12
 
-	VkPipelineVertexInputStateCreateInfo vertexInputState = vkb::initializers::pipeline_vertex_input_state_create_info();
-	vertexInputState.vertexBindingDescriptionCount        = static_cast<uint32_t>(bindings.size());
-	vertexInputState.pVertexBindingDescriptions           = bindings.data();
-	vertexInputState.vertexAttributeDescriptionCount      = static_cast<uint32_t>(attributes.size());
-	vertexInputState.pVertexAttributeDescriptions         = attributes.data();
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(bindings.size());
+	vertex_input_state.pVertexBindingDescriptions           = bindings.data();
+	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(attributes.size());
+	vertex_input_state.pVertexAttributeDescriptions         = attributes.data();
 
-	auto inputAssemblyState = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	auto raster_state       = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT,
-	                                                                                      VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
-	auto blendAttachment    = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	auto colorBlendState    = vkb::initializers::pipeline_color_blend_state_create_info(1, &blendAttachment);
-	auto depthStencilState  = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
-	auto viewportState      = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-	auto multisampleState   = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	auto input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+	auto raster_state         = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT,
+	                                                                                        VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	auto blend_attachment     = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+	auto color_blend_state    = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
+	auto depth_stencil_state  = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	auto viewport_state       = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	auto multisample_state    = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	auto                        dynamicState        = vkb::initializers::pipeline_dynamic_state_create_info(dynamicStateEnables.data(), dynamicStateEnables.size(), 0);
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	auto                        dynamic_state         = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), dynamic_state_enables.size(), 0);
 
-	auto pipelineCreateInfo                = vkb::initializers::pipeline_create_info(gltf_pipeline_layout, renderPass, 0);
-	pipelineCreateInfo.pVertexInputState   = &vertexInputState;
-	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-	pipelineCreateInfo.pRasterizationState = &raster_state;
-	pipelineCreateInfo.pColorBlendState    = &colorBlendState;
-	pipelineCreateInfo.pMultisampleState   = &multisampleState;
-	pipelineCreateInfo.pViewportState      = &viewportState;
-	pipelineCreateInfo.pDepthStencilState  = &depthStencilState;
-	pipelineCreateInfo.pDynamicState       = &dynamicState;
-	pipelineCreateInfo.stageCount          = static_cast<uint32_t>(shaderStages.size());
-	pipelineCreateInfo.pStages             = shaderStages.data();
+	auto pipeline_create_info                = vkb::initializers::pipeline_create_info(gltf_pipeline_layout, renderPass, 0);
+	pipeline_create_info.pVertexInputState   = &vertex_input_state;
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &raster_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages             = shader_stages.data();
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipelineCreateInfo, nullptr, &gltf_pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &gltf_pipeline));
 }
 
-void render_octomap::create_splat_pipeline(VkRenderPass renderPass)
+void RenderOctomap::create_splat_pipeline(VkRenderPass renderPass)
 {
 	if (splat_pipeline != VK_NULL_HANDLE)
 	{
@@ -386,19 +387,19 @@ void render_octomap::create_splat_pipeline(VkRenderPass renderPass)
 
 	// Descriptor set for splat UBO
 	{
-		std::vector<VkDescriptorPoolSize> poolSizes = {
+		std::vector<VkDescriptorPoolSize> pool_sizes = {
 		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
-		VkDescriptorPoolCreateInfo poolInfo = vkb::initializers::descriptor_pool_create_info(poolSizes, 1);
-		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &poolInfo, nullptr, &splat_descriptor_pool));
+		VkDescriptorPoolCreateInfo pool_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
+		VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &pool_info, nullptr, &splat_descriptor_pool));
 
 		std::vector<VkDescriptorSetLayoutBinding> bindings = {
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		                                                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0)};
-		VkDescriptorSetLayoutCreateInfo layoutInfo = vkb::initializers::descriptor_set_layout_create_info(bindings);
-		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &layoutInfo, nullptr, &splat_descriptor_set_layout));
+		VkDescriptorSetLayoutCreateInfo layout_info = vkb::initializers::descriptor_set_layout_create_info(bindings);
+		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &layout_info, nullptr, &splat_descriptor_set_layout));
 
-		VkDescriptorSetAllocateInfo allocInfo = vkb::initializers::descriptor_set_allocate_info(splat_descriptor_pool, &splat_descriptor_set_layout, 1);
-		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocInfo, &splat_descriptor_set));
+		VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(splat_descriptor_pool, &splat_descriptor_set_layout, 1);
+		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &splat_descriptor_set));
 
 		VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*splat_uniform_buffer);
 		VkWriteDescriptorSet   write             = vkb::initializers::write_descriptor_set(splat_descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor);
@@ -408,7 +409,7 @@ void render_octomap::create_splat_pipeline(VkRenderPass renderPass)
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&splat_descriptor_set_layout, 1);
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &splat_pipeline_layout));
 
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStages = {
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
 	    load_shader("render_octomap", "splat.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 	    load_shader("render_octomap", "splat.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
@@ -423,51 +424,51 @@ void render_octomap::create_splat_pipeline(VkRenderPass renderPass)
 	    vkb::initializers::vertex_input_attribute_description(0, 4, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 11),          // color
 	};
 
-	VkPipelineVertexInputStateCreateInfo vertexInputState = vkb::initializers::pipeline_vertex_input_state_create_info();
-	vertexInputState.vertexBindingDescriptionCount        = static_cast<uint32_t>(bindings.size());
-	vertexInputState.pVertexBindingDescriptions           = bindings.data();
-	vertexInputState.vertexAttributeDescriptionCount      = static_cast<uint32_t>(attributes.size());
-	vertexInputState.pVertexAttributeDescriptions         = attributes.data();
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(bindings.size());
+	vertex_input_state.pVertexBindingDescriptions           = bindings.data();
+	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(attributes.size());
+	vertex_input_state.pVertexAttributeDescriptions         = attributes.data();
 
-	auto inputAssemblyState = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
-	auto raster_state       = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE,
-	                                                                                      VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	auto input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, 0, VK_FALSE);
+	auto raster_state         = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE,
+	                                                                                        VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 	// Premultiplied alpha blending
-	VkPipelineColorBlendAttachmentState blendAttachment{};
-	blendAttachment.colorWriteMask      = 0xf;
-	blendAttachment.blendEnable         = VK_TRUE;
-	blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	blendAttachment.colorBlendOp        = VK_BLEND_OP_ADD;
-	blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	blendAttachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+	VkPipelineColorBlendAttachmentState blend_attachment{};
+	blend_attachment.colorWriteMask      = 0xf;
+	blend_attachment.blendEnable         = VK_TRUE;
+	blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
+	blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-	auto colorBlendState   = vkb::initializers::pipeline_color_blend_state_create_info(1, &blendAttachment);
-	auto depthStencilState = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
-	auto viewportState     = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-	auto multisampleState  = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+	auto color_blend_state   = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
+	auto depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	auto viewport_state      = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	auto multisample_state   = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	auto                        dynamicState        = vkb::initializers::pipeline_dynamic_state_create_info(dynamicStateEnables.data(), dynamicStateEnables.size(), 0);
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	auto                        dynamic_state         = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), dynamic_state_enables.size(), 0);
 
-	auto pipelineCreateInfo                = vkb::initializers::pipeline_create_info(splat_pipeline_layout, renderPass, 0);
-	pipelineCreateInfo.pVertexInputState   = &vertexInputState;
-	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-	pipelineCreateInfo.pRasterizationState = &raster_state;
-	pipelineCreateInfo.pColorBlendState    = &colorBlendState;
-	pipelineCreateInfo.pMultisampleState   = &multisampleState;
-	pipelineCreateInfo.pViewportState      = &viewportState;
-	pipelineCreateInfo.pDepthStencilState  = &depthStencilState;
-	pipelineCreateInfo.pDynamicState       = &dynamicState;
-	pipelineCreateInfo.stageCount          = static_cast<uint32_t>(shaderStages.size());
-	pipelineCreateInfo.pStages             = shaderStages.data();
+	auto pipeline_create_info                = vkb::initializers::pipeline_create_info(splat_pipeline_layout, renderPass, 0);
+	pipeline_create_info.pVertexInputState   = &vertex_input_state;
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &raster_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages             = shader_stages.data();
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipelineCreateInfo, nullptr, &splat_pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &splat_pipeline));
 }
 
-void render_octomap::prepare_ubo()
+void RenderOctomap::prepare_ubo()
 {
 	// Vertex shader uniform buffer block
 	uniform_buffer_vs = std::make_unique<vkb::core::BufferC>(get_device(),
@@ -477,7 +478,7 @@ void render_octomap::prepare_ubo()
 	update_ubo();
 }
 
-void render_octomap::update_ubo()
+void RenderOctomap::update_ubo()
 {
 	uboVS.projection = camera.matrices.perspective;
 	uboVS.camera     = camera.matrices.view;
@@ -486,10 +487,10 @@ void render_octomap::update_ubo()
 }
 
 // This just gives the first vertex_buffer
-void render_octomap::generate_master_cube()
+void RenderOctomap::generate_master_cube()
 {
 	// Setup vertices for a single quad made from two triangles
-	std::vector<Vertex> verticesLoc =
+	std::vector<Vertex> local_vertices =
 	    {
 	        {{0.5f, 0.5f, 0.5f}},
 	        {{0.5f, 0.5f, -0.5f}},
@@ -521,14 +522,14 @@ void render_octomap::generate_master_cube()
 
 	// Vertex buffer — static geometry, upload once via staging
 	{
-		auto staging  = vkb::core::BufferC::create_staging_buffer(get_device(), verticesLoc);
+		auto staging  = vkb::core::BufferC::create_staging_buffer(get_device(), local_vertices);
 		vertex_buffer = std::make_unique<vkb::core::BufferC>(get_device(),
-		                                                     verticesLoc.size() * sizeof(Vertex),
+		                                                     local_vertices.size() * sizeof(Vertex),
 		                                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		                                                     VMA_MEMORY_USAGE_GPU_ONLY);
 		with_command_buffer([&](VkCommandBuffer cmd) {
 			VkBufferCopy copy{};
-			copy.size = verticesLoc.size() * sizeof(Vertex);
+			copy.size = local_vertices.size() * sizeof(Vertex);
 			vkCmdCopyBuffer(cmd, staging.get_handle(), vertex_buffer->get_handle(), 1, &copy);
 		});
 	}
@@ -549,7 +550,7 @@ void render_octomap::generate_master_cube()
 	}
 }
 
-void render_octomap::setup_vertex_descriptions()
+void RenderOctomap::setup_vertex_descriptions()
 {
 	generate_master_cube();
 	// Binding description
@@ -576,14 +577,14 @@ void render_octomap::setup_vertex_descriptions()
 	vertices.input_state.vertexAttributeDescriptionCount = vertices.attribute_descriptions.size();
 	vertices.input_state.pVertexAttributeDescriptions    = vertices.attribute_descriptions.data();
 }
-bool render_octomap::resize(const uint32_t width, const uint32_t height)
+bool RenderOctomap::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	rebuild_command_buffers();
 	return true;
 }
 
-void render_octomap::on_update_ui_overlay(vkb::Drawer &drawer)
+void RenderOctomap::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.button("OCTOMAP"))
 	{
@@ -599,7 +600,7 @@ void render_octomap::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void render_octomap::render(float delta_time)
+void RenderOctomap::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -659,8 +660,8 @@ void render_octomap::render(float delta_time)
 	// Draw the 3D map fullscreen; the ImGui overlay is drawn on top afterwards.
 	VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 	vkCmdSetViewport(cmd, 0, 1, &viewport);
-	VkRect2D scissorRect = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
-	vkCmdSetScissor(cmd, 0, 1, &scissorRect);
+	VkRect2D scissor_rect = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
+	vkCmdSetScissor(cmd, 0, 1, &scissor_rect);
 
 	VkDeviceSize offsets[2] = {0, 0};
 
@@ -768,14 +769,14 @@ void render_octomap::render(float delta_time)
 			// Sort splats back-to-front for correct alpha compositing.
 			// Camera position = -R^T * t, extracted from the view matrix.
 			{
-				glm::mat3 R      = glm::mat3(camera.matrices.view);
-				glm::vec3 t      = glm::vec3(camera.matrices.view[3]);
-				glm::vec3 camPos = -glm::transpose(R) * t;
+				glm::mat3 R       = glm::mat3(camera.matrices.view);
+				glm::vec3 t       = glm::vec3(camera.matrices.view[3]);
+				glm::vec3 cam_pos = -glm::transpose(R) * t;
 
 				std::sort(splat_instances_cpu.begin(), splat_instances_cpu.end(),
-				          [&camPos](const SplatInstance &a, const SplatInstance &b) {
-					          float dax = a.pos[0] - camPos.x, day = a.pos[1] - camPos.y, daz = a.pos[2] - camPos.z;
-					          float dbx = b.pos[0] - camPos.x, dby = b.pos[1] - camPos.y, dbz = b.pos[2] - camPos.z;
+				          [&cam_pos](const SplatInstance &a, const SplatInstance &b) {
+					          float dax = a.pos[0] - cam_pos.x, day = a.pos[1] - cam_pos.y, daz = a.pos[2] - cam_pos.z;
+					          float dbx = b.pos[0] - cam_pos.x, dby = b.pos[1] - cam_pos.y, dbz = b.pos[2] - cam_pos.z;
 					          return (dax * dax + day * day + daz * daz) > (dbx * dbx + dby * dby + dbz * dbz);
 				          });
 
@@ -807,7 +808,7 @@ void render_octomap::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-void render_octomap::input_event(const vkb::InputEvent &input_event)
+void RenderOctomap::input_event(const vkb::InputEvent &input_event)
 {
 	// For keyboard events, intercept WASD/numpad camera control before the
 	// framework's GUI gets a chance to capture the keystroke.
@@ -857,17 +858,17 @@ void render_octomap::input_event(const vkb::InputEvent &input_event)
 	ApiVulkanSample::input_event(input_event);
 }
 
-void render_octomap::on_view_state_changed(ViewState newState)
+void RenderOctomap::on_view_state_changed(ViewState new_state)
 {
-	if (current_view_state == newState)
+	if (current_view_state == new_state)
 	{
 		return;
 	}
 
-	LOGI("View state changed to: {}", static_cast<int>(newState));
-	current_view_state = newState;
+	LOGI("View state changed to: {}", static_cast<int>(new_state));
+	current_view_state = new_state;
 
-	switch (newState)
+	switch (new_state)
 	{
 		case ViewState::Octomap:
 			// Octomap is already loaded, just need to rebuild command buffers
@@ -895,7 +896,7 @@ void render_octomap::on_view_state_changed(ViewState newState)
 	rebuild_command_buffers();
 }
 
-void render_octomap::load_gltf_scene(const std::string &filename)
+void RenderOctomap::load_gltf_scene(const std::string &filename)
 {
 	LOGI("Loading GLTF scene: {}", filename);
 
@@ -928,7 +929,7 @@ void render_octomap::load_gltf_scene(const std::string &filename)
 	}
 }
 
-void render_octomap::load_gaussian_splats_scene(const std::string &scene_dir)
+void RenderOctomap::load_gaussian_splats_scene(const std::string &scene_dir)
 {
 	LOGI("Loading Gaussian Splats from directory: {}", scene_dir);
 
@@ -995,7 +996,7 @@ void render_octomap::load_gaussian_splats_scene(const std::string &scene_dir)
 	create_splat_pipeline(render_pass);
 }
 
-void render_octomap::load_gaussian_splats_data(const std::string &filename)
+void RenderOctomap::load_gaussian_splats_data(const std::string &filename)
 {
 	// Parse the splats GLTF directly to extract `KHR_gaussian_splatting` attributes.
 	// The file contains a single POINTS primitive with accessor indices for POSITION/COLOR_0 and
@@ -1163,5 +1164,5 @@ void render_octomap::load_gaussian_splats_data(const std::string &filename)
 
 std::unique_ptr<vkb::Application> create_render_octomap()
 {
-	return std::make_unique<render_octomap>();
+	return std::make_unique<RenderOctomap>();
 }

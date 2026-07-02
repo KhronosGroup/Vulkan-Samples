@@ -65,6 +65,13 @@ void main() {
     // Transform splat center to view space
     vec4 viewCenter = ubo.view * vec4(inPosition, 1.0);
 
+    // There is no vertex-shader discard, so culling is done by placing the quad outside the
+    // clip volume: with w = 1, clip coordinates of (2, 2, 2) divide down to NDC x/y = 2, which
+    // is outside Vulkan's [-1, 1] NDC range on those axes alone and is therefore rejected by
+    // clipping before the rasterizer ever sees it (NDC z = 2 is also outside Vulkan's [0, 1]
+    // depth range, reinforcing the cull). The other outputs are zeroed only so a culled vertex
+    // can't contribute visible color/opacity if it somehow survives (e.g. via flat interpolation).
+
     // Cull splats at or behind the near plane — they produce inverted/degenerate quads.
     if (viewCenter.z >= -0.001) {
         gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -77,7 +84,8 @@ void main() {
 
     float splatDepth = -viewCenter.z; // positive distance in front of camera
 
-    // Cull unconverged / degenerate splats whose world-scale exceeds their depth
+    // Cull unconverged / degenerate splats whose world-scale exceeds their depth (same
+    // outside-clip-volume technique as above).
     float maxScale = max(inScale.x, max(inScale.y, inScale.z));
     if (maxScale > splatDepth) {
         gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
