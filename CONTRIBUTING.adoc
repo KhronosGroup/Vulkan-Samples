@@ -156,7 +156,18 @@ It is recommended to use `clang-format-15`, which is compatible with the styles 
 . Make sure the sample code builds and runs on Windows, Linux, macOS and Android.
 If you cannot verify on all these target platforms, please note platform restrictions in the sample's README.
 . Verify the sample against a recent version of the Vulkan validation layers, either built from source or from the most recent available Vulkan SDK.
-. Submit a pull request via github for the contribution, including electronically signing the Khronos Contributor License Agreement (CLA) for the repository using CLA-Assistant.
+. Submit a pull request via GitHub for the contribution, including electronically signing the link:https://cla-assistant.io/KhronosGroup/Vulkan-Samples[Khronos Contributor License Agreement (CLA)] for the repository using CLA-Assistant.
+
+== AI-Assisted Contributions
+
+By submitting a Contribution to this repository, you additionally represent
+that, to the extent any of Your Contributions were developed with the
+assistance of artificial intelligence tools or AI-generated code, You have
+exercised sufficient review, judgment, and creative direction over such tools
+and resulting material to reasonably consider it Your original creation, and
+You are not aware of any third-party license, intellectual property claim, or
+other restriction arising from such use that is associated with any part of
+Your Contribution or use thereof.
 
 == Code Reviews
 
