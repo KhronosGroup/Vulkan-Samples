@@ -1,4 +1,7 @@
 ////
+- Copyright 2026 The Khronos Group, Inc. 
+- Copyright 2019-2026, Arm Limited and Contributors
+- 
 - SPDX-FileCopyrightText: 2019-2024, Arm Limited and Contributors
 - SPDX-FileCopyrightText: 2026 The Khronos Group, Inc.
 -
