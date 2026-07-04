@@ -262,10 +262,10 @@ void TimelineSemaphore::signal_next_frame()
 }
 
 // Waits for the timeline to reach MAX_STAGES for the current frame
-void TimelineSemaphore::wait_for_next_frame()
+void TimelineSemaphore::wait_for_next_frame(const uint64_t nextFrame)
 {
 	// MAX_STAGES is used as it provides a boundary value between the stages of this frame and the next
-	const uint64_t waitValue = (timeline.frame + 1) * Timeline::MAX_STAGES;
+	const uint64_t waitValue = nextFrame * Timeline::MAX_STAGES;
 
 	VkSemaphoreWaitInfo waitInfo;
 	waitInfo.sType          = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
@@ -307,13 +307,17 @@ void TimelineSemaphore::do_compute_work()
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores    = &timeline.semaphore;
 
+		// Define next frame prior to queue submit to prevent potential deadlock in wait_for_next_frame(). This can happen due to incorrect
+		// waitValue caused by signalling the main thread to advance the frame before completion of wait_for_next_frame() in worker threads
+		uint64_t nextFrame = timeline.frame + 1;
+
 		// If the threads are being killed, we need to skip the queue submission to allow the program to exit gracefully
 		if (compute_worker.alive)
 		{
 			VK_CHECK(vkQueueSubmit(compute.queue, 1, &submit_info, VK_NULL_HANDLE));
 		}
 
-		wait_for_next_frame();
+		wait_for_next_frame(nextFrame);
 	}
 }
 
@@ -485,13 +489,17 @@ void TimelineSemaphore::do_graphics_work()
 			wait_on_timeline(Timeline::draw);
 		}
 
+		// Define next frame prior to queue submit to prevent potential deadlock in wait_for_next_frame(). This can happen due to incorrect
+		// waitValue caused by signalling the main thread to advance the frame before completion of wait_for_next_frame() in worker threads
+		uint64_t nextFrame = timeline.frame + 1;
+
 		// If the threads are being killed, we need to skip the queue submission to allow the program to exit gracefully
 		if (graphics_worker.alive)
 		{
 			VK_CHECK(vkQueueSubmit(graphics.queue, 1, &submit_info, VK_NULL_HANDLE));
 		}
 
-		wait_for_next_frame();
+		wait_for_next_frame(nextFrame);
 	}
 }
 

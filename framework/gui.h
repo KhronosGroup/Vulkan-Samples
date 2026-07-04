@@ -29,7 +29,6 @@
 #include "platform/input_events.h"
 #include "platform/window.h"
 #include "rendering/hpp_pipeline_state.h"
-#include "stats/hpp_stats.h"
 #include "stats/stats.h"
 #include <glm/glm.hpp>
 #include <imgui.h>
@@ -106,7 +105,6 @@ class Gui
 	using PipelineLayoutType                = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineLayout, VkPipelineLayout>::type;
 	using PipelineShaderStageCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::PipelineShaderStageCreateInfo, VkPipelineShaderStageCreateInfo>::type;
 	using RenderPassType                    = typename std::conditional<bindingType == BindingType::Cpp, vk::RenderPass, VkRenderPass>::type;
-	using StatsType                         = typename std::conditional<bindingType == BindingType::Cpp, vkb::stats::HPPStats, vkb::Stats>::type;
 
   public:
 	/**
@@ -128,9 +126,9 @@ class Gui
 	  public:
 		/**
 		 * @brief Constructs a StatsView
-		 * @param stats Const pointer to the Stats data object; may be null
+		 * @param stats Const pointer to the vkb::stats::Stats data object; may be null
 		 */
-		StatsView(const StatsType *stats);
+		StatsView(const vkb::stats::Stats<bindingType> *stats);
 
 		float get_graph_height() const;
 
@@ -165,7 +163,7 @@ class Gui
 	 */
 	Gui(vkb::rendering::RenderContext<bindingType> &render_context,
 	    Window const                               &window,
-	    StatsType const                            *stats           = nullptr,
+	    vkb::stats::Stats<bindingType> const       *stats           = nullptr,
 	    float                                       font_size       = 21.0f,
 	    bool                                        explicit_update = false);
 
@@ -259,7 +257,7 @@ class Gui
 	 * @param stats Statistics to show (can be null)
 	 * @param debug_info Debug info to show (can be null)
 	 */
-	void show_top_window(const std::string &app_name, const StatsType *stats = nullptr, DebugInfo *debug_info = nullptr);
+	void show_top_window(const std::string &app_name, const vkb::stats::Stats<bindingType> *stats = nullptr, DebugInfo *debug_info = nullptr);
 
 	/**
 	 * @brief Updates the Gui
@@ -273,7 +271,7 @@ class Gui
 	 * @brief Shows a child with statistics
 	 * @param stats Statistics to show
 	 */
-	void show_stats(const StatsType &stats);
+	void show_stats(const vkb::stats::Stats<bindingType> &stats);
 
   private:
 	static constexpr char const      *default_font        = "Roboto-Regular";            // The name of the default font file to use
@@ -350,7 +348,7 @@ using GuiCpp = Gui<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
 inline Gui<bindingType>::Gui(
-    vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, StatsType const *stats, float font_size, bool explicit_update) :
+    vkb::rendering::RenderContext<bindingType> &render_context_, Window const &window, vkb::stats::Stats<bindingType> const *stats, float font_size, bool explicit_update) :
     render_context{render_context_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
@@ -1285,7 +1283,7 @@ inline void Gui<bindingType>::show_simple_window(const std::string &name, uint32
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::show_stats(const StatsType &stats)
+inline void Gui<bindingType>::show_stats(const vkb::stats::Stats<bindingType> &stats)
 {
 	for (const auto &stat_index : stats.get_requested_stats())
 	{
@@ -1327,7 +1325,7 @@ inline void Gui<bindingType>::show_stats(const StatsType &stats)
 }
 
 template <vkb::BindingType bindingType>
-inline void Gui<bindingType>::show_top_window(const std::string &app_name, const StatsType *stats, DebugInfo *debug_info)
+inline void Gui<bindingType>::show_top_window(const std::string &app_name, const vkb::stats::Stats<bindingType> *stats, DebugInfo *debug_info)
 {
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
@@ -1501,7 +1499,7 @@ inline void Gui<bindingType>::upload_draw_data(const ImDrawData *draw_data, uint
 }
 
 template <vkb::BindingType bindingType>
-inline Gui<bindingType>::StatsView::StatsView(const StatsType *stats)
+inline Gui<bindingType>::StatsView::StatsView(const vkb::stats::Stats<bindingType> *stats)
 {
 	if (stats == nullptr)
 	{
