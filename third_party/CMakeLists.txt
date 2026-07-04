@@ -402,5 +402,6 @@ if(NOT IOS)
     set_target_properties(vgf_samples PROPERTIES FOLDER "ThirdParty")
     set_target_properties(vgf_schema PROPERTIES FOLDER "ThirdParty")
     set_target_properties(vgf-utils PROPERTIES FOLDER "ThirdParty")
+    set_target_properties(flatc PROPERTIES FOLDER "ThirdParty")
 endif()
 
