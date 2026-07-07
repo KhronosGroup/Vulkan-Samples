@@ -95,7 +95,6 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	void         draw();
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void extend_instance_create_info(vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
-	virtual void extend_debug_utils_messenger_create_info(vkb::StructureChainBuilderC<VkDebugUtilsMessengerCreateInfoEXT> &scb) const override;
 	virtual void render(float delta_time) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
@@ -106,7 +105,10 @@ class ShaderDebugPrintf : public ApiVulkanSample
 	virtual void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
 
-	VkDebugUtilsMessengerCreateInfoEXT get_debug_utils_messenger_create_info() const;
+	VkDebugUtilsMessengerCreateInfoEXT const &get_debug_utils_messenger_create_info() const;
+
+  private:
+	VkDebugUtilsMessengerEXT debug_utils_messenger{VK_NULL_HANDLE};
 };
 
 std::unique_ptr<vkb::Application> create_shader_debugprintf();
