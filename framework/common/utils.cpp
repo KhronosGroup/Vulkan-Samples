@@ -106,7 +106,8 @@ void screenshot(vkb::rendering::RenderContextC &render_context, const std::strin
 	image_copy_region.imageExtent.height          = height;
 	image_copy_region.imageExtent.depth           = 1;
 
-	cmd_buf->copy_image_to_buffer(src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
+	cmd_buf->copy_image_to_buffer(
+	    src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
 
 	// Enable destination buffer to map memory
 	{
@@ -174,12 +175,7 @@ void screenshot(vkb::rendering::RenderContextC &render_context, const std::strin
 		}
 	}
 
-	vkb::fs::write_image(raw_data,
-	                     filename,
-	                     width,
-	                     height,
-	                     4,
-	                     width * 4);
+	vkb::fs::write_image(raw_data, filename, width, height, 4, width * 4);
 
 	dst_buffer.unmap();
 }        // namespace vkb
@@ -249,22 +245,33 @@ sg::Light &add_light(vkb::scene_graph::SceneC  &scene,
 	return light;
 }
 
-sg::Light &add_point_light(vkb::scene_graph::SceneC &scene, const glm::vec3 &position, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
+sg::Light &add_point_light(vkb::scene_graph::SceneC  &scene,
+                           const glm::vec3           &position,
+                           const sg::LightProperties &props,
+                           vkb::scene_graph::NodeC   *parent_node)
 {
 	return add_light(scene, sg::LightType::Point, position, {}, props, parent_node);
 }
 
-sg::Light &add_directional_light(vkb::scene_graph::SceneC &scene, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
+sg::Light &add_directional_light(vkb::scene_graph::SceneC  &scene,
+                                 const glm::quat           &rotation,
+                                 const sg::LightProperties &props,
+                                 vkb::scene_graph::NodeC   *parent_node)
 {
 	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
 }
 
-sg::Light &add_spot_light(vkb::scene_graph::SceneC &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, vkb::scene_graph::NodeC *parent_node)
+sg::Light &add_spot_light(vkb::scene_graph::SceneC  &scene,
+                          const glm::vec3           &position,
+                          const glm::quat           &rotation,
+                          const sg::LightProperties &props,
+                          vkb::scene_graph::NodeC   *parent_node)
 {
 	return add_light(scene, sg::LightType::Spot, position, rotation, props, parent_node);
 }
 
-vkb::scene_graph::NodeC &add_free_camera(vkb::scene_graph::SceneC &scene, const std::string &node_name, VkExtent2D extent)
+vkb::scene_graph::NodeC &
+    add_free_camera(vkb::scene_graph::SceneC &scene, const std::string &node_name, VkExtent2D extent)
 {
 	auto camera_node = scene.find_node(node_name);
 

@@ -111,7 +111,8 @@ struct hash<vkb::core::HPPDescriptorSetLayout>
 {
 	size_t operator()(const vkb::core::HPPDescriptorSetLayout &descriptor_set_layout) const
 	{
-		return std::hash<vkb::DescriptorSetLayout>()(reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout));
+		return std::hash<vkb::DescriptorSetLayout>()(
+		    reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout));
 	}
 };
 
@@ -338,7 +339,10 @@ struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
 }        // namespace
 
 template <class T, class... A>
-T &request_resource(vkb::core::DeviceCpp &device, vkb::HPPResourceRecord *recorder, std::unordered_map<size_t, T> &resources, A &...args)
+T &request_resource(vkb::core::DeviceCpp          &device,
+                    vkb::HPPResourceRecord        *recorder,
+                    std::unordered_map<size_t, T> &resources,
+                    A &...args)
 {
 	HPPRecordHelper<T, A...> record_helper;
 
@@ -369,7 +373,8 @@ T &request_resource(vkb::core::DeviceCpp &device, vkb::HPPResourceRecord *record
 
 		if (!res_ins_it.second)
 		{
-			throw std::runtime_error{std::string{"Insertion error for #"} + std::to_string(res_id) + "cache object (" + res_type + ")"};
+			throw std::runtime_error{std::string{"Insertion error for #"} + std::to_string(res_id) + "cache object (" +
+			                         res_type + ")"};
 		}
 
 		res_it = res_ins_it.first;
