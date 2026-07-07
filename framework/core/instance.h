@@ -247,8 +247,7 @@ inline Instance<bindingType>::Instance(std::string const                        
 	                                   .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions_cstr.size()),
 	                                   .ppEnabledExtensionNames = enabled_extensions_cstr.data()};
 
-	vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> scb;
-	scb.set_anchor_struct(create_info);
+	vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> scb(create_info);
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
 		extend_instance_create_info(scb);

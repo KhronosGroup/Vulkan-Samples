@@ -198,8 +198,6 @@ class VulkanSample : public vkb::Application
 	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
 	virtual void                    extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &scb) const;
-	virtual void                    extend_debug_report_callback_create_info(vkb::StructureChainBuilder<bindingType, DebugReportCallbackCreateInfoType> &scb) const;
-	virtual void                    extend_debug_utils_messenger_create_info(vkb::StructureChainBuilder<bindingType, DebugUtilsMessengerCreateInfoType> &scb) const;
 	virtual uint32_t                get_api_version() const;
 	virtual InstanceCreateFlagsType get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
 
@@ -341,8 +339,8 @@ class VulkanSample : public vkb::Application
 	static void set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	vk::DebugReportCallbackCreateInfoEXT get_debug_report_callback_create_info() const;
-	vk::DebugUtilsMessengerCreateInfoEXT get_debug_utils_messenger_create_info() const;
+	vk::DebugReportCallbackCreateInfoEXT const &get_debug_report_callback_create_info() const;
+	vk::DebugUtilsMessengerCreateInfoEXT const &get_debug_utils_messenger_create_info() const;
 #endif
 
 	/**
@@ -836,14 +834,6 @@ inline void VulkanSample<bindingType>::extend_instance_create_info_impl(vkb::Str
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::extend_debug_report_callback_create_info(vkb::StructureChainBuilder<bindingType, DebugReportCallbackCreateInfoType> &scb) const
-{}
-
-template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::extend_debug_utils_messenger_create_info(vkb::StructureChainBuilder<bindingType, DebugUtilsMessengerCreateInfoType> &scb) const
-{}
-
-template <vkb::BindingType bindingType>
 inline uint32_t VulkanSample<bindingType>::get_api_version() const
 {
 	return VK_API_VERSION_1_1;
@@ -904,18 +894,22 @@ inline vkb::core::Device<bindingType> &VulkanSample<bindingType>::get_device()
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 template <vkb::BindingType bindingType>
-inline vk::DebugReportCallbackCreateInfoEXT VulkanSample<bindingType>::get_debug_report_callback_create_info() const
+inline vk::DebugReportCallbackCreateInfoEXT const &VulkanSample<bindingType>::get_debug_report_callback_create_info() const
 {
-	return {.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-	        .pfnCallback = vkb::core::debug_callback};
+	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info =
+	    {.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	     .pfnCallback = vkb::core::debug_callback};
+	return debug_report_callback_create_info;
 }
 
 template <vkb::BindingType bindingType>
-inline vk::DebugUtilsMessengerCreateInfoEXT VulkanSample<bindingType>::get_debug_utils_messenger_create_info() const
+inline vk::DebugUtilsMessengerCreateInfoEXT const &VulkanSample<bindingType>::get_debug_utils_messenger_create_info() const
 {
-	return {.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-	        .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-	        .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
+	static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info =
+	    {.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	     .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	     .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
+	return debug_utils_messenger_create_info;
 }
 #endif
 
@@ -1236,51 +1230,17 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		instance.reset(reinterpret_cast<vkb::core::InstanceCpp *>(create_instance().release()));
 	}
 
-	// initialize debug utils or report callback based on enabled extensions, if any
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	// initialize debug utils or report callback based on enabled extensions
 	if (instance->is_extension_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		vkb::StructureChainBuilderCpp<vk::DebugUtilsMessengerCreateInfoEXT> scb;
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-		scb.set_anchor_struct(get_debug_utils_messenger_create_info());
-#endif
-
-		if constexpr (bindingType == BindingType::Cpp)
-		{
-			extend_debug_utils_messenger_create_info(scb);
-		}
-		else
-		{
-			extend_debug_utils_messenger_create_info(reinterpret_cast<vkb::StructureChainBuilderC<VkDebugUtilsMessengerCreateInfoEXT> &>(scb));
-		}
-
-		vk::DebugUtilsMessengerCreateInfoEXT const *debug_utils_messenger_create_info = scb.get_struct<vk::DebugUtilsMessengerCreateInfoEXT>();
-		if (debug_utils_messenger_create_info)
-		{
-			debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*debug_utils_messenger_create_info);
-		}
+		debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(get_debug_utils_messenger_create_info());
 	}
 	else if (instance->is_extension_enabled(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		vkb::StructureChainBuilderCpp<vk::DebugReportCallbackCreateInfoEXT> scb;
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-		scb.set_anchor_struct(get_debug_report_callback_create_info());
-#endif
-
-		if constexpr (bindingType == BindingType::Cpp)
-		{
-			extend_debug_report_callback_create_info(scb);
-		}
-		else
-		{
-			extend_debug_report_callback_create_info(reinterpret_cast<vkb::StructureChainBuilderC<VkDebugReportCallbackCreateInfoEXT> &>(scb));
-		}
-
-		vk::DebugReportCallbackCreateInfoEXT const *debug_report_callback_create_info = scb.get_struct<vk::DebugReportCallbackCreateInfoEXT>();
-		if (debug_report_callback_create_info)
-		{
-			debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*debug_report_callback_create_info);
-		}
+		debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(get_debug_report_callback_create_info());
 	}
+#endif
 
 	// Getting a valid vulkan surface from the platform
 	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::core::InstanceC &>(*instance)));

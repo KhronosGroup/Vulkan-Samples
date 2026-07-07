@@ -61,6 +61,8 @@ ShaderDebugPrintf::~ShaderDebugPrintf()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
+
+		vkDestroyDebugUtilsMessengerEXT(get_instance().get_handle(), debug_utils_messenger, nullptr);
 	}
 }
 
@@ -440,6 +442,12 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	// Register a sample specific debug utils callback in addition to the one registered by the base class
+	if (get_instance().is_extension_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		vkCreateDebugUtilsMessengerEXT(get_instance().get_handle(), &get_debug_utils_messenger_create_info(), nullptr, &debug_utils_messenger);
+	}
+
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -6.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
@@ -458,14 +466,16 @@ bool ShaderDebugPrintf::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-VkDebugUtilsMessengerCreateInfoEXT ShaderDebugPrintf::get_debug_utils_messenger_create_info() const
+VkDebugUtilsMessengerCreateInfoEXT const &ShaderDebugPrintf::get_debug_utils_messenger_create_info() const
 {
-	return {.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-	        .pNext           = nullptr,
-	        .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT,
-	        .messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT,
-	        .pfnUserCallback = debug_utils_message_callback,
-	        .pUserData       = nullptr};
+	static VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info =
+	    {.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+	     .pNext           = nullptr,
+	     .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT,
+	     .messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT,
+	     .pfnUserCallback = debug_utils_message_callback,
+	     .pUserData       = nullptr};
+	return debug_utils_messenger_create_info;
 }
 
 void ShaderDebugPrintf::extend_instance_create_info(vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
@@ -474,18 +484,6 @@ void ShaderDebugPrintf::extend_instance_create_info(vkb::StructureChainBuilderC<
 
 	// Register a sample specific debug utils callback in addition to the one registered by the base class
 	scb.add_struct(get_debug_utils_messenger_create_info());
-}
-
-void ShaderDebugPrintf::extend_debug_utils_messenger_create_info(vkb::StructureChainBuilderC<VkDebugUtilsMessengerCreateInfoEXT> &scb) const
-{
-	ApiVulkanSample::extend_debug_utils_messenger_create_info(scb);
-
-	// Register a sample specific debug utils callback in addition to the one registered by the base class
-	// for some unknown reason, this VkDebugUtilsMessengerCreateInfoEXT needs to be the first one!
-	// That is, we need to replace the current anchor with this one, and add the current anchor as the second struct in the chain.
-	VkDebugUtilsMessengerCreateInfoEXT tmp = *scb.get_struct<VkDebugUtilsMessengerCreateInfoEXT>();
-	scb.set_anchor_struct(get_debug_utils_messenger_create_info());
-	scb.add_struct(tmp);
 }
 
 void ShaderDebugPrintf::render(float delta_time)
