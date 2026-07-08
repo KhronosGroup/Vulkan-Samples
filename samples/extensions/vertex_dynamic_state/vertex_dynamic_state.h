@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, Mobica Limited
+/* Copyright (c) 2022-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,6 +70,7 @@ class VertexDynamicState : public ApiVulkanSample
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	void prepare_uniform_buffers();

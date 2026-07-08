@@ -51,10 +51,15 @@ void GraphicsPipelineLibrary::pipeline_creation_threadfn()
 GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 {
 	title = "Graphics pipeline library";
+}
+
+void GraphicsPipelineLibrary::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
 
 	// Graphics pipeline library related extensions required by this sample
-	add_device_extension(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
-	add_device_extension(VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME);
+	requested_extensions[VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME]          = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void GraphicsPipelineLibrary::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

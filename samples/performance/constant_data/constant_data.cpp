@@ -74,10 +74,6 @@ ConstantData::ConstantData()
 	{
 		config.insert<vkb::IntSetting>(vkb::to_u32(i), gui_method_value, vkb::to_u32(i));
 	}
-
-	// Request sample-specific extensions as optional
-	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME, true);
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME, true);
 }
 
 bool ConstantData::prepare(const vkb::ApplicationOptions &options)
@@ -120,6 +116,15 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	create_gui(*window, &get_stats());
 
 	return true;
+}
+
+void ConstantData::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Request sample-specific extensions as optional
+	requested_extensions[VK_KHR_MAINTENANCE3_EXTENSION_NAME]        = vkb::RequestMode::Optional;
+	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void ConstantData::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

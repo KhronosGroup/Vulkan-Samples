@@ -22,9 +22,6 @@
 
 DynamicBlending::DynamicBlending()
 {
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
-	add_device_extension(VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME);
-
 	title = "Dynamic blending";
 }
 
@@ -144,6 +141,14 @@ void DynamicBlending::prepare_scene()
 	                                          {1.0f, 0.0f, 1.0f, 0.5f},
 	                                          {1.0f, 1.0f, 0.0f, 0.5f},
 	                                          {1.0f, 1.0f, 1.0f, 0.5f}}};
+}
+
+void DynamicBlending::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void DynamicBlending::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

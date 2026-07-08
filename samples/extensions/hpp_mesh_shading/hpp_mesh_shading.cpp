@@ -25,11 +25,6 @@
 HPPMeshShading::HPPMeshShading()
 {
 	title = "Mesh shading";
-
-	// VK_EXT_mesh_shader depends on VK_KHR_spirv_1_4, which in turn depends on Vulkan 1.1 and VK_KHR_shader_float_controls
-	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 }
 
 HPPMeshShading::~HPPMeshShading()
@@ -69,6 +64,16 @@ bool HPPMeshShading::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	return prepared;
+}
+
+void HPPMeshShading::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleCpp::request_device_extensions(requested_extensions);
+
+	// VK_EXT_mesh_shader depends on VK_KHR_spirv_1_4, which in turn depends on Vulkan 1.1 and VK_KHR_shader_float_controls
+	requested_extensions[VK_EXT_MESH_SHADER_EXTENSION_NAME]           = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME]             = vkb::RequestMode::Required;
 }
 
 void HPPMeshShading::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)

@@ -21,8 +21,6 @@
 OITLinkedLists::OITLinkedLists()
 {
 	title = "OIT linked lists";
-
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 }
 
 OITLinkedLists::~OITLinkedLists()
@@ -106,6 +104,13 @@ void OITLinkedLists::render(float delta_time)
 		camera.rotate({delta_time * 5.0f, delta_time * 5.0f, 0.0f});
 	}
 	update_scene_constants();
+}
+
+void OITLinkedLists::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void OITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

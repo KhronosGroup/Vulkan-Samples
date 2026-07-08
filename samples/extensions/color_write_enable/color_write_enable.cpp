@@ -18,12 +18,6 @@
 
 #include "color_write_enable.h"
 
-ColorWriteEnable::ColorWriteEnable()
-{
-	add_device_extension(VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
-}
-
 ColorWriteEnable::~ColorWriteEnable()
 {
 	if (has_device())
@@ -231,6 +225,14 @@ void ColorWriteEnable::create_attachments()
 	create_attachment(format, &attachments.red);
 	create_attachment(format, &attachments.green);
 	create_attachment(format, &attachments.blue);
+}
+
+void ColorWriteEnable::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME]     = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

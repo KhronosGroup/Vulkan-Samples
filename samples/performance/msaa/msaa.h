@@ -76,6 +76,8 @@ class MSAASample : public vkb::VulkanSampleC
 	void draw_gui() override;
 
   private:
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	virtual void prepare_render_context() override;

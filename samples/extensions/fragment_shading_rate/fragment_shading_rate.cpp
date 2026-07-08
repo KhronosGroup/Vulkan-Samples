@@ -25,11 +25,6 @@
 FragmentShadingRate::FragmentShadingRate()
 {
 	title = "Fragment shading rate";
-	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
 }
 
 FragmentShadingRate::~FragmentShadingRate()
@@ -45,6 +40,16 @@ FragmentShadingRate::~FragmentShadingRate()
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
 	}
+}
+
+void FragmentShadingRate::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME]   = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MULTIVIEW_EXTENSION_NAME]             = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MAINTENANCE2_EXTENSION_NAME]          = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void FragmentShadingRate::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

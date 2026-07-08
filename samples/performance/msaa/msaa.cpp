@@ -73,14 +73,6 @@ const std::string to_string(VkResolveModeFlagBits mode)
 
 MSAASample::MSAASample()
 {
-	// Extension of interest in this sample (optional)
-	add_device_extension(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, true);
-
-	// Extension dependency requirements (given that instance API version is 1.0.0)
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, true);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME, true);
-	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	// MSAA will be enabled by default if supported
@@ -88,6 +80,19 @@ MSAASample::MSAASample()
 	// with writeback resolve of color and depth
 	config.insert<vkb::BoolSetting>(0, gui_run_postprocessing, false);
 	config.insert<vkb::BoolSetting>(1, gui_run_postprocessing, true);
+}
+
+void MSAASample::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Extension of interest in this sample (optional)
+	requested_extensions[VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME] = vkb::RequestMode::Optional;
+
+	// Extension dependency requirements (given that instance API version is 1.0.0)
+	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME] = vkb::RequestMode::Optional;
+	requested_extensions[VK_KHR_MAINTENANCE2_EXTENSION_NAME]        = vkb::RequestMode::Optional;
+	requested_extensions[VK_KHR_MULTIVIEW_EXTENSION_NAME]           = vkb::RequestMode::Optional;
 }
 
 bool MSAASample::prepare(const vkb::ApplicationOptions &options)

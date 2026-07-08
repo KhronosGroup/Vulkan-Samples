@@ -22,11 +22,6 @@ HostImageCopy::HostImageCopy()
 	title    = "Host image copy";
 	zoom     = -4.0f;
 	rotation = {-25.0f, 45.0f, 0.0f};
-
-	// Enable required extensions
-	add_device_extension(VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME);
-	add_device_extension(VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME);
 }
 
 HostImageCopy::~HostImageCopy()
@@ -39,6 +34,15 @@ HostImageCopy::~HostImageCopy()
 		destroy_texture(texture);
 		uniform_buffer_vs.reset();
 	}
+}
+
+void HostImageCopy::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME]        = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME]        = vkb::RequestMode::Required;
 }
 
 // Enable physical device features required for this example

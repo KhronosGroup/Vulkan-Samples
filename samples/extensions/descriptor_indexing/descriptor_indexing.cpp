@@ -23,13 +23,6 @@ static constexpr uint32_t NumDescriptorsNonUniform = 64;
 DescriptorIndexing::DescriptorIndexing()
 {
 	title = "Descriptor indexing";
-
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
-
-	// Works around a validation layer bug with descriptor pool allocation with VARIABLE_COUNT.
-	// See: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2350.
-	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
 }
 
 DescriptorIndexing::~DescriptorIndexing()
@@ -499,6 +492,18 @@ bool DescriptorIndexing::prepare(const vkb::ApplicationOptions &options)
 
 	prepared = true;
 	return true;
+}
+
+void DescriptorIndexing::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MAINTENANCE3_EXTENSION_NAME]        = vkb::RequestMode::Required;
+
+	// Works around a validation layer bug with descriptor pool allocation with VARIABLE_COUNT.
+	// See: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2350.
+	requested_extensions[VK_KHR_MAINTENANCE1_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void DescriptorIndexing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
