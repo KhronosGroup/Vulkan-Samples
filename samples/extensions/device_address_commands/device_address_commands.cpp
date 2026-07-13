@@ -74,7 +74,8 @@ bool DeviceAddressCommands::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	load_extension_functions();
+	volkLoadDevice(get_device().get_handle());
+
 	create_geometry_buffers();
 	create_object_buffers();
 	create_compute_pipeline();
@@ -108,30 +109,6 @@ void DeviceAddressCommands::request_gpu_features(vkb::core::PhysicalDeviceC &gpu
 	// vkCmdDrawIndexedIndirectCount2KHR is a multi-draw indirect variant;
 	// multiDrawIndirect is required when maxDrawCount > 1.
 	gpu.get_mutable_requested_features().multiDrawIndirect = VK_TRUE;
-}
-
-// ============================================================================
-// Extension function loading
-// ============================================================================
-
-void DeviceAddressCommands::load_extension_functions()
-{
-	VkDevice dev = get_device().get_handle();
-
-#define LOAD_PFN(name)                                                    \
-	name = reinterpret_cast<PFN_##name>(vkGetDeviceProcAddr(dev, #name)); \
-	if (!name)                                                            \
-	{                                                                     \
-		throw std::runtime_error("Failed to load " #name);                \
-	}
-
-	LOAD_PFN(vkCmdFillMemoryKHR)
-	LOAD_PFN(vkCmdUpdateMemoryKHR)
-	LOAD_PFN(vkCmdBindIndexBuffer3KHR)
-	LOAD_PFN(vkCmdBindVertexBuffers3KHR)
-	LOAD_PFN(vkCmdDrawIndexedIndirectCount2KHR)
-
-#undef LOAD_PFN
 }
 
 // ============================================================================

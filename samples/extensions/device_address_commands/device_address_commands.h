@@ -81,7 +81,6 @@ class DeviceAddressCommands : public ApiVulkanSample
 	void create_object_buffers();
 	void create_compute_pipeline();
 	void create_graphics_pipeline();
-	void load_extension_functions();
 
 	// -------------------------------------------------------------------------
 	// Scene constants
@@ -141,15 +140,6 @@ class DeviceAddressCommands : public ApiVulkanSample
 	VkPipeline       compute_pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout graphics_pipeline_layout{VK_NULL_HANDLE};
 	VkPipeline       graphics_pipeline{VK_NULL_HANDLE};
-
-	// -------------------------------------------------------------------------
-	// VK_KHR_device_address_commands function pointers (loaded at runtime)
-	// -------------------------------------------------------------------------
-	PFN_vkCmdFillMemoryKHR                vkCmdFillMemoryKHR{nullptr};
-	PFN_vkCmdUpdateMemoryKHR              vkCmdUpdateMemoryKHR{nullptr};
-	PFN_vkCmdBindIndexBuffer3KHR          vkCmdBindIndexBuffer3KHR{nullptr};
-	PFN_vkCmdBindVertexBuffers3KHR        vkCmdBindVertexBuffers3KHR{nullptr};
-	PFN_vkCmdDrawIndexedIndirectCount2KHR vkCmdDrawIndexedIndirectCount2KHR{nullptr};
 
 	float accumulated_time{0.0f};
 };
