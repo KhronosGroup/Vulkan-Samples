@@ -27,6 +27,7 @@ class ShaderQuadControl : public ApiVulkanSample
 
 	bool     prepare(const vkb::ApplicationOptions &options) override;
 	void     build_command_buffers() override;
+	void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void     request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	uint32_t get_api_version() const override;
