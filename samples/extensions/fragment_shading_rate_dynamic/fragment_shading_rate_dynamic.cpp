@@ -1053,9 +1053,7 @@ void FragmentShadingRateDynamic::draw()
 	submit_info.pCommandBuffers      = &draw_cmd_buffers[current_buffer];
 	submit_info.signalSemaphoreCount = 2;
 	submit_info.pSignalSemaphores    = semaphores.data();
-
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-	ApiVulkanSample::submit_frame();
 
 	const std::array<VkPipelineStageFlags, 2> small_wait_mask = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 	                                                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
@@ -1088,6 +1086,8 @@ void FragmentShadingRateDynamic::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &compute_submit_info, compute_fence));
 	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &compute_fence, VK_TRUE, UINT64_MAX));
 	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &compute_fence));
+
+	ApiVulkanSample::submit_frame();
 
 	vkDestroySemaphore(get_device().get_handle(), semaphore, VK_NULL_HANDLE);
 	vkDestroySemaphore(get_device().get_handle(), small_semaphore, VK_NULL_HANDLE);
