@@ -1378,7 +1378,10 @@ inline void VulkanSample<bindingType>::request_device_extensions(std::unordered_
 #endif
 
 #ifdef VKB_VULKAN_DEBUG
-	requested_extensions[VK_EXT_DEBUG_MARKER_EXTENSION_NAME] = vkb::RequestMode::Optional;
+	if (typeid(*debug_utils.get()) == typeid(vkb::core::HPPDebugMarkerExtDebugUtils))
+	{
+		requested_extensions[VK_EXT_DEBUG_MARKER_EXTENSION_NAME] = vkb::RequestMode::Required;
+	}
 #endif
 }
 
