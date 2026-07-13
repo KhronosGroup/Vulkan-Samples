@@ -281,7 +281,7 @@ void MultithreadingRenderPasses::record_separate_secondary_command_buffers(std::
 	    });
 
 	// Recording scene command buffer
-	vkb::ColorBlendState scene_color_blend_state;
+	vkb::rendering::ColorBlendStateC scene_color_blend_state;
 	scene_color_blend_state.attachments.resize(scene_render_pass.get_color_output_count(0));
 
 	scene_command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT, &scene_render_pass, &scene_framebuffer, 0);
@@ -514,7 +514,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::core
 	// Enabling depth bias to get rid of self-shadowing artifacts
 	// Depth bias literally "pushes" slightly all the primitives further away from the camera taking their slope into account
 	// It helps to avoid precision related problems while doing depth comparisons in the final pass
-	vkb::RasterizationState rasterization_state{};
+	vkb::rendering::RasterizationStateC rasterization_state{};
 	rasterization_state.front_face        = front_face;
 	rasterization_state.depth_bias_enable = VK_TRUE;
 
@@ -526,7 +526,7 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::core
 	command_buffer.set_rasterization_state(rasterization_state);
 	command_buffer.set_depth_bias(-1.4f, 0.0f, -1.7f);
 
-	vkb::MultisampleState multisample_state{};
+	vkb::rendering::MultisampleStateC multisample_state{};
 	multisample_state.rasterization_samples = get_sample_count();
 	command_buffer.set_multisample_state(multisample_state);
 }

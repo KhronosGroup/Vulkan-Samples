@@ -28,7 +28,6 @@
 #include "filesystem/legacy.h"
 #include "platform/input_events.h"
 #include "platform/window.h"
-#include "rendering/hpp_pipeline_state.h"
 #include "stats/stats.h"
 #include <glm/glm.hpp>
 #include <imgui.h>
@@ -695,26 +694,26 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 	// Location 2: Color
 	vk::VertexInputAttributeDescription col_attr = {.location = 2, .format = vk::Format::eR8G8B8A8Unorm, .offset = offsetof(ImDrawVert, col)};
 
-	vkb::rendering::HPPVertexInputState vertex_input_state = {.bindings = {vertex_input_binding}, .attributes = {pos_attr, uv_attr, col_attr}};
+	vkb::rendering::VertexInputStateCpp vertex_input_state = {.bindings = {vertex_input_binding}, .attributes = {pos_attr, uv_attr, col_attr}};
 
 	command_buffer.set_vertex_input_state(vertex_input_state);
 
 	// Blend state
-	vkb::rendering::HPPColorBlendAttachmentState color_attachment = {.blend_enable           = true,
+	vkb::rendering::ColorBlendAttachmentStateCpp color_attachment = {.blend_enable           = true,
 	                                                                 .src_color_blend_factor = vk::BlendFactor::eSrcAlpha,
 	                                                                 .dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha,
 	                                                                 .src_alpha_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha,
 	                                                                 .color_write_mask       = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
 	                                                                                     vk::ColorComponentFlagBits::eB};
 
-	vkb::rendering::HPPColorBlendState blend_state{.attachments = {color_attachment}};
+	vkb::rendering::ColorBlendStateCpp blend_state{.attachments = {color_attachment}};
 
 	command_buffer.set_color_blend_state(blend_state);
 
-	vkb::rendering::HPPRasterizationState rasterization_state = {.cull_mode = vk::CullModeFlagBits::eNone};
+	vkb::rendering::RasterizationStateCpp rasterization_state = {.cull_mode = vk::CullModeFlagBits::eNone};
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	vkb::rendering::HPPDepthStencilState depth_state = {.depth_test_enable = false, .depth_write_enable = false};
+	vkb::rendering::DepthStencilStateCpp depth_state = {.depth_test_enable = false, .depth_write_enable = false};
 	command_buffer.set_depth_stencil_state(depth_state);
 
 	// Bind pipeline layout

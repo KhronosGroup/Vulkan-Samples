@@ -136,7 +136,7 @@ void PostProcessingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
 	// Disable culling
-	RasterizationState rasterization_state;
+	vkb::rendering::RasterizationStateC rasterization_state;
 	rasterization_state.cull_mode = VK_CULL_MODE_NONE;
 	command_buffer.set_rasterization_state(rasterization_state);
 

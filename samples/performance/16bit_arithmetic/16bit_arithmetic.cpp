@@ -202,11 +202,11 @@ void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::core::CommandBuff
 	command_buffer.bind_pipeline_layout(*layout);
 
 	// A depth-stencil attachment exists in the default render pass, make sure we ignore it.
-	vkb::DepthStencilState ds_state = {};
-	ds_state.depth_test_enable      = VK_FALSE;
-	ds_state.stencil_test_enable    = VK_FALSE;
-	ds_state.depth_write_enable     = VK_FALSE;
-	ds_state.depth_compare_op       = VK_COMPARE_OP_ALWAYS;
+	vkb::rendering::DepthStencilStateC ds_state = {};
+	ds_state.depth_test_enable                  = VK_FALSE;
+	ds_state.stencil_test_enable                = VK_FALSE;
+	ds_state.depth_write_enable                 = VK_FALSE;
+	ds_state.depth_compare_op                   = VK_COMPARE_OP_ALWAYS;
 	command_buffer.set_depth_stencil_state(ds_state);
 
 	command_buffer.bind_image(*view, *sampler, 0, 0, 0);

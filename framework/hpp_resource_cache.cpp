@@ -70,7 +70,7 @@ const HPPResourceCacheState &HPPResourceCache::get_internal_state() const
 	return state;
 }
 
-vkb::core::HPPComputePipeline &HPPResourceCache::request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
+vkb::core::HPPComputePipeline &HPPResourceCache::request_compute_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state)
 {
 	return request_resource(device, recorder, compute_pipeline_mutex, state.compute_pipelines, pipeline_cache, pipeline_state);
 }
@@ -96,7 +96,7 @@ vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rend
 	return request_resource(device, recorder, framebuffer_mutex, state.framebuffers, render_target, render_pass);
 }
 
-vkb::core::HPPGraphicsPipeline &HPPResourceCache::request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
+vkb::core::HPPGraphicsPipeline &HPPResourceCache::request_graphics_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state)
 {
 	return request_resource(device, recorder, graphics_pipeline_mutex, state.graphics_pipelines, pipeline_cache, pipeline_state);
 }

@@ -240,15 +240,6 @@ struct hash<vkb::rendering::AttachmentCpp>
 };
 
 template <>
-struct hash<vkb::rendering::HPPPipelineState>
-{
-	size_t operator()(const vkb::rendering::HPPPipelineState &pipeline_state) const
-	{
-		return std::hash<vkb::PipelineState>()(reinterpret_cast<vkb::PipelineState const &>(pipeline_state));
-	}
-};
-
-template <>
 struct hash<vkb::rendering::RenderTargetCpp>
 {
 	size_t operator()(const vkb::rendering::RenderTargetCpp &render_target) const

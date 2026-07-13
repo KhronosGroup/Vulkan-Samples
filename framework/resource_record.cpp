@@ -93,7 +93,7 @@ size_t ResourceRecord::register_render_pass(const std::vector<vkb::rendering::At
 	return render_pass_indices.back();
 }
 
-size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cache*/, PipelineState &pipeline_state)
+size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cache*/, vkb::rendering::PipelineStateC &pipeline_state)
 {
 	graphics_pipeline_indices.push_back(graphics_pipeline_indices.size());
 

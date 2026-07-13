@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -734,12 +734,12 @@ void BlitSubpass::set_source(vkb::core::ImageView *source)
 
 void BlitSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 {
-	vkb::RasterizationState rasterization_state = {};
-	rasterization_state.cull_mode               = VK_CULL_MODE_NONE;
+	vkb::rendering::RasterizationStateC rasterization_state = {};
+	rasterization_state.cull_mode                           = VK_CULL_MODE_NONE;
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	vkb::DepthStencilState depth_stencil_state = {};
-	depth_stencil_state.depth_test_enable      = VK_FALSE;
+	vkb::rendering::DepthStencilStateC depth_stencil_state = {};
+	depth_stencil_state.depth_test_enable                  = VK_FALSE;
 	command_buffer.set_depth_stencil_state(depth_stencil_state);
 
 	command_buffer.bind_pipeline_layout(*pipeline_layout);

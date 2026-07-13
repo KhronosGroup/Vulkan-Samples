@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,14 +50,14 @@ VkPipeline Pipeline::get_handle() const
 	return handle;
 }
 
-const PipelineState &Pipeline::get_state() const
+const vkb::rendering::PipelineStateC &Pipeline::get_state() const
 {
 	return state;
 }
 
-ComputePipeline::ComputePipeline(vkb::core::DeviceC &device,
-                                 VkPipelineCache     pipeline_cache,
-                                 PipelineState      &pipeline_state) :
+ComputePipeline::ComputePipeline(vkb::core::DeviceC             &device,
+                                 VkPipelineCache                 pipeline_cache,
+                                 vkb::rendering::PipelineStateC &pipeline_state) :
     Pipeline{device}
 {
 	const ShaderModule *shader_module = pipeline_state.get_pipeline_layout().get_shader_modules().front();
@@ -123,9 +123,9 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC &device,
 	vkDestroyShaderModule(device.get_handle(), stage.module, nullptr);
 }
 
-GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC &device,
-                                   VkPipelineCache     pipeline_cache,
-                                   PipelineState      &pipeline_state) :
+GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC             &device,
+                                   VkPipelineCache                 pipeline_cache,
+                                   vkb::rendering::PipelineStateC &pipeline_state) :
     Pipeline{device}
 {
 	std::vector<VkShaderModule> shader_modules;

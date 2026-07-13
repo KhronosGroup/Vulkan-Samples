@@ -198,9 +198,9 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 
 		VkRect2D scissor{};
 
-		vkb::ColorBlendAttachmentState color_blend_attachment{};
+		vkb::rendering::ColorBlendAttachmentStateC color_blend_attachment{};
 
-		vkb::ColorBlendState color_blend_state{};
+		vkb::rendering::ColorBlendStateC color_blend_state{};
 
 		ForwardSubpassSecondaryState state{};
 

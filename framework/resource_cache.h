@@ -105,9 +105,9 @@ class ResourceCache
 	                                                   const std::vector<ShaderModule *> &shader_modules,
 	                                                   const std::vector<ShaderResource> &set_resources);
 
-	GraphicsPipeline &request_graphics_pipeline(PipelineState &pipeline_state);
+	GraphicsPipeline &request_graphics_pipeline(vkb::rendering::PipelineStateC &pipeline_state);
 
-	ComputePipeline &request_compute_pipeline(PipelineState &pipeline_state);
+	ComputePipeline &request_compute_pipeline(vkb::rendering::PipelineStateC &pipeline_state);
 
 	DescriptorSet &request_descriptor_set(DescriptorSetLayout                      &descriptor_set_layout,
 	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,

@@ -152,17 +152,17 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	read(stream,
 	     specialization_constant_state);
 
-	VertexInputState vertex_input_state{};
+	vkb::rendering::VertexInputStateC vertex_input_state{};
 
 	read(stream,
 	     vertex_input_state.attributes,
 	     vertex_input_state.bindings);
 
-	InputAssemblyState input_assembly_state{};
-	RasterizationState rasterization_state{};
-	ViewportState      viewport_state{};
-	MultisampleState   multisample_state{};
-	DepthStencilState  depth_stencil_state{};
+	vkb::rendering::InputAssemblyStateC input_assembly_state{};
+	vkb::rendering::RasterizationStateC rasterization_state{};
+	vkb::rendering::ViewportState       viewport_state{};
+	vkb::rendering::MultisampleStateC   multisample_state{};
+	vkb::rendering::DepthStencilStateC  depth_stencil_state{};
 
 	read(stream,
 	     input_assembly_state,
@@ -171,14 +171,14 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	     multisample_state,
 	     depth_stencil_state);
 
-	ColorBlendState color_blend_state{};
+	vkb::rendering::ColorBlendStateC color_blend_state{};
 
 	read(stream,
 	     color_blend_state.logic_op,
 	     color_blend_state.logic_op_enable,
 	     color_blend_state.attachments);
 
-	PipelineState pipeline_state{};
+	vkb::rendering::PipelineStateC pipeline_state{};
 	assert(pipeline_layout_index < pipeline_layouts.size());
 	pipeline_state.set_pipeline_layout(*pipeline_layouts[pipeline_layout_index]);
 	assert(render_pass_index < render_passes.size());

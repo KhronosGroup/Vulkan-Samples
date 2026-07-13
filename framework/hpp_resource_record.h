@@ -37,11 +37,6 @@ class HPPShaderVariant;
 struct HPPSubpassInfo;
 }        // namespace core
 
-namespace rendering
-{
-class HPPPipelineState;
-}
-
 /**
  * @brief facade class around vkb::ResourceRecord, providing a vulkan.hpp-based interface
  *
@@ -53,10 +48,10 @@ class HPPResourceRecord : private vkb::ResourceRecord
 	using vkb::ResourceRecord::get_data;
 	using vkb::ResourceRecord::set_data;
 
-	size_t register_graphics_pipeline(vk::PipelineCache pipeline_cache, vkb::rendering::HPPPipelineState &pipeline_state)
+	size_t register_graphics_pipeline(vk::PipelineCache pipeline_cache, vkb::rendering::PipelineStateCpp &pipeline_state)
 	{
 		return vkb::ResourceRecord::register_graphics_pipeline(static_cast<VkPipelineCache>(pipeline_cache),
-		                                                       reinterpret_cast<vkb::PipelineState &>(pipeline_state));
+		                                                       reinterpret_cast<vkb::rendering::PipelineStateC &>(pipeline_state));
 	}
 
 	size_t register_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
