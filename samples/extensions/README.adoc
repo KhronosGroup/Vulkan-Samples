@@ -154,6 +154,12 @@ The sample implements "Game of Life" in an esoteric way, using out-of-order sign
 
 Demonstrates how to use the buffer device address feature, which enables extreme flexibility in how buffer memory is accessed.
 
+=== xref:./{extension_samplespath}device_address_commands/README.adoc[Device address commands]
+
+*Extension*: https://www.khronos.org/registry/vulkan/specs/latest/man/html/VK_KHR_device_address_commands.html[`VK_KHR_device_address_commands`]
+
+GPU-driven galaxy rendering that demonstrates address-based variants of bind, draw, fill, update, and memory-range barrier commands — no `VkBuffer` handles required at record time.
+
 === xref:./{extension_samplespath}synchronization_2/README.adoc[Synchronization2]
 
 *Extension* https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_KHR_synchronization2[`VK_KHR_synchronization2`]

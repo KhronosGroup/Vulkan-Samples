@@ -1,0 +1,409 @@
+////
+- Copyright (c) 2026, Holochip Inc.
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+////
+
+= VK_KHR_device_address_commands
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/device_address_commands[Khronos Vulkan samples github repository].
+endif::[]
+
+== Overview
+
+`VK_KHR_device_address_commands` replaces
+_buffer handles_ with _device addresses_ in the most commonly used Vulkan commands.
+Instead of passing a `VkBuffer` and a byte offset to commands such as
+`vkCmdBindIndexBuffer` or `vkCmdFillBuffer`, the caller passes a raw 64-bit
+`VkDeviceAddress` — the same kind of pointer already used by
+`VK_KHR_buffer_device_address` in shader code.
+
+This matters in GPU-driven rendering and ray-tracing systems that manage many
+small allocations inside a single large heap buffer.  With this extension every
+bind, draw, fill, and update command can work on any sub-range of any buffer
+using only the address that a sub-allocator already tracks, without having to
+keep a `VkBuffer` alive for each sub-allocation.
+
+== What this sample demonstrates
+
+The sample renders a galaxy of 256 animated octahedra that orbit around the
+origin in a four-armed spiral pattern.  The entire scene is GPU-driven: a
+compute shader animates every object, builds a draw-command array, and atomically
+counts how many objects are close enough to the camera to be visible.  The
+graphics pass then draws only those visible objects.
+
+Every command in the frame loop that touches a device address uses the new
+extension functions:
+
+[cols="1,3", options="header"]
+|===
+|New command |Purpose in this sample
+
+|`vkCmdUpdateMemoryKHR`
+|Writes the view-projection matrix to a device-local buffer by address at the
+start of each frame.  Replaces `vkCmdUpdateBuffer`.
+
+|`vkCmdFillMemoryKHR`
+|Zeros the draw-count buffer by address before the compute pass runs.
+Replaces `vkCmdFillBuffer`.
+
+|`VkMemoryRangeBarrierKHR` / `VkMemoryRangeBarriersInfoKHR`
+|Synchronises address ranges between pipeline stages without requiring a
+`VkBuffer` handle.  Five such barriers guard the frame — two before the
+compute pass and three after.
+
+|`vkCmdBindIndexBuffer3KHR`
+|Binds the index buffer by its device address.  Replaces `vkCmdBindIndexBuffer`.
+
+|`vkCmdBindVertexBuffers3KHR`
+|Binds the vertex buffer by its device address.  Replaces `vkCmdBindVertexBuffers`.
+
+|`vkCmdDrawIndexedIndirectCount2KHR`
+|Issues GPU-driven indexed draw calls.  Both the draw-command array and the
+draw count are specified by device address.  Replaces
+`vkCmdDrawIndexedIndirectCount`.
+|===
+
+== Prerequisites
+
+=== Hardware / driver support
+
+The extension is reported by drivers that support address-based command
+recording.  Check for `VkPhysicalDeviceDeviceAddressCommandsFeaturesKHR::deviceAddressCommands`.
+
+=== Vulkan version and other required extensions
+
+* Vulkan **1.3** — for `vkCmdPipelineBarrier2` (synchronisation2 core), which
+  is the mechanism through which `VkMemoryRangeBarrierKHR` is submitted.
+* `VK_KHR_buffer_device_address` — either as a 1.2 core feature or as the KHR
+  extension, to obtain buffer addresses via `vkGetBufferDeviceAddress`.
+* `VK_KHR_device_address_commands` itself.
+
+=== Shader requirements
+
+GLSL shaders in this sample use:
+
+* `GL_EXT_buffer_reference2` — declares typed buffer pointers
+* `GL_EXT_shader_explicit_arithmetic_types_int64` — the `uint64_t` type in
+  push constants
+
+Slang shaders use the equivalent native pointer syntax: struct members of type
+`T*` are resolved to SPIR-V physical-storage-buffer pointers automatically.
+
+== Key concepts
+
+=== Addresses vs. handles
+
+In standard Vulkan every buffer is represented by a `VkBuffer` opaque handle.
+A single 4 GB device-local heap may be backed by hundreds of such handles, each
+requiring creation, destruction, and lifetime tracking.
+
+`VK_KHR_buffer_device_address` (Vulkan 1.2 core) lets you call
+`vkGetBufferDeviceAddress` to obtain the raw GPU virtual address of a buffer.
+Shaders can dereference that address through `GL_EXT_buffer_reference2` or
+Slang pointers — but _host commands_ still required a `VkBuffer` handle.
+
+`VK_KHR_device_address_commands` closes that gap: it provides address-based
+variants of the most performance-critical host commands, so a sub-allocator
+that hands out raw 64-bit addresses can use those addresses everywhere —
+including draw, bind, fill, and update commands — without maintaining a
+parallel table of `VkBuffer` handles.
+
+=== VkDeviceAddressRangeKHR
+
+Most new commands take a `VkDeviceAddressRangeKHR` instead of a `(VkBuffer,
+offset, size)` tuple:
+
+[source,c]
+----
+typedef struct VkDeviceAddressRangeKHR {
+    VkDeviceAddress address; // start of the range
+    VkDeviceSize    size;    // byte length
+} VkDeviceAddressRangeKHR;
+----
+
+=== VkStridedDeviceAddressRangeKHR
+
+Indirect-draw commands also accept a _stride_, allowing packed or sparse
+command arrays:
+
+[source,c]
+----
+typedef struct VkStridedDeviceAddressRangeKHR {
+    VkDeviceAddress address; // start of the first command
+    VkDeviceSize    size;    // total byte span
+    VkDeviceSize    stride;  // byte distance between consecutive commands
+} VkStridedDeviceAddressRangeKHR;
+----
+
+=== VkMemoryRangeBarrierKHR
+
+The address-based barrier replaces `VkBufferMemoryBarrier2`, which requires
+a `VkBuffer` handle:
+
+[source,c]
+----
+typedef struct VkMemoryRangeBarrierKHR {
+    VkStructureType             sType;
+    const void*                 pNext;
+    VkPipelineStageFlags2       srcStageMask;
+    VkAccessFlags2              srcAccessMask;
+    VkPipelineStageFlags2       dstStageMask;
+    VkAccessFlags2              dstAccessMask;
+    uint32_t                    srcQueueFamilyIndex;
+    uint32_t                    dstQueueFamilyIndex;
+    VkDeviceAddressRangeKHR     addressRange;
+} VkMemoryRangeBarrierKHR;
+----
+
+Multiple barriers are submitted in a single `vkCmdPipelineBarrier2` call by
+chaining a `VkMemoryRangeBarriersInfoKHR` into `VkDependencyInfo::pNext`:
+
+[source,c]
+----
+VkMemoryRangeBarriersInfoKHR mri{VK_STRUCTURE_TYPE_MEMORY_RANGE_BARRIERS_INFO_KHR};
+mri.memoryRangeBarrierCount = barrier_count;
+mri.pMemoryRangeBarriers    = barriers;
+
+VkDependencyInfo dep{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+dep.pNext = &mri;
+vkCmdPipelineBarrier2(cmd, &dep);
+----
+
+=== vkCmdFillMemoryKHR
+
+[source,c]
+----
+void vkCmdFillMemoryKHR(
+    VkCommandBuffer              commandBuffer,
+    const VkDeviceAddressRangeKHR* pRange,
+    VkAddressCommandFlagsKHR     flags,
+    uint32_t                     data);
+----
+
+Fills a memory range with a 32-bit pattern — the address-based equivalent of
+`vkCmdFillBuffer`.  `flags` is reserved for future usage-hint extensions.
+
+=== vkCmdUpdateMemoryKHR
+
+[source,c]
+----
+void vkCmdUpdateMemoryKHR(
+    VkCommandBuffer              commandBuffer,
+    const VkDeviceAddressRangeKHR* pRange,
+    VkAddressCommandFlagsKHR     flags,
+    VkDeviceSize                 dataSize,
+    const void*                  pData);
+----
+
+Embeds up to 65536 bytes of host data directly into the command stream and
+copies it to the target address range at execution time — the address-based
+equivalent of `vkCmdUpdateBuffer`.
+
+=== vkCmdBindIndexBuffer3KHR
+
+[source,c]
+----
+void vkCmdBindIndexBuffer3KHR(
+    VkCommandBuffer                     commandBuffer,
+    const VkBindIndexBuffer3InfoKHR*    pInfo);
+
+typedef struct VkBindIndexBuffer3InfoKHR {
+    VkStructureType              sType;
+    const void*                  pNext;
+    VkDeviceAddressRangeKHR      addressRange;
+    VkAddressCommandFlagsKHR     addressFlags;
+    VkIndexType                  indexType;
+} VkBindIndexBuffer3InfoKHR;
+----
+
+=== vkCmdBindVertexBuffers3KHR
+
+[source,c]
+----
+void vkCmdBindVertexBuffers3KHR(
+    VkCommandBuffer                       commandBuffer,
+    uint32_t                              firstBinding,
+    uint32_t                              bindingCount,
+    const VkBindVertexBuffer3InfoKHR*     pBindingInfos);
+
+typedef struct VkBindVertexBuffer3InfoKHR {
+    VkStructureType                  sType;
+    const void*                      pNext;
+    VkBool32                         setStride;   // VK_FALSE = stride from pipeline
+    VkStridedDeviceAddressRangeKHR   addressRange;
+    VkAddressCommandFlagsKHR         addressFlags;
+} VkBindVertexBuffer3InfoKHR;
+----
+
+When `setStride == VK_FALSE` the stride comes from the currently bound pipeline's
+vertex input state, which is the common case.
+
+=== vkCmdDrawIndexedIndirectCount2KHR
+
+[source,c]
+----
+void vkCmdDrawIndexedIndirectCount2KHR(
+    VkCommandBuffer                      commandBuffer,
+    const VkDrawIndirectCount2InfoKHR*   pInfo);
+
+typedef struct VkDrawIndirectCount2InfoKHR {
+    VkStructureType                  sType;
+    const void*                      pNext;
+    VkStridedDeviceAddressRangeKHR   addressRange;       // draw commands
+    VkAddressCommandFlagsKHR         addressFlags;
+    VkDeviceAddressRangeKHR          countAddressRange;  // draw count
+    VkAddressCommandFlagsKHR         countAddressFlags;
+    uint32_t                         maxDrawCount;
+} VkDrawIndirectCount2InfoKHR;
+----
+
+The `maxDrawCount` field is a hard upper bound used by the hardware to limit
+memory access, not a pre-count of visible objects — the actual draw count is
+read at execution time from `countAddressRange`.
+
+== Enabling the extension
+
+=== Feature request
+
+[source,cpp]
+----
+// In request_gpu_features():
+
+// Buffer device address is required to obtain VkDeviceAddress values.
+REQUEST_REQUIRED_FEATURE(gpu,
+    VkPhysicalDeviceBufferDeviceAddressFeatures,
+    bufferDeviceAddress);
+
+// The new extension feature.
+REQUEST_REQUIRED_FEATURE(gpu,
+    VkPhysicalDeviceDeviceAddressCommandsFeaturesKHR,
+    deviceAddressCommands);
+----
+
+=== Extension registration
+
+[source,cpp]
+----
+// In the constructor:
+add_device_extension(VK_KHR_DEVICE_ADDRESS_COMMANDS_EXTENSION_NAME);
+add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, /*optional=*/true);
+----
+
+=== Loading function pointers
+
+The extension functions are not part of the Vulkan 1.3 core dispatch table and
+must be fetched explicitly:
+
+[source,cpp]
+----
+fn_vkCmdFillMemoryKHR =
+    reinterpret_cast<PFN_vkCmdFillMemoryKHR>(
+        vkGetDeviceProcAddr(device, "vkCmdFillMemoryKHR"));
+// ... repeat for each command
+----
+
+=== Buffer allocation
+
+Every buffer whose address will be used must be created with
+`VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT` and its backing memory allocated
+with `VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT`:
+
+[source,cpp]
+----
+VkBufferCreateInfo bci = vkb::initializers::buffer_create_info(
+    usage | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, size);
+vkCreateBuffer(device, &bci, nullptr, &buffer);
+
+VkMemoryAllocateFlagsInfo mafi{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO};
+mafi.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+// ... add to VkMemoryAllocateInfo::pNext chain
+
+VkBufferDeviceAddressInfo bdai{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
+bdai.buffer = buffer;
+VkDeviceAddress address = vkGetBufferDeviceAddress(device, &bdai);
+----
+
+== Descriptor-free GPU-driven rendering
+
+Because every buffer is accessed by address — through push constants in both
+the compute and vertex shaders — this sample uses **zero descriptor sets or
+descriptor pools**.  The per-frame record loop is:
+
+[source,cpp]
+----
+// 1. Write VP matrix by address (replaces vkCmdUpdateBuffer)
+VkDeviceAddressRangeKHR cam_range{camera.address, sizeof(mat4)};
+vkCmdUpdateMemoryKHR(cmd, &cam_range, VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR, sizeof(mat4), &vp);
+
+// 2. Zero draw count by address (replaces vkCmdFillBuffer)
+VkDeviceAddressRangeKHR count_range{draw_count.address, sizeof(uint32_t)};
+vkCmdFillMemoryKHR(cmd, &count_range, VK_ADDRESS_COMMAND_STORAGE_BUFFER_USAGE_BIT_KHR, 0u);
+
+// 3. Barrier: transfer writes visible to compute / vertex
+// (VkMemoryRangeBarrierKHR × 2)
+
+// 4. Compute: animate objects and build draw commands
+vkCmdDispatch(cmd, 4, 1, 1);   // 4 groups × 64 threads = 256 objects
+
+// 5. Barrier: compute writes visible to indirect draw
+// (VkMemoryRangeBarrierKHR × 3)
+
+// 6. Bind index buffer by address
+vkCmdBindIndexBuffer3KHR(cmd, &idx_info);
+
+// 7. Bind vertex buffer by address
+vkCmdBindVertexBuffers3KHR(cmd, 0, 1, &vtx_info);
+
+// 8. GPU-driven draw: both command array and count by address
+vkCmdDrawIndexedIndirectCount2KHR(cmd, &draw_info);
+----
+
+== Push-constant interface
+
+Because there are no descriptors, all buffer addresses flow into shaders via
+push constants.  The two push-constant structs mirror each other between the
+C++ host and the shader:
+
+.Compute push constants (64 bytes, matching `DeviceAddressCommands::PushCompute`)
+[source,glsl]
+----
+layout(push_constant) uniform PushCompute {
+    float    time;              // animation clock
+    float    max_vis_dist;      // culling distance
+    uint64_t orbit_params_addr; // per-object orbital parameters
+    uint64_t transforms_addr;   // output mat4 array
+    uint64_t draw_cmds_addr;    // output VkDrawIndexedIndirectCommand array
+    uint64_t draw_count_addr;   // output atomic counter
+    vec3     camera_pos;        // for frustum culling
+    float    _pad;
+} pc;
+----
+
+.Vertex push constants (16 bytes, matching `DeviceAddressCommands::PushVertex`)
+[source,glsl]
+----
+layout(push_constant) uniform PushVertex {
+    CameraRef  camera;     // device address → mat4 view_projection
+    TransformRef transforms; // device address → mat4 per-object transforms
+} pc;
+----
+
+== Further reading
+
+* Vulkan specification: https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_device_address_commands.html[VK_KHR_device_address_commands]
+* Khronos proposal: https://docs.vulkan.org/features/latest/features/proposals/VK_KHR_device_address_commands.html[Feature proposal]
+* Related sample: xref:../buffer_device_address/README.adoc[Buffer device address]
