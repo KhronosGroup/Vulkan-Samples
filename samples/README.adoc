@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2020-2024, Arm Limited and Contributors
+- Copyright (c) 2020-2026, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -44,3 +44,6 @@ include::./extensions/README.adoc[]
 
 [[tooling-samples]]
 include::./tooling/README.adoc[]
+
+[[complex-samples]]
+include::../complex/README.adoc[]
