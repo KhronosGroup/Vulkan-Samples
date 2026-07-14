@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -62,13 +62,14 @@ inline int32_t get_bits_per_pixel(vk::Format format)
 	return vkb::get_bits_per_pixel(static_cast<VkFormat>(format));
 }
 
-inline vk::Format get_suitable_depth_format(vk::PhysicalDevice             physical_device,
-                                            bool                           depth_only                 = false,
-                                            const std::vector<vk::Format> &depth_format_priority_list = {
-                                                vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16Unorm})
+inline vk::Format
+    get_suitable_depth_format(vk::PhysicalDevice             physical_device,
+                              bool                           depth_only                 = false,
+                              const std::vector<vk::Format> &depth_format_priority_list = {
+                                  vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16Unorm})
 {
-	return static_cast<vk::Format>(
-	    vkb::get_suitable_depth_format(physical_device, depth_only, reinterpret_cast<std::vector<VkFormat> const &>(depth_format_priority_list)));
+	return static_cast<vk::Format>(vkb::get_suitable_depth_format(
+	    physical_device, depth_only, reinterpret_cast<std::vector<VkFormat> const &>(depth_format_priority_list)));
 }
 
 inline bool is_buffer_descriptor_type(vk::DescriptorType descriptor_type)
@@ -152,7 +153,10 @@ inline void image_layout_transition(vk::CommandBuffer                command_buf
 	                             static_cast<VkImageSubresourceRange const &>(subresource_range));
 }
 
-inline void make_filters_valid(vk::PhysicalDevice physical_device, vk::Format format, vk::Filter *filter, vk::SamplerMipmapMode *mipmapMode = nullptr)
+inline void make_filters_valid(vk::PhysicalDevice     physical_device,
+                               vk::Format             format,
+                               vk::Filter            *filter,
+                               vk::SamplerMipmapMode *mipmapMode = nullptr)
 {
 	// Not all formats support linear filtering, so we need to adjust them if they don't
 	if (*filter == vk::Filter::eNearest && (mipmapMode == nullptr || *mipmapMode == vk::SamplerMipmapMode::eNearest))
@@ -172,19 +176,20 @@ inline void make_filters_valid(vk::PhysicalDevice physical_device, vk::Format fo
 	}
 }
 
-inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
-                                                  vk::SurfaceKHR                 surface,
-                                                  std::vector<vk::Format> const &preferred_formats = {
-                                                      vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32})
+inline vk::SurfaceFormatKHR
+    select_surface_format(vk::PhysicalDevice             gpu,
+                          vk::SurfaceKHR                 surface,
+                          std::vector<vk::Format> const &preferred_formats = {
+                              vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32})
 {
 	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
 	assert(!supported_surface_formats.empty());
 
-	auto it = std::ranges::find_if(supported_surface_formats,
-	                               [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
-		                               return std::ranges::any_of(preferred_formats,
-		                                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
-	                               });
+	auto it =
+	    std::ranges::find_if(supported_surface_formats, [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
+		    return std::ranges::any_of(
+		        preferred_formats, [&surface_format](vk::Format format) { return format == surface_format.format; });
+	    });
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
@@ -208,29 +213,36 @@ inline vk::ImageCompressionPropertiesEXT query_applied_compression(vk::Device de
 	vk::ImageSubresource2EXT image_subresource{
 	    .imageSubresource = {.aspectMask = vk::ImageAspectFlagBits::eColor, .mipLevel = 0, .arrayLayer = 0}};
 
-	auto imageSubresourceLayout = device.getImageSubresourceLayout2EXT<vk::SubresourceLayout2EXT, vk::ImageCompressionPropertiesEXT>(image, image_subresource);
+	auto imageSubresourceLayout =
+	    device.getImageSubresourceLayout2EXT<vk::SubresourceLayout2EXT, vk::ImageCompressionPropertiesEXT>(
+	        image, image_subresource);
 
 	return imageSubresourceLayout.get<vk::ImageCompressionPropertiesEXT>();
 }
 
 // helper functions not backed by vk_common.h
-inline vk::CommandBuffer
-    allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
+inline vk::CommandBuffer allocate_command_buffer(vk::Device             device,
+                                                 vk::CommandPool        command_pool,
+                                                 vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
 {
-	vk::CommandBufferAllocateInfo command_buffer_allocate_info{.commandPool = command_pool, .level = level, .commandBufferCount = 1};
+	vk::CommandBufferAllocateInfo command_buffer_allocate_info{
+	    .commandPool = command_pool, .level = level, .commandBufferCount = 1};
 	return device.allocateCommandBuffers(command_buffer_allocate_info).front();
 }
 
-inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
+inline vk::DescriptorSet allocate_descriptor_set(vk::Device              device,
+                                                 vk::DescriptorPool      descriptor_pool,
+                                                 vk::DescriptorSetLayout descriptor_set_layout)
 {
-	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{.descriptorPool     = descriptor_pool,
-	                                                           .descriptorSetCount = 1,
-	                                                           .pSetLayouts        = &descriptor_set_layout};
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info{
+	    .descriptorPool = descriptor_pool, .descriptorSetCount = 1, .pSetLayouts = &descriptor_set_layout};
 	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 }
 
-inline vk::Framebuffer
-    create_framebuffer(vk::Device device, vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
+inline vk::Framebuffer create_framebuffer(vk::Device                        device,
+                                          vk::RenderPass                    render_pass,
+                                          std::vector<vk::ImageView> const &attachments,
+                                          vk::Extent2D const               &extent)
 {
 	vk::FramebufferCreateInfo framebuffer_create_info{.renderPass      = render_pass,
 	                                                  .attachmentCount = static_cast<uint32_t>(attachments.size()),
@@ -241,19 +253,20 @@ inline vk::Framebuffer
 	return device.createFramebuffer(framebuffer_create_info);
 }
 
-inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
-                                             vk::PipelineCache                                         pipeline_cache,
-                                             std::vector<vk::PipelineShaderStageCreateInfo> const     &shader_stages,
-                                             vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
-                                             vk::PrimitiveTopology                                     primitive_topology,
-                                             uint32_t                                                  patch_control_points,
-                                             vk::PolygonMode                                           polygon_mode,
-                                             vk::CullModeFlags                                         cull_mode,
-                                             vk::FrontFace                                             front_face,
-                                             std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
-                                             vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
-                                             vk::PipelineLayout                                        pipeline_layout,
-                                             vk::RenderPass                                            render_pass)
+inline vk::Pipeline
+    create_graphics_pipeline(vk::Device                                                device,
+                             vk::PipelineCache                                         pipeline_cache,
+                             std::vector<vk::PipelineShaderStageCreateInfo> const     &shader_stages,
+                             vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
+                             vk::PrimitiveTopology                                     primitive_topology,
+                             uint32_t                                                  patch_control_points,
+                             vk::PolygonMode                                           polygon_mode,
+                             vk::CullModeFlags                                         cull_mode,
+                             vk::FrontFace                                             front_face,
+                             std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
+                             vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
+                             vk::PipelineLayout                                        pipeline_layout,
+                             vk::RenderPass                                            render_pass)
 {
 	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state{.topology = primitive_topology};
 
@@ -266,16 +279,18 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 
 	vk::PipelineMultisampleStateCreateInfo multisample_state{.rasterizationSamples = vk::SampleCountFlagBits::e1};
 
-	vk::PipelineColorBlendStateCreateInfo color_blend_state{.attachmentCount = static_cast<uint32_t>(blend_attachment_states.size()),
-	                                                        .pAttachments    = blend_attachment_states.data()};
+	vk::PipelineColorBlendStateCreateInfo color_blend_state{.attachmentCount =
+	                                                            static_cast<uint32_t>(blend_attachment_states.size()),
+	                                                        .pAttachments = blend_attachment_states.data()};
 
-	std::array<vk::DynamicState, 2>    dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-	vk::PipelineDynamicStateCreateInfo dynamic_state{.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size()),
-	                                                 .pDynamicStates    = dynamic_state_enables.data()};
+	std::array<vk::DynamicState, 2> dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+	vk::PipelineDynamicStateCreateInfo dynamic_state{.dynamicStateCount =
+	                                                     static_cast<uint32_t>(dynamic_state_enables.size()),
+	                                                 .pDynamicStates = dynamic_state_enables.data()};
 
 	// Final fullscreen composition pass pipeline
-	vk::GraphicsPipelineCreateInfo pipeline_create_info{.stageCount          = static_cast<uint32_t>(shader_stages.size()),
-	                                                    .pStages             = shader_stages.data(),
+	vk::GraphicsPipelineCreateInfo pipeline_create_info{.stageCount = static_cast<uint32_t>(shader_stages.size()),
+	                                                    .pStages    = shader_stages.data(),
 	                                                    .pVertexInputState   = &vertex_input_state,
 	                                                    .pInputAssemblyState = &input_assembly_state,
 	                                                    .pTessellationState  = &tessellation_state,
@@ -317,9 +332,13 @@ inline vk::ImageView create_image_view(vk::Device           device,
 	return device.createImageView(image_view_create_info);
 }
 
-inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_type, uint32_t query_count, vk::QueryPipelineStatisticFlags pipeline_statistics = {})
+inline vk::QueryPool create_query_pool(vk::Device                      device,
+                                       vk::QueryType                   query_type,
+                                       uint32_t                        query_count,
+                                       vk::QueryPipelineStatisticFlags pipeline_statistics = {})
 {
-	vk::QueryPoolCreateInfo query_pool_create_info{.queryType = query_type, .queryCount = query_count, .pipelineStatistics = pipeline_statistics};
+	vk::QueryPoolCreateInfo query_pool_create_info{
+	    .queryType = query_type, .queryCount = query_count, .pipelineStatistics = pipeline_statistics};
 	return device.createQueryPool(query_pool_create_info);
 }
 
@@ -393,7 +412,10 @@ inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage,
 	return image_aspect_flags;
 }
 
-inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::CommandBuffer> command_buffers, std::vector<vk::Semaphore> semaphores = {})
+inline void submit_and_wait(vk::Device                     device,
+                            vk::Queue                      queue,
+                            std::vector<vk::CommandBuffer> command_buffers,
+                            std::vector<vk::Semaphore>     semaphores = {})
 {
 	// Submit command_buffer
 	vk::SubmitInfo submit_info{.commandBufferCount   = static_cast<uint32_t>(command_buffers.size()),
@@ -419,14 +441,17 @@ inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::
 	device.destroyFence(fence);
 }
 
-inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> const &queue_family_properties, vk::QueueFlagBits queue_flag)
+inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> const &queue_family_properties,
+                                       vk::QueueFlagBits                             queue_flag)
 {
 	// Dedicated queue for compute
 	// Try to find a queue family index that supports compute but not graphics
 	if (queue_flag & vk::QueueFlagBits::eCompute)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties,
-		                                       [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics); });
+		auto propertyIt =
+		    std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
+			    return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics);
+		    });
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -437,11 +462,11 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	// Try to find a queue family index that supports transfer but not graphics and compute
 	if (queue_flag & vk::QueueFlagBits::eTransfer)
 	{
-		auto propertyIt = std::ranges::find_if(queue_family_properties,
-		                                       [queue_flag](const vk::QueueFamilyProperties &property) {
-			                                       return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
-			                                              !(property.queueFlags & vk::QueueFlagBits::eCompute);
-		                                       });
+		auto propertyIt =
+		    std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
+			    return (property.queueFlags & queue_flag) && !(property.queueFlags & vk::QueueFlagBits::eGraphics) &&
+			           !(property.queueFlags & vk::QueueFlagBits::eCompute);
+		    });
 		if (propertyIt != queue_family_properties.end())
 		{
 			return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));
@@ -449,8 +474,10 @@ inline uint32_t get_queue_family_index(std::vector<vk::QueueFamilyProperties> co
 	}
 
 	// For other queue types or if no separate compute queue is present, return the first one to support the requested flags
-	auto propertyIt = std::ranges::find_if(
-	    queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) { return (property.queueFlags & queue_flag) == queue_flag; });
+	auto propertyIt =
+	    std::ranges::find_if(queue_family_properties, [queue_flag](const vk::QueueFamilyProperties &property) {
+		    return (property.queueFlags & queue_flag) == queue_flag;
+	    });
 	if (propertyIt != queue_family_properties.end())
 	{
 		return static_cast<uint32_t>(std::distance(queue_family_properties.begin(), propertyIt));

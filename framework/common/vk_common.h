@@ -93,9 +93,7 @@ bool is_depth_format(VkFormat format);
 VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
                                    bool                         depth_only                 = false,
                                    const std::vector<VkFormat> &depth_format_priority_list = {
-                                       VK_FORMAT_D32_SFLOAT,
-                                       VK_FORMAT_D24_UNORM_S8_UINT,
-                                       VK_FORMAT_D16_UNORM});
+                                       VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM});
 
 /**
  * @brief Helper function to pick a blendable format from a priority ordered list
@@ -112,7 +110,10 @@ VkFormat choose_blendable_format(VkPhysicalDevice physical_device, const std::ve
  * @param filter The preferred filter to adjust
  * @param mipmapMode (Optional) The preferred mipmap mode to adjust
  */
-void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFilter *filter, VkSamplerMipmapMode *mipmapMode = nullptr);
+void make_filters_valid(VkPhysicalDevice     physical_device,
+                        VkFormat             format,
+                        VkFilter            *filter,
+                        VkSamplerMipmapMode *mipmapMode = nullptr);
 
 /**
  * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
@@ -166,10 +167,11 @@ VkShaderModule load_shader_from_vector(const std::vector<uint32_t> &spirv, VkDev
  * @param preferred_formats List of preferred VkFormats to use.
  * @return The preferred VkSurfaceFormatKHR.
  */
-VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice             gpu,
-                                         VkSurfaceKHR                 surface,
-                                         std::vector<VkFormat> const &preferred_formats = {
-                                             VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32});
+VkSurfaceFormatKHR
+    select_surface_format(VkPhysicalDevice             gpu,
+                          VkSurfaceKHR                 surface,
+                          std::vector<VkFormat> const &preferred_formats = {
+                              VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32});
 
 /**
  * @brief Image memory barrier structure used to define
@@ -281,9 +283,11 @@ void image_layout_transition(VkCommandBuffer                                    
 /**
  * @brief Helper functions for compression controls
  */
-std::vector<VkImageCompressionFixedRateFlagBitsEXT> fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags);
+std::vector<VkImageCompressionFixedRateFlagBitsEXT>
+    fixed_rate_compression_flags_to_vector(VkImageCompressionFixedRateFlagsEXT flags);
 
-VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice gpu, const VkImageCreateInfo &create_info);
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice         gpu,
+                                                                       const VkImageCreateInfo &create_info);
 
 VkImageCompressionPropertiesEXT query_applied_compression(VkDevice device, VkImage image);
 
@@ -320,6 +324,7 @@ std::vector<LoadStoreInfo> get_clear_store_all();
 std::vector<VkClearValue> get_clear_value();
 }        // namespace gbuffer
 
-uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queue_family_properties, VkQueueFlagBits queue_flag);
+uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queue_family_properties,
+                                VkQueueFlagBits                             queue_flag);
 
 }        // namespace vkb

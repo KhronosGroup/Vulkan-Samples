@@ -148,7 +148,8 @@ struct hash<vkb::LoadStoreInfo>
 		std::size_t result = 0;
 
 		vkb::hash_combine(result, static_cast<std::underlying_type<VkAttachmentLoadOp>::type>(load_store_info.load_op));
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkAttachmentStoreOp>::type>(load_store_info.store_op));
+		vkb::hash_combine(result,
+		                  static_cast<std::underlying_type<VkAttachmentStoreOp>::type>(load_store_info.store_op));
 
 		return result;
 	}
@@ -221,7 +222,8 @@ struct hash<vkb::ShaderResource>
 
 		vkb::hash_combine(result, shader_resource.set);
 		vkb::hash_combine(result, shader_resource.binding);
-		vkb::hash_combine(result, static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
+		vkb::hash_combine(result,
+		                  static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
 		vkb::hash_combine(result, shader_resource.mode);
 
 		return result;
@@ -251,7 +253,8 @@ struct hash<VkDescriptorImageInfo>
 		std::size_t result = 0;
 
 		vkb::hash_combine(result, descriptor_image_info.imageView);
-		vkb::hash_combine(result, static_cast<std::underlying_type<VkImageLayout>::type>(descriptor_image_info.imageLayout));
+		vkb::hash_combine(result,
+		                  static_cast<std::underlying_type<VkImageLayout>::type>(descriptor_image_info.imageLayout));
 		vkb::hash_combine(result, descriptor_image_info.sampler);
 
 		return result;
@@ -363,7 +366,8 @@ struct hash<vkb::rendering::StencilOpStateC>
 {
 	std::size_t operator()(const vkb::rendering::StencilOpStateC &stencil) const
 	{
-		return std::hash<vkb::rendering::StencilOpStateCpp>()(reinterpret_cast<vkb::rendering::StencilOpStateCpp const &>(stencil));
+		return std::hash<vkb::rendering::StencilOpStateCpp>()(
+		    reinterpret_cast<vkb::rendering::StencilOpStateCpp const &>(stencil));
 	}
 };
 
@@ -452,7 +456,8 @@ struct hash<vkb::rendering::ColorBlendAttachmentStateC>
 {
 	std::size_t operator()(const vkb::rendering::ColorBlendAttachmentStateC &color_blend_attachment) const
 	{
-		return std::hash<vkb::rendering::ColorBlendAttachmentStateCpp>()(reinterpret_cast<vkb::rendering::ColorBlendAttachmentStateCpp const &>(color_blend_attachment));
+		return std::hash<vkb::rendering::ColorBlendAttachmentStateCpp>()(
+		    reinterpret_cast<vkb::rendering::ColorBlendAttachmentStateCpp const &>(color_blend_attachment));
 	}
 };
 
@@ -557,7 +562,8 @@ struct hash<vkb::rendering::PipelineStateC>
 {
 	std::size_t operator()(const vkb::rendering::PipelineStateC &pipeline_state) const
 	{
-		return std::hash<vkb::rendering::PipelineStateCpp>()(reinterpret_cast<vkb::rendering::PipelineStateCpp const &>(pipeline_state));
+		return std::hash<vkb::rendering::PipelineStateCpp>()(
+		    reinterpret_cast<vkb::rendering::PipelineStateCpp const &>(pipeline_state));
 	}
 };
 }        // namespace std
@@ -574,21 +580,17 @@ inline void hash_param(size_t &seed, const T &value)
 
 template <>
 inline void hash_param(size_t & /*seed*/, const VkPipelineCache & /*value*/)
-{
-}
+{}
 
 template <>
-inline void hash_param<std::vector<uint8_t>>(
-    size_t                     &seed,
-    const std::vector<uint8_t> &value)
+inline void hash_param<std::vector<uint8_t>>(size_t &seed, const std::vector<uint8_t> &value)
 {
 	hash_combine(seed, std::string{value.begin(), value.end()});
 }
 
 template <>
-inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(
-    size_t                                         &seed,
-    const std::vector<vkb::rendering::AttachmentC> &value)
+inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(size_t                                         &seed,
+                                                                 const std::vector<vkb::rendering::AttachmentC> &value)
 {
 	for (auto &attachment : value)
 	{
@@ -597,9 +599,7 @@ inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(
 }
 
 template <>
-inline void hash_param<std::vector<LoadStoreInfo>>(
-    size_t                           &seed,
-    const std::vector<LoadStoreInfo> &value)
+inline void hash_param<std::vector<LoadStoreInfo>>(size_t &seed, const std::vector<LoadStoreInfo> &value)
 {
 	for (auto &load_store_info : value)
 	{
@@ -608,9 +608,7 @@ inline void hash_param<std::vector<LoadStoreInfo>>(
 }
 
 template <>
-inline void hash_param<std::vector<SubpassInfo>>(
-    size_t                         &seed,
-    const std::vector<SubpassInfo> &value)
+inline void hash_param<std::vector<SubpassInfo>>(size_t &seed, const std::vector<SubpassInfo> &value)
 {
 	for (auto &subpass_info : value)
 	{
@@ -619,9 +617,7 @@ inline void hash_param<std::vector<SubpassInfo>>(
 }
 
 template <>
-inline void hash_param<std::vector<ShaderModule *>>(
-    size_t                            &seed,
-    const std::vector<ShaderModule *> &value)
+inline void hash_param<std::vector<ShaderModule *>>(size_t &seed, const std::vector<ShaderModule *> &value)
 {
 	for (auto &shader_module : value)
 	{
@@ -630,9 +626,7 @@ inline void hash_param<std::vector<ShaderModule *>>(
 }
 
 template <>
-inline void hash_param<std::vector<ShaderResource>>(
-    size_t                            &seed,
-    const std::vector<ShaderResource> &value)
+inline void hash_param<std::vector<ShaderResource>>(size_t &seed, const std::vector<ShaderResource> &value)
 {
 	for (auto &resource : value)
 	{
@@ -642,8 +636,7 @@ inline void hash_param<std::vector<ShaderResource>>(
 
 template <>
 inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>>>(
-    size_t                                                               &seed,
-    const std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
+    size_t &seed, const std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
 {
 	for (auto &binding_set : value)
 	{
@@ -659,8 +652,7 @@ inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferI
 
 template <>
 inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>>>(
-    size_t                                                              &seed,
-    const std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
+    size_t &seed, const std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
 {
 	for (auto &binding_set : value)
 	{
@@ -691,8 +683,7 @@ struct RecordHelper
 	}
 
 	void index(ResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
-	{
-	}
+	{}
 };
 
 template <class... A>
@@ -753,7 +744,10 @@ struct RecordHelper<GraphicsPipeline, A...>
 }        // namespace
 
 template <class T, class... A>
-T &request_resource(vkb::core::DeviceC &device, ResourceRecord *recorder, std::unordered_map<std::size_t, T> &resources, A &...args)
+T &request_resource(vkb::core::DeviceC                 &device,
+                    ResourceRecord                     *recorder,
+                    std::unordered_map<std::size_t, T> &resources,
+                    A &...args)
 {
 	RecordHelper<T, A...> record_helper;
 
@@ -784,7 +778,8 @@ T &request_resource(vkb::core::DeviceC &device, ResourceRecord *recorder, std::u
 
 		if (!res_ins_it.second)
 		{
-			throw std::runtime_error{std::string{"Insertion error for #"} + std::to_string(res_id) + "cache object (" + res_type + ")"};
+			throw std::runtime_error{std::string{"Insertion error for #"} + std::to_string(res_id) + "cache object (" +
+			                         res_type + ")"};
 		}
 
 		res_it = res_ins_it.first;
