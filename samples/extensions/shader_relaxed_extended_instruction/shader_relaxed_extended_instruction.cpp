@@ -42,11 +42,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL s_debug_utils_message_callback(
 ShaderRelaxedExtendedInstruction::ShaderRelaxedExtendedInstruction()
 {
 	title = "Shader relaxed extended instruction (VK_KHR_shader_relaxed_extended_instruction)";
-
-	// Device extensions used by this demo
-	add_device_extension(VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME);
-	// Non-semantic info is the SPIR-V mechanism for non-semantic extended instruction sets
-	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 }
 
 ShaderRelaxedExtendedInstruction::~ShaderRelaxedExtendedInstruction()
@@ -100,6 +95,17 @@ void ShaderRelaxedExtendedInstruction::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
+}
+
+void ShaderRelaxedExtendedInstruction::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Device extensions used by this demo
+	requested_extensions[VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Non-semantic info is the SPIR-V mechanism for non-semantic extended instruction sets
+	requested_extensions[VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void ShaderRelaxedExtendedInstruction::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

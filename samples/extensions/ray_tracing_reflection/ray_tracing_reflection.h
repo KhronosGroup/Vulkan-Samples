@@ -135,6 +135,7 @@ class RaytracingReflection : public ApiVulkanSample
   private:
 	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
+	void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 };
 
 std::unique_ptr<vkb::VulkanSampleC> create_ray_tracing_reflection();

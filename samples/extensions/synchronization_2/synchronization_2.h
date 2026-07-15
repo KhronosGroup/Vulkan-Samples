@@ -98,6 +98,7 @@ class Synchronization2 : public ApiVulkanSample
 
 	Synchronization2();
 	~Synchronization2();
+	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         load_assets();
 	void         build_command_buffers() override;

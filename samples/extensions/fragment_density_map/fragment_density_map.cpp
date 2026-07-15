@@ -53,9 +53,6 @@ void FragmentDensityMap::destroy_pipeline(FragmentDensityMap::PipelineData &pipe
 FragmentDensityMap::FragmentDensityMap()
 {
 	title = "Fragment Density Map";
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-	add_device_extension(VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME);
 }
 
 FragmentDensityMap::~FragmentDensityMap()
@@ -982,6 +979,15 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 			fdm.ubo->convert_and_update(new_fdm_data);
 		}
 	}
+}
+
+void FragmentDensityMap::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME]  = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MAINTENANCE2_EXTENSION_NAME]         = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

@@ -45,8 +45,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL ShaderDebugPrintf::debug_utils_message_callback(
 ShaderDebugPrintf::ShaderDebugPrintf()
 {
 	title = "Shader debugprintf";
-
-	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 }
 
 ShaderDebugPrintf::~ShaderDebugPrintf()
@@ -131,6 +129,13 @@ void ShaderDebugPrintf::request_validation_feature_enables(std::vector<VkValidat
 {
 	ApiVulkanSample::request_validation_feature_enables(requested_layer_settings);
 	requested_layer_settings.push_back(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
+}
+
+void ShaderDebugPrintf::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void ShaderDebugPrintf::request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const

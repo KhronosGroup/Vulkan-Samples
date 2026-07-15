@@ -36,8 +36,6 @@ static constexpr unsigned grid_height = 64;
 TimelineSemaphore::TimelineSemaphore()
 {
 	title = "Timeline Semaphore";
-
-	add_device_extension(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 }
 
 TimelineSemaphore::~TimelineSemaphore()
@@ -612,6 +610,13 @@ void TimelineSemaphore::build_graphics_command_buffer()
 	vkCmdEndRenderPass(graphics.command_buffer);
 
 	VK_CHECK(vkEndCommandBuffer(graphics.command_buffer));
+}
+
+void TimelineSemaphore::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void TimelineSemaphore::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

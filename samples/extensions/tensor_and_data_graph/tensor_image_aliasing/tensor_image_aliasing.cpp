@@ -24,16 +24,6 @@
 #include "scene_graph/components/perspective_camera.h"
 #include "stats/stats.h"
 
-TensorImageAliasing::TensorImageAliasing()
-{
-	// Declare that we need the data graph and tensor extensions
-	add_device_extension("VK_ARM_tensors");
-	add_device_extension("VK_ARM_data_graph");
-	// These extensions are dependencies of the above, so we need to add them too.
-	add_device_extension("VK_KHR_maintenance5");
-	add_device_extension("VK_KHR_deferred_host_operations");
-}
-
 uint32_t TensorImageAliasing::get_api_version() const
 {
 	return VK_API_VERSION_1_3;        // Required by the emulation layers
@@ -53,6 +43,19 @@ TensorImageAliasing::~TensorImageAliasing()
 	// Make sure resources created in the render pipeline are destroyed before the Device gets destroyed.
 	// TODO: Could move this to the base VulkanSample class and upstream this patch.
 	set_render_pipeline(nullptr);
+}
+
+void TensorImageAliasing::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Declare that we need the data graph and tensor extensions
+	requested_extensions[VK_ARM_TENSORS_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_ARM_DATA_GRAPH_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// These extensions are dependencies of the above, so we need to add them too.
+	requested_extensions[VK_KHR_MAINTENANCE_5_EXTENSION_NAME]            = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 /**

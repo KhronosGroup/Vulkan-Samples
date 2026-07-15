@@ -132,6 +132,7 @@ class ShaderObject : public ApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void setup_framebuffer() override;
 	void setup_render_pass() override;
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void build_command_buffers() override;
 	void render(float delta_time) override;

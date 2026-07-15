@@ -20,8 +20,6 @@
 VertexDynamicState::VertexDynamicState()
 {
 	title = "Vertex Dynamic State";
-
-	add_device_extension(VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME);
 }
 
 VertexDynamicState::~VertexDynamicState()
@@ -442,6 +440,13 @@ void VertexDynamicState::create_descriptor_sets()
         vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
     };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+}
+
+void VertexDynamicState::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void VertexDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

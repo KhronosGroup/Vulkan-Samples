@@ -30,11 +30,6 @@ std::vector<std::string> LogicOpDynamicState::GUI_settings::logic_op_names =
 LogicOpDynamicState::LogicOpDynamicState()
 {
 	title = "Logic Operations Dynamic State";
-
-	/* Extensions required for dynamic logic operations */
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
-	add_device_extension(VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME);
 }
 
 LogicOpDynamicState::~LogicOpDynamicState()
@@ -192,6 +187,16 @@ void LogicOpDynamicState::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 	}
+}
+
+void LogicOpDynamicState::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	/* Extensions required for dynamic logic operations */
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME]        = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME]          = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 /**

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025 Holochip Corporation
+/* Copyright (c) 2023-2026 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,6 +35,7 @@ class MeshShading : public ApiVulkanSample
 	MeshShading();
 	~MeshShading() override;
 
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	void prepare_pipelines();

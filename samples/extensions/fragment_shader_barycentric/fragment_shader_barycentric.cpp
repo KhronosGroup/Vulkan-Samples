@@ -20,8 +20,6 @@
 FragmentShaderBarycentric::FragmentShaderBarycentric()
 {
 	title = "Fragment shader barycentric";
-
-	add_device_extension(VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME);
 }
 
 FragmentShaderBarycentric::~FragmentShaderBarycentric()
@@ -380,6 +378,13 @@ void FragmentShaderBarycentric::on_update_ui_overlay(vkb::Drawer &drawer)
 			rebuild_command_buffers();
 		}
 	}
+}
+
+void FragmentShaderBarycentric::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 /**
