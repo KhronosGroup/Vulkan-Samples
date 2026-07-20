@@ -55,7 +55,7 @@ const std::ostringstream &ResourceRecord::get_stream()
 	return stream;
 }
 
-size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant)
+size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const vkb::core::ShaderSource &glsl_source, const std::string &entry_point, const vkb::core::ShaderVariant &shader_variant)
 {
 	shader_module_indices.push_back(shader_module_indices.size());
 
@@ -64,13 +64,13 @@ size_t ResourceRecord::register_shader_module(VkShaderStageFlagBits stage, const
 	return shader_module_indices.back();
 }
 
-size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *> &shader_modules)
+size_t ResourceRecord::register_pipeline_layout(const std::vector<vkb::core::ShaderModuleC *> &shader_modules)
 {
 	pipeline_layout_indices.push_back(pipeline_layout_indices.size());
 
 	std::vector<size_t> shader_indices(shader_modules.size());
 	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
-	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
+	               [this](vkb::core::ShaderModuleC *shader_module) { return shader_module_to_index.at(shader_module); });
 
 	write(stream,
 	      ResourceType::PipelineLayout,
@@ -134,7 +134,7 @@ size_t ResourceRecord::register_graphics_pipeline(VkPipelineCache /*pipeline_cac
 	return graphics_pipeline_indices.back();
 }
 
-void ResourceRecord::set_shader_module(size_t index, const ShaderModule &shader_module)
+void ResourceRecord::set_shader_module(size_t index, const vkb::core::ShaderModuleC &shader_module)
 {
 	shader_module_to_index[&shader_module] = index;
 }

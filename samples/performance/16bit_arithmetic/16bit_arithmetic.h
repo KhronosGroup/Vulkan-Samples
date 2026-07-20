@@ -59,7 +59,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSampleC
 
 	struct VisualizationSubpass : vkb::rendering::SubpassC
 	{
-		VisualizationSubpass(vkb::rendering::RenderContextC &context, vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source);
+		VisualizationSubpass(vkb::rendering::RenderContextC &context, vkb::core::ShaderSource &&vertex_source, vkb::core::ShaderSource &&fragment_source);
 		virtual void prepare() override;
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
 

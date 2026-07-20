@@ -70,9 +70,9 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs("base.vert.spv");
-	vkb::ShaderSource scene_fs("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	vkb::core::ShaderSource scene_vs("base.vert.spv");
+	vkb::core::ShaderSource scene_fs("base.frag.spv");
+	auto                    scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
 	scene_subpass->set_output_attachments({static_cast<int>(Attachments::Color)});
 
 	// Forward rendering pass
@@ -82,9 +82,9 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	set_render_pipeline(std::move(render_pipeline));
 
 	// Post-processing pass (chromatic aberration)
-	vkb::ShaderSource postprocessing_vs("postprocessing/postprocessing.vert.spv");
+	vkb::core::ShaderSource postprocessing_vs("postprocessing/postprocessing.vert.spv");
 	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
-	postprocessing_pipeline->add_pass().add_subpass(vkb::ShaderSource("postprocessing/chromatic_aberration.frag.spv"));
+	postprocessing_pipeline->add_pass().add_subpass(vkb::core::ShaderSource("postprocessing/chromatic_aberration.frag.spv"));
 
 	// Trigger recreation of Swapchain and render targets, with initial compression parameters
 	update_render_targets();

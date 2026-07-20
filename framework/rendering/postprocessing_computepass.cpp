@@ -21,7 +21,7 @@
 
 namespace vkb
 {
-PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant,
+PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *parent, const vkb::core::ShaderSource &cs_source, const vkb::core::ShaderVariant &cs_variant,
                                                      std::shared_ptr<core::Sampler> &&default_sampler) :
     PostProcessingPass{parent},
     cs_source{cs_source},
@@ -161,8 +161,8 @@ void PostProcessingComputePass::transition_images(vkb::core::CommandBufferC &com
 				continue;
 			}
 
-			const bool readable = !(resource->qualifiers & ShaderResourceQualifiers::NonReadable);
-			const bool writable = !(resource->qualifiers & ShaderResourceQualifiers::NonReadable);
+			const bool readable = !(resource->qualifiers & vkb::core::ShaderResourceQualifierFlagBits::NonReadable);
+			const bool writable = !(resource->qualifiers & vkb::core::ShaderResourceQualifierFlagBits::NonWritable);
 
 			vkb::ImageMemoryBarrier barrier;
 			barrier.old_layout = storage_rt->get_layout(*attachment);

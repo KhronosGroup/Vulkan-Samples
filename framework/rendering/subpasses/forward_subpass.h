@@ -54,9 +54,6 @@ template <vkb::BindingType bindingType>
 class ForwardSubpass : public vkb::rendering::subpasses::GeometrySubpass<bindingType>
 {
   public:
-	using ShaderSourceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
-
-  public:
 	/**
 	 * @brief Constructs a subpass designed for forward rendering
 	 * @param render_context Render context
@@ -66,8 +63,8 @@ class ForwardSubpass : public vkb::rendering::subpasses::GeometrySubpass<binding
 	 * @param camera Camera used to look at the scene
 	 */
 	ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context,
-	               ShaderSourceType                          &&vertex_shader,
-	               ShaderSourceType                          &&fragment_shader,
+	               vkb::core::ShaderSource                   &&vertex_shader,
+	               vkb::core::ShaderSource                   &&fragment_shader,
 	               vkb::scene_graph::Scene<bindingType>       &scene,
 	               sg::Camera                                 &camera);
 
@@ -85,8 +82,8 @@ using ForwardSubpassCpp = ForwardSubpass<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
 inline ForwardSubpass<bindingType>::ForwardSubpass(vkb::rendering::RenderContext<bindingType> &render_context,
-                                                   ShaderSourceType                          &&vertex_source,
-                                                   ShaderSourceType                          &&fragment_source,
+                                                   vkb::core::ShaderSource                   &&vertex_source,
+                                                   vkb::core::ShaderSource                   &&fragment_source,
                                                    vkb::scene_graph::Scene<bindingType>       &scene_,
                                                    sg::Camera                                 &camera) :
     GeometrySubpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source), scene_, camera}
@@ -110,8 +107,8 @@ inline void ForwardSubpass<bindingType>::prepare()
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
 			auto &variant     = sub_mesh->get_mut_shader_variant();
-			auto &vert_module = device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader_impl(), variant);
-			auto &frag_module = device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader_impl(), variant);
+			auto &vert_module = device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader(), variant);
+			auto &frag_module = device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader(), variant);
 		}
 	}
 }
