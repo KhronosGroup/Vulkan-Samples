@@ -62,16 +62,16 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	{
 	  public:
 		ShadowSubpass(vkb::rendering::RenderContextC &render_context,
-		              vkb::ShaderSource             &&vertex_source,
-		              vkb::ShaderSource             &&fragment_source,
+		              vkb::core::ShaderSource       &&vertex_source,
+		              vkb::core::ShaderSource       &&fragment_source,
 		              vkb::scene_graph::SceneC       &scene,
 		              vkb::sg::Camera                &camera);
 
 	  protected:
 		virtual void prepare_pipeline_state(vkb::core::CommandBufferC &command_buffer, VkFrontFace front_face, bool double_sided_material) override;
 
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+		                                                     const std::vector<vkb::core::ShaderModuleC *> &shader_modules) override;
 
 		virtual void prepare_push_constants(vkb::core::CommandBufferC &command_buffer, vkb::sg::SubMesh &sub_mesh) override;
 	};
@@ -84,8 +84,8 @@ class MultithreadingRenderPasses : public vkb::VulkanSampleC
 	{
 	  public:
 		MainSubpass(vkb::rendering::RenderContextC                              &render_context,
-		            vkb::ShaderSource                                          &&vertex_source,
-		            vkb::ShaderSource                                          &&fragment_source,
+		            vkb::core::ShaderSource                                    &&vertex_source,
+		            vkb::core::ShaderSource                                    &&fragment_source,
 		            vkb::scene_graph::SceneC                                    &scene,
 		            vkb::sg::Camera                                             &camera,
 		            vkb::sg::Camera                                             &shadowmap_camera,

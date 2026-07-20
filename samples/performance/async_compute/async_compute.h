@@ -84,8 +84,8 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 	struct DepthMapSubpass : vkb::rendering::subpasses::ForwardSubpassC
 	{
 		DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
-		                vkb::ShaderSource             &&vertex_shader,
-		                vkb::ShaderSource             &&fragment_shader,
+		                vkb::core::ShaderSource       &&vertex_shader,
+		                vkb::core::ShaderSource       &&fragment_shader,
 		                vkb::scene_graph::SceneC       &scene,
 		                vkb::sg::Camera                &camera);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;
@@ -94,8 +94,8 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 	struct ShadowMapForwardSubpass : vkb::rendering::subpasses::ForwardSubpassC
 	{
 		ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
-		                        vkb::ShaderSource             &&vertex_shader,
-		                        vkb::ShaderSource             &&fragment_shader,
+		                        vkb::core::ShaderSource       &&vertex_shader,
+		                        vkb::core::ShaderSource       &&fragment_shader,
 		                        vkb::scene_graph::SceneC       &scene,
 		                        vkb::sg::Camera                &camera,
 		                        vkb::sg::Camera                &shadow_camera);
@@ -109,7 +109,7 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	struct CompositeSubpass : vkb::rendering::SubpassC
 	{
-		CompositeSubpass(vkb::rendering::RenderContextC &render_context, vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
+		CompositeSubpass(vkb::rendering::RenderContextC &render_context, vkb::core::ShaderSource &&vertex_shader, vkb::core::ShaderSource &&fragment_shader);
 		void         set_texture(const vkb::core::ImageView *hdr_view, const vkb::core::ImageView *bloom_view,
 		                         const vkb::core::Sampler *sampler);
 		virtual void draw(vkb::core::CommandBufferC &command_buffer) override;

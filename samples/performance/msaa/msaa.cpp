@@ -110,19 +110,19 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs{"base.vert.spv"};
-	vkb::ShaderSource scene_fs{"base.frag.spv"};
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
-	scene_pipeline                  = std::make_unique<vkb::rendering::RenderPipelineC>();
+	vkb::core::ShaderSource scene_vs{"base.vert.spv"};
+	vkb::core::ShaderSource scene_fs{"base.frag.spv"};
+	auto                    scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	scene_pipeline                        = std::make_unique<vkb::rendering::RenderPipelineC>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
-	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
+	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::core::ShaderSource{"postprocessing/postprocessing.vert.spv"});
 	postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource{"postprocessing/outline.frag.spv"});
+	    .add_subpass(vkb::core::ShaderSource{"postprocessing/outline.frag.spv"});
 
-	ms_depth_postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
+	ms_depth_postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::core::ShaderSource{"postprocessing/postprocessing.vert.spv"});
 	ms_depth_postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource{"postprocessing/outline_ms_depth.frag.spv"});
+	    .add_subpass(vkb::core::ShaderSource{"postprocessing/outline_ms_depth.frag.spv"});
 
 	update_pipelines();
 

@@ -111,9 +111,9 @@ bool PostprocessingWithVgf::prepare(const vkb::ApplicationOptions &options)
 	vkb::sg::Camera &camera      = camera_node.get_component<vkb::sg::Camera>();
 
 	// Create a forward rendering pipeline to render the scene.
-	vkb::ShaderSource vert_shader("base.vert.spv");
-	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
+	vkb::core::ShaderSource vert_shader("base.vert.spv");
+	vkb::core::ShaderSource frag_shader("base.frag.spv");
+	auto                    scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
 
 	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));

@@ -49,7 +49,7 @@ class ResourceReplay
 
 	std::unordered_map<ResourceType, ResourceFunc> stream_resources;
 
-	std::vector<ShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModuleC *> shader_modules;
 
 	std::vector<PipelineLayout *> pipeline_layouts;
 

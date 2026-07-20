@@ -79,16 +79,16 @@ class SubMesh : public Component
 
 	const Material *get_material() const;
 
-	const ShaderVariant &get_shader_variant() const;
+	const vkb::core::ShaderVariant &get_shader_variant() const;
 
-	ShaderVariant &get_mut_shader_variant();
+	vkb::core::ShaderVariant &get_mut_shader_variant();
 
   private:
 	std::unordered_map<std::string, VertexAttribute> vertex_attributes;
 
 	const Material *material{nullptr};
 
-	ShaderVariant shader_variant;
+	vkb::core::ShaderVariant shader_variant;
 };
 }        // namespace sg
 }        // namespace vkb

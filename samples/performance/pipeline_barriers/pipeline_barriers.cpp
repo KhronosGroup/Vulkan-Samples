@@ -84,8 +84,8 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert.spv"};
-	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag.spv"};
+	auto geometry_vs = vkb::core::ShaderSource{"deferred/geometry.vert.spv"};
+	auto geometry_fs = vkb::core::ShaderSource{"deferred/geometry.frag.spv"};
 
 	auto gbuffer_pass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
 	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
@@ -93,8 +93,8 @@ bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());
 
-	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert.spv"};
-	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag.spv"};
+	auto lighting_vs = vkb::core::ShaderSource{"deferred/lighting.vert.spv"};
+	auto lighting_fs = vkb::core::ShaderSource{"deferred/lighting.frag.spv"};
 
 	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
 	lighting_subpass->set_input_attachments({1, 2, 3});

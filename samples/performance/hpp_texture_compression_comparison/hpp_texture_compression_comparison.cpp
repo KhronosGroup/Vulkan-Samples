@@ -230,9 +230,9 @@ std::unique_ptr<vkb::scene_graph::components::HPPImage> HPPTextureCompressionCom
 
 void HPPTextureCompressionComparison::create_subpass()
 {
-	vkb::core::HPPShaderSource vert_shader("base.vert.spv");
-	vkb::core::HPPShaderSource frag_shader("base.frag.spv");
-	auto                       scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(
+	vkb::core::ShaderSource vert_shader("base.vert.spv");
+	vkb::core::ShaderSource frag_shader("base.frag.spv");
+	auto                    scene_sub_pass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(
         get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 
 	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineCpp>();
