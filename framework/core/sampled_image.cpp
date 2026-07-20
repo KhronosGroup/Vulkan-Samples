@@ -24,14 +24,13 @@ namespace vkb
 namespace core
 {
 SampledImage::SampledImage(const core::ImageView &image_view, Sampler *sampler) :
-    image_view{&image_view},
-    target_attachment{0},
-    render_target{nullptr},
-    sampler{sampler},
-    isDepthResolve{false}
+    image_view{&image_view}, target_attachment{0}, render_target{nullptr}, sampler{sampler}, isDepthResolve{false}
 {}
 
-SampledImage::SampledImage(uint32_t target_attachment, vkb::rendering::RenderTargetC *render_target, Sampler *sampler, bool isDepthResolve) :
+SampledImage::SampledImage(uint32_t                       target_attachment,
+                           vkb::rendering::RenderTargetC *render_target,
+                           Sampler                       *sampler,
+                           bool                           isDepthResolve) :
     image_view{nullptr},
     target_attachment{target_attachment},
     render_target{render_target},

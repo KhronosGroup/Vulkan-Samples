@@ -61,9 +61,11 @@ void init(const DeviceType &device)
 	allocator_info.device           = static_cast<VkDevice>(device.get_handle());
 	allocator_info.instance         = static_cast<VkInstance>(device.get_gpu().get_instance().get_handle());
 
-	bool can_get_memory_requirements = device.get_gpu().is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	bool has_dedicated_allocation    = device.get_gpu().is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-	if (can_get_memory_requirements && has_dedicated_allocation && device.is_extension_enabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
+	bool can_get_memory_requirements =
+	    device.get_gpu().is_extension_supported(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+	bool has_dedicated_allocation = device.get_gpu().is_extension_supported(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+	if (can_get_memory_requirements && has_dedicated_allocation &&
+	    device.is_extension_enabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	}
@@ -74,7 +76,8 @@ void init(const DeviceType &device)
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 	}
 
-	if (device.get_gpu().is_extension_supported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME) && device.is_extension_enabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME) &&
+	    device.is_extension_enabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 	}
@@ -85,7 +88,8 @@ void init(const DeviceType &device)
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT;
 	}
 
-	if (device.get_gpu().is_extension_supported(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME) && device.is_extension_enabled(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME))
+	if (device.get_gpu().is_extension_supported(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME) &&
+	    device.is_extension_enabled(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME))
 	{
 		allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
 	}
@@ -126,12 +130,16 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
   public:
 	using ParentType = vkb::core::VulkanResource<bindingType, HandleType>;
 
-	using BufferType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type;
-	using BufferCreateInfoType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type;
-	using DeviceMemoryType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceMemory, VkDeviceMemory>::type;
-	using DeviceSizeType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
-	using ImageCreateInfoType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ImageCreateInfo, VkImageCreateInfo>::type;
-	using ImageType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Image, VkImage>::type;
+	using BufferType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Buffer, VkBuffer>::type;
+	using BufferCreateInfoType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCreateInfo, VkBufferCreateInfo>::type;
+	using DeviceMemoryType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceMemory, VkDeviceMemory>::type;
+	using DeviceSizeType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceSize, VkDeviceSize>::type;
+	using ImageCreateInfoType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ImageCreateInfo, VkImageCreateInfo>::type;
+	using ImageType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Image, VkImage>::type;
 
   public:
 	Allocated()                  = delete;
@@ -398,14 +406,13 @@ inline Allocated<bindingType, HandleType>::Allocated(Allocated &&other) noexcept
     mapped_data(std::exchange(other.mapped_data, {})),
     coherent(std::exchange(other.coherent, {})),
     persistent(std::exchange(other.persistent, {}))
-{
-}
+{}
 
 template <vkb::BindingType bindingType, typename HandleType>
 template <typename... Args>
-inline Allocated<bindingType, HandleType>::Allocated(const VmaAllocationCreateInfo &allocation_create_info, Args &&...args) :
-    ParentType{std::forward<Args>(args)...},
-    allocation_create_info(allocation_create_info)
+inline Allocated<bindingType, HandleType>::Allocated(const VmaAllocationCreateInfo &allocation_create_info,
+                                                     Args &&...args) :
+    ParentType{std::forward<Args>(args)...}, allocation_create_info(allocation_create_info)
 {}
 
 template <vkb::BindingType bindingType, typename HandleType>
@@ -428,7 +435,8 @@ inline void Allocated<bindingType, HandleType>::clear()
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::BufferType Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment)
+inline typename Allocated<bindingType, HandleType>::BufferType
+    Allocated<bindingType, HandleType>::create_buffer(BufferCreateInfoType const &create_info, DeviceSizeType alignment)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -436,12 +444,14 @@ inline typename Allocated<bindingType, HandleType>::BufferType Allocated<binding
 	}
 	else
 	{
-		return static_cast<VkBuffer>(create_buffer_impl(reinterpret_cast<vk::BufferCreateInfo const &>(create_info), alignment));
+		return static_cast<VkBuffer>(
+		    create_buffer_impl(reinterpret_cast<vk::BufferCreateInfo const &>(create_info), alignment));
 	}
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::BufferCreateInfo const &create_info, DeviceSizeType alignment)
+inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::BufferCreateInfo const &create_info,
+                                                                         DeviceSizeType              alignment)
 {
 	vk::Buffer        buffer = VK_NULL_HANDLE;
 	VmaAllocationInfo allocation_info{};
@@ -449,24 +459,22 @@ inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::Buf
 	auto result = VK_SUCCESS;
 	if (alignment == 0)
 	{
-		result = vmaCreateBuffer(
-		    get_memory_allocator(),
-		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
-		    &allocation_create_info,
-		    reinterpret_cast<VkBuffer *>(&buffer),
-		    &allocation,
-		    &allocation_info);
+		result = vmaCreateBuffer(get_memory_allocator(),
+		                         reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		                         &allocation_create_info,
+		                         reinterpret_cast<VkBuffer *>(&buffer),
+		                         &allocation,
+		                         &allocation_info);
 	}
 	else
 	{
-		result = vmaCreateBufferWithAlignment(
-		    get_memory_allocator(),
-		    reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
-		    &allocation_create_info,
-		    alignment,
-		    reinterpret_cast<VkBuffer *>(&buffer),
-		    &allocation,
-		    &allocation_info);
+		result = vmaCreateBufferWithAlignment(get_memory_allocator(),
+		                                      reinterpret_cast<VkBufferCreateInfo const *>(&create_info),
+		                                      &allocation_create_info,
+		                                      alignment,
+		                                      reinterpret_cast<VkBuffer *>(&buffer),
+		                                      &allocation,
+		                                      &allocation_info);
 	}
 
 	if (result != VK_SUCCESS)
@@ -478,7 +486,8 @@ inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::Buf
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::ImageType Allocated<bindingType, HandleType>::create_image(ImageCreateInfoType const &create_info)
+inline typename Allocated<bindingType, HandleType>::ImageType
+    Allocated<bindingType, HandleType>::create_image(ImageCreateInfoType const &create_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -573,7 +582,8 @@ inline void Allocated<bindingType, HandleType>::flush(DeviceSizeType offset, Dev
 	{
 		if constexpr (bindingType == vkb::BindingType::Cpp)
 		{
-			vmaFlushAllocation(get_memory_allocator(), allocation, static_cast<VkDeviceSize>(offset), static_cast<VkDeviceSize>(size));
+			vmaFlushAllocation(
+			    get_memory_allocator(), allocation, static_cast<VkDeviceSize>(offset), static_cast<VkDeviceSize>(size));
 		}
 		else
 		{
@@ -589,7 +599,8 @@ inline const uint8_t *Allocated<bindingType, HandleType>::get_data() const
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::DeviceMemoryType Allocated<bindingType, HandleType>::get_memory() const
+inline typename Allocated<bindingType, HandleType>::DeviceMemoryType
+    Allocated<bindingType, HandleType>::get_memory() const
 {
 	VmaAllocationInfo alloc_info;
 	vmaGetAllocationInfo(get_memory_allocator(), allocation, &alloc_info);
@@ -604,7 +615,8 @@ inline typename Allocated<bindingType, HandleType>::DeviceMemoryType Allocated<b
 }
 
 template <vkb::BindingType bindingType, typename HandleType>
-inline typename Allocated<bindingType, HandleType>::DeviceSizeType Allocated<bindingType, HandleType>::get_memory_offset() const
+inline typename Allocated<bindingType, HandleType>::DeviceSizeType
+    Allocated<bindingType, HandleType>::get_memory_offset() const
 {
 	VmaAllocationInfo alloc_info;
 	vmaGetAllocationInfo(get_memory_allocator(), allocation, &alloc_info);

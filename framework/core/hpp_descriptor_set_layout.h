@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,19 +60,20 @@ class HPPDescriptorSetLayout : private vkb::DescriptorSetLayout
 
 	std::unique_ptr<vk::DescriptorSetLayoutBinding> get_layout_binding(const uint32_t binding_index) const
 	{
-		return std::unique_ptr<vk::DescriptorSetLayoutBinding>(
-		    reinterpret_cast<vk::DescriptorSetLayoutBinding *>(vkb::DescriptorSetLayout::get_layout_binding(binding_index).release()));
+		return std::unique_ptr<vk::DescriptorSetLayoutBinding>(reinterpret_cast<vk::DescriptorSetLayoutBinding *>(
+		    vkb::DescriptorSetLayout::get_layout_binding(binding_index).release()));
 	}
 
 	std::unique_ptr<vk::DescriptorSetLayoutBinding> get_layout_binding(std::string const &name) const
 	{
-		return std::unique_ptr<vk::DescriptorSetLayoutBinding>(
-		    reinterpret_cast<vk::DescriptorSetLayoutBinding *>(vkb::DescriptorSetLayout::get_layout_binding(name).release()));
+		return std::unique_ptr<vk::DescriptorSetLayoutBinding>(reinterpret_cast<vk::DescriptorSetLayoutBinding *>(
+		    vkb::DescriptorSetLayout::get_layout_binding(name).release()));
 	}
 
 	vk::DescriptorBindingFlagsEXT get_layout_binding_flag(const uint32_t binding_index) const
 	{
-		return static_cast<vk::DescriptorBindingFlagsEXT>(vkb::DescriptorSetLayout::get_layout_binding_flag(binding_index));
+		return static_cast<vk::DescriptorBindingFlagsEXT>(
+		    vkb::DescriptorSetLayout::get_layout_binding_flag(binding_index));
 	}
 };
 }        // namespace core

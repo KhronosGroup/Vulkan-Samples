@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,11 @@ using CommandBufferCpp = CommandBuffer<vkb::BindingType::Cpp>;
 class HPPQueue
 {
   public:
-	HPPQueue(vkb::core::DeviceCpp &device, uint32_t family_index, vk::QueueFamilyProperties const &properties, vk::Bool32 can_present, uint32_t index);
+	HPPQueue(vkb::core::DeviceCpp            &device,
+	         uint32_t                         family_index,
+	         vk::QueueFamilyProperties const &properties,
+	         vk::Bool32                       can_present,
+	         uint32_t                         index);
 
 	HPPQueue(const HPPQueue &) = default;
 

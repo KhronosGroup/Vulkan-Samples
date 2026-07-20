@@ -77,8 +77,14 @@ class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
   private:
 	size_t subpass_count;
 
-	template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
-	void create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
+	template <typename T_SubpassDescription,
+	          typename T_AttachmentDescription,
+	          typename T_AttachmentReference,
+	          typename T_SubpassDependency,
+	          typename T_RenderPassCreateInfo>
+	void create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments,
+	                       const std::vector<LoadStoreInfo>               &load_store_infos,
+	                       const std::vector<SubpassInfo>                 &subpasses);
 
 	std::vector<uint32_t> color_output_count;
 };
