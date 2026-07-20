@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,11 @@
 
 namespace vkb
 {
-Queue::Queue(vkb::core::DeviceC &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index) :
+Queue::Queue(vkb::core::DeviceC     &device,
+             uint32_t                family_index,
+             VkQueueFamilyProperties properties,
+             VkBool32                can_present,
+             uint32_t                index) :
     device{device}, family_index{family_index}, index{index}, can_present{can_present}, properties{properties}
 {
 	vkGetDeviceQueue(device.get_handle(), family_index, index, &handle);
