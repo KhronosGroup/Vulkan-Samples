@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,36 +44,55 @@ using CommandPoolC   = CommandPool<vkb::BindingType::C>;
 using CommandPoolCpp = CommandPool<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
-class Device
-    : public vkb::core::VulkanResource<bindingType, typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Device, VkDevice>::type>
+class Device : public vkb::core::VulkanResource<
+                   bindingType,
+                   typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Device, VkDevice>::type>
 {
   public:
-	using Bool32Type                 = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Bool32, VkBool32>::type;
-	using BufferCopyType             = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCopy, VkBufferCopy>::type;
-	using CommandBufferLevelType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBufferLevel, VkCommandBufferLevel>::type;
-	using CommandBufferType          = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBuffer, VkCommandBuffer>::type;
-	using CommandPoolCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPoolCreateFlags, VkCommandPoolCreateFlags>::type;
-	using CommandPoolType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
-	using DeviceMemoryType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceMemory, VkDeviceMemory>::type;
-	using DeviceType                 = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Device, VkDevice>::type;
-	using Extent2DType               = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
-	using FenceType                  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Fence, VkFence>::type;
-	using FormatType                 = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Format, VkFormat>::type;
-	using ImageType                  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Image, VkImage>::type;
-	using ImageUsageFlagsType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ImageUsageFlags, VkImageUsageFlags>::type;
-	using MemoryPropertyFlagsType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::MemoryPropertyFlags, VkMemoryPropertyFlags>::type;
-	using QueueFamilyPropertiesType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFamilyProperties, VkQueueFamilyProperties>::type;
-	using QueueFlagBitsType          = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFlagBits, VkQueueFlagBits>::type;
-	using QueueFlagsType             = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFlags, VkQueueFlags>::type;
-	using QueueType                  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Queue, VkQueue>::type;
-	using ResultType                 = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Result, VkResult>::type;
-	using SemaphoreType              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
-	using SurfaceType                = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using Bool32Type = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Bool32, VkBool32>::type;
+	using BufferCopyType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::BufferCopy, VkBufferCopy>::type;
+	using CommandBufferLevelType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBufferLevel, VkCommandBufferLevel>::type;
+	using CommandBufferType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBuffer, VkCommandBuffer>::type;
+	using CommandPoolCreateFlagsType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPoolCreateFlags, VkCommandPoolCreateFlags>::type;
+	using CommandPoolType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
+	using DeviceMemoryType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceMemory, VkDeviceMemory>::type;
+	using DeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Device, VkDevice>::type;
+	using Extent2DType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
+	using FenceType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Fence, VkFence>::type;
+	using FormatType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Format, VkFormat>::type;
+	using ImageType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Image, VkImage>::type;
+	using ImageUsageFlagsType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ImageUsageFlags, VkImageUsageFlags>::type;
+	using MemoryPropertyFlagsType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::MemoryPropertyFlags, VkMemoryPropertyFlags>::type;
+	using QueueFamilyPropertiesType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFamilyProperties, VkQueueFamilyProperties>::type;
+	using QueueFlagBitsType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFlagBits, VkQueueFlagBits>::type;
+	using QueueFlagsType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFlags, VkQueueFlags>::type;
+	using QueueType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Queue, VkQueue>::type;
+	using ResultType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Result, VkResult>::type;
+	using SemaphoreType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Semaphore, VkSemaphore>::type;
+	using SurfaceType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
-	using DebugUtilsType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDebugUtils, vkb::DebugUtils>::type;
-	using FencePoolType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
-	using CoreQueueType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
-	using ResourceCacheType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPResourceCache, vkb::ResourceCache>::type;
+	using DebugUtilsType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPDebugUtils, vkb::DebugUtils>::type;
+	using FencePoolType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPFencePool, vkb::FencePool>::type;
+	using CoreQueueType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueue, vkb::Queue>::type;
+	using ResourceCacheType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vkb::HPPResourceCache, vkb::ResourceCache>::type;
 
   public:
 	/**
@@ -105,38 +124,60 @@ class Device
 	Device &operator=(const Device &) = delete;
 	Device &operator=(Device &&)      = delete;
 
-	void add_queue(size_t global_index, uint32_t family_index, QueueFamilyPropertiesType const &properties, Bool32Type can_present);
-	void copy_buffer(
-	    vkb::core::Buffer<bindingType> const &src, vkb::core::Buffer<bindingType> &dst, QueueType queue, BufferCopyType const *copy_region = nullptr);
-	CommandBufferType                      create_command_buffer(CommandBufferLevelType level, bool begin = false) const;
-	CommandPoolType                        create_command_pool(uint32_t queue_index, CommandPoolCreateFlagsType flags = 0);
-	std::pair<ImageType, DeviceMemoryType> create_image(
-	    FormatType format, Extent2DType const &extent, uint32_t mip_levels, ImageUsageFlagsType usage, MemoryPropertyFlagsType properties) const;
-	void                                 create_internal_command_pool();
-	void                                 create_internal_fence_pool();
-	void                                 flush_command_buffer(CommandBufferType command_buffer, QueueType queue, bool free = true, SemaphoreType signal_semaphore = VK_NULL_HANDLE) const;
-	vkb::core::CommandPool<bindingType> &get_command_pool() const;
-	DebugUtilsType const                &get_debug_utils() const;
-	FencePoolType                       &get_fence_pool() const;
-	PhysicalDevice<bindingType> const   &get_gpu() const;
-	CoreQueueType const                 &get_queue(uint32_t queue_family_index, uint32_t queue_index) const;
-	CoreQueueType const                 &get_queue_by_flags(QueueFlagsType queue_flags, uint32_t queue_index) const;
-	CoreQueueType const                 &get_queue_by_present(uint32_t queue_index) const;
-	ResourceCacheType                   &get_resource_cache();
-	bool                                 is_extension_enabled(const char *extension) const;
-	bool                                 is_image_format_supported(FormatType format) const;
-	void                                 wait_idle() const;
+	void              add_queue(size_t                           global_index,
+	                            uint32_t                         family_index,
+	                            QueueFamilyPropertiesType const &properties,
+	                            Bool32Type                       can_present);
+	void              copy_buffer(vkb::core::Buffer<bindingType> const &src,
+	                              vkb::core::Buffer<bindingType>       &dst,
+	                              QueueType                             queue,
+	                              BufferCopyType const                 *copy_region = nullptr);
+	CommandBufferType create_command_buffer(CommandBufferLevelType level, bool begin = false) const;
+	CommandPoolType   create_command_pool(uint32_t queue_index, CommandPoolCreateFlagsType flags = 0);
+	std::pair<ImageType, DeviceMemoryType> create_image(FormatType              format,
+	                                                    Extent2DType const     &extent,
+	                                                    uint32_t                mip_levels,
+	                                                    ImageUsageFlagsType     usage,
+	                                                    MemoryPropertyFlagsType properties) const;
+	void                                   create_internal_command_pool();
+	void                                   create_internal_fence_pool();
+	void                                   flush_command_buffer(CommandBufferType command_buffer,
+	                                                            QueueType         queue,
+	                                                            bool              free = true,
+	                                                            SemaphoreType     signal_semaphore = VK_NULL_HANDLE) const;
+	vkb::core::CommandPool<bindingType>   &get_command_pool() const;
+	DebugUtilsType const                  &get_debug_utils() const;
+	FencePoolType                         &get_fence_pool() const;
+	PhysicalDevice<bindingType> const     &get_gpu() const;
+	CoreQueueType const                   &get_queue(uint32_t queue_family_index, uint32_t queue_index) const;
+	CoreQueueType const                   &get_queue_by_flags(QueueFlagsType queue_flags, uint32_t queue_index) const;
+	CoreQueueType const                   &get_queue_by_present(uint32_t queue_index) const;
+	ResourceCacheType                     &get_resource_cache();
+	bool                                   is_extension_enabled(const char *extension) const;
+	bool                                   is_image_format_supported(FormatType format) const;
+	void                                   wait_idle() const;
 
   private:
-	void                                   copy_buffer_impl(vk::Device device, vkb::core::BufferCpp const &src, vkb::core::BufferCpp &dst, vk::Queue queue, vk::BufferCopy const *copy_region);
-	vk::CommandBuffer                      create_command_buffer_impl(vk::Device device, vk::CommandBufferLevel level, bool begin) const;
-	std::pair<vk::Image, vk::DeviceMemory> create_image_impl(
-	    vk::Device device, vk::Format format, vk::Extent2D const &extent, uint32_t mip_levels, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties)
-	    const;
-	void flush_command_buffer_impl(
-	    vk::Device device, vk::CommandBuffer command_buffer, vk::Queue queue, bool free = true, vk::Semaphore signal_semaphore = nullptr) const;
+	void              copy_buffer_impl(vk::Device                  device,
+	                                   vkb::core::BufferCpp const &src,
+	                                   vkb::core::BufferCpp       &dst,
+	                                   vk::Queue                   queue,
+	                                   vk::BufferCopy const       *copy_region);
+	vk::CommandBuffer create_command_buffer_impl(vk::Device device, vk::CommandBufferLevel level, bool begin) const;
+	std::pair<vk::Image, vk::DeviceMemory> create_image_impl(vk::Device              device,
+	                                                         vk::Format              format,
+	                                                         vk::Extent2D const     &extent,
+	                                                         uint32_t                mip_levels,
+	                                                         vk::ImageUsageFlags     usage,
+	                                                         vk::MemoryPropertyFlags properties) const;
+	void                                   flush_command_buffer_impl(vk::Device        device,
+	                                                                 vk::CommandBuffer command_buffer,
+	                                                                 vk::Queue         queue,
+	                                                                 bool              free = true,
+	                                                                 vk::Semaphore     signal_semaphore = nullptr) const;
 	vkb::core::HPPQueue const &get_queue_by_flags_impl(vk::QueueFlags queue_flags, uint32_t queue_index) const;
-	void                       init(std::unordered_map<const char *, bool> const &requested_extensions, std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features);
+	void                       init(std::unordered_map<const char *, bool> const                 &requested_extensions,
+	                                std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features);
 
   private:
 	std::unique_ptr<vkb::core::CommandPoolCpp>    command_pool;
@@ -168,7 +209,11 @@ inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp       
                                              std::unique_ptr<vkb::core::HPPDebugUtils>         &&debug_utils,
                                              std::unordered_map<const char *, bool> const       &requested_extensions,
                                              std::function<void(vkb::core::PhysicalDeviceCpp &)> request_gpu_features) :
-    vkb::core::VulkanResourceCpp<vk::Device>{nullptr, this}, debug_utils{std::move(debug_utils)}, gpu{gpu}, resource_cache{*this}, surface(surface)
+    vkb::core::VulkanResourceCpp<vk::Device>{nullptr, this},
+    debug_utils{std::move(debug_utils)},
+    gpu{gpu},
+    resource_cache{*this},
+    surface(surface)
 {
 	init(requested_extensions, request_gpu_features);
 }
@@ -179,21 +224,32 @@ inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC           
                                            std::unique_ptr<vkb::DebugUtils>                &&debug_utils,
                                            std::unordered_map<const char *, bool> const     &requested_extensions,
                                            std::function<void(vkb::core::PhysicalDeviceC &)> request_gpu_features) :
-    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this}, debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())}, gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface(static_cast<vk::SurfaceKHR>(surface))
+    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this},
+    debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())},
+    gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)},
+    resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)},
+    surface(static_cast<vk::SurfaceKHR>(surface))
 {
 	init(requested_extensions, request_gpu_features);
 }
 
 template <>
-inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp &gpu, vk::Device &vulkan_device, vk::SurfaceKHR surface) :
+inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp &gpu,
+                                             vk::Device                   &vulkan_device,
+                                             vk::SurfaceKHR                surface) :
     VulkanResource{vulkan_device}, gpu{gpu}, surface{surface}, resource_cache{*this}
 {
 	debug_utils = std::make_unique<HPPDummyDebugUtils>();
 }
 
 template <>
-inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC &gpu, VkDevice &vulkan_device, VkSurfaceKHR surface) :
-    VulkanResource{vulkan_device}, gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface{static_cast<vk::SurfaceKHR>(surface)}
+inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC &gpu,
+                                           VkDevice                   &vulkan_device,
+                                           VkSurfaceKHR                surface) :
+    VulkanResource{vulkan_device},
+    gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)},
+    resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)},
+    surface{static_cast<vk::SurfaceKHR>(surface)}
 {
 	debug_utils = std::make_unique<HPPDummyDebugUtils>();
 }
@@ -219,7 +275,10 @@ inline Device<bindingType>::~Device()
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::add_queue(size_t global_index, uint32_t family_index, QueueFamilyPropertiesType const &properties, Bool32Type can_present)
+inline void Device<bindingType>::add_queue(size_t                           global_index,
+                                           uint32_t                         family_index,
+                                           QueueFamilyPropertiesType const &properties,
+                                           Bool32Type                       can_present)
 {
 	if (queues.size() <= global_index)
 	{
@@ -254,7 +313,8 @@ inline void Device<bindingType>::copy_buffer(vkb::core::Buffer<bindingType> cons
 	}
 	else
 	{
-		copy_buffer_impl(static_cast<vk::Device>(this->get_handle()), reinterpret_cast<vkb::core::BufferCpp const &>(src),
+		copy_buffer_impl(static_cast<vk::Device>(this->get_handle()),
+		                 reinterpret_cast<vkb::core::BufferCpp const &>(src),
 		                 reinterpret_cast<vkb::core::BufferCpp &>(dst),
 		                 static_cast<vk::Queue>(queue),
 		                 reinterpret_cast<vk::BufferCopy const *>(copy_region));
@@ -262,7 +322,8 @@ inline void Device<bindingType>::copy_buffer(vkb::core::Buffer<bindingType> cons
 }
 
 template <vkb::BindingType bindingType>
-inline typename Device<bindingType>::CommandBufferType Device<bindingType>::create_command_buffer(CommandBufferLevelType level, bool begin) const
+inline typename Device<bindingType>::CommandBufferType
+    Device<bindingType>::create_command_buffer(CommandBufferLevelType level, bool begin) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -270,13 +331,14 @@ inline typename Device<bindingType>::CommandBufferType Device<bindingType>::crea
 	}
 	else
 	{
-		return static_cast<VkCommandBuffer>(
-		    create_command_buffer_impl(static_cast<vk::Device>(this->get_handle()), static_cast<vk::CommandBufferLevel>(level), begin));
+		return static_cast<VkCommandBuffer>(create_command_buffer_impl(
+		    static_cast<vk::Device>(this->get_handle()), static_cast<vk::CommandBufferLevel>(level), begin));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename Device<bindingType>::CommandPoolType Device<bindingType>::create_command_pool(uint32_t queue_index, CommandPoolCreateFlagsType flags)
+inline typename Device<bindingType>::CommandPoolType
+    Device<bindingType>::create_command_pool(uint32_t queue_index, CommandPoolCreateFlagsType flags)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -285,14 +347,19 @@ inline typename Device<bindingType>::CommandPoolType Device<bindingType>::create
 	}
 	else
 	{
-		vk::CommandPoolCreateInfo command_pool_info{.flags = static_cast<vk::CommandPoolCreateFlags>(flags), .queueFamilyIndex = queue_index};
+		vk::CommandPoolCreateInfo command_pool_info{.flags            = static_cast<vk::CommandPoolCreateFlags>(flags),
+		                                            .queueFamilyIndex = queue_index};
 		return static_cast<vk::Device>(this->get_handle()).createCommandPool(command_pool_info);
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline std::pair<typename Device<bindingType>::ImageType, typename Device<bindingType>::DeviceMemoryType> Device<bindingType>::create_image(
-    FormatType format, Extent2DType const &extent, uint32_t mip_levels, ImageUsageFlagsType usage, MemoryPropertyFlagsType properties) const
+inline std::pair<typename Device<bindingType>::ImageType, typename Device<bindingType>::DeviceMemoryType>
+    Device<bindingType>::create_image(FormatType              format,
+                                      Extent2DType const     &extent,
+                                      uint32_t                mip_levels,
+                                      ImageUsageFlagsType     usage,
+                                      MemoryPropertyFlagsType properties) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -300,26 +367,29 @@ inline std::pair<typename Device<bindingType>::ImageType, typename Device<bindin
 	}
 	else
 	{
-		return static_cast<std::pair<VkImage, VkDeviceMemory>>(create_image_impl(static_cast<vk::Device>(this->get_handle()),
-		                                                                         static_cast<VkFormat>(format),
-		                                                                         static_cast<VkExtent2D>(extent),
-		                                                                         mip_levels,
-		                                                                         static_cast<VkImageUsageFlags>(usage),
-		                                                                         static_cast<VkMemoryPropertyFlags>(properties)));
+		return static_cast<std::pair<VkImage, VkDeviceMemory>>(
+		    create_image_impl(static_cast<vk::Device>(this->get_handle()),
+		                      static_cast<VkFormat>(format),
+		                      static_cast<VkExtent2D>(extent),
+		                      mip_levels,
+		                      static_cast<VkImageUsageFlags>(usage),
+		                      static_cast<VkMemoryPropertyFlags>(properties)));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void Device<bindingType>::create_internal_command_pool()
 {
-	uint32_t familyIndex = get_queue_by_flags_impl(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
+	uint32_t familyIndex =
+	    get_queue_by_flags_impl(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
 		command_pool = std::make_unique<vkb::core::CommandPoolCpp>(*this, familyIndex);
 	}
 	else
 	{
-		command_pool = std::make_unique<vkb::core::CommandPoolCpp>(*reinterpret_cast<vkb::core::DeviceCpp *>(this), familyIndex);
+		command_pool =
+		    std::make_unique<vkb::core::CommandPoolCpp>(*reinterpret_cast<vkb::core::DeviceCpp *>(this), familyIndex);
 	}
 }
 
@@ -337,7 +407,10 @@ inline void Device<bindingType>::create_internal_fence_pool()
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::flush_command_buffer(CommandBufferType command_buffer, QueueType queue, bool free, SemaphoreType signal_semaphore) const
+inline void Device<bindingType>::flush_command_buffer(CommandBufferType command_buffer,
+                                                      QueueType         queue,
+                                                      bool              free,
+                                                      SemaphoreType     signal_semaphore) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -406,7 +479,8 @@ inline PhysicalDevice<bindingType> const &Device<bindingType>::get_gpu() const
 }
 
 template <vkb::BindingType bindingType>
-inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::get_queue(uint32_t queue_family_index, uint32_t queue_index) const
+inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::get_queue(uint32_t queue_family_index,
+                                                                                         uint32_t queue_index) const
 {
 	assert(queue_family_index < queues.size() && "Queue family index out of bounds");
 	assert(queue_index < queues[queue_family_index].size() && "Queue index out of bounds");
@@ -422,8 +496,8 @@ inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::g
 }
 
 template <vkb::BindingType bindingType>
-inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::get_queue_by_flags(QueueFlagsType required_queue_flags,
-                                                                                                  uint32_t       queue_index) const
+inline typename Device<bindingType>::CoreQueueType const &
+    Device<bindingType>::get_queue_by_flags(QueueFlagsType required_queue_flags, uint32_t queue_index) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -431,16 +505,19 @@ inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::g
 	}
 	else
 	{
-		return reinterpret_cast<vkb::Queue const &>(get_queue_by_flags_impl(static_cast<vk::QueueFlags>(required_queue_flags), queue_index));
+		return reinterpret_cast<vkb::Queue const &>(
+		    get_queue_by_flags_impl(static_cast<vk::QueueFlags>(required_queue_flags), queue_index));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline typename Device<bindingType>::CoreQueueType const &Device<bindingType>::get_queue_by_present(uint32_t queue_index) const
+inline typename Device<bindingType>::CoreQueueType const &
+    Device<bindingType>::get_queue_by_present(uint32_t queue_index) const
 {
-	auto queueIt =
-	    std::ranges::find_if(queues,
-	                         [queue_index](const std::vector<vkb::core::HPPQueue> &queue_family) { return !queue_family.empty() && queue_index < queue_family[0].get_properties().queueCount && queue_family[0].support_present(); });
+	auto queueIt = std::ranges::find_if(queues, [queue_index](const std::vector<vkb::core::HPPQueue> &queue_family) {
+		return !queue_family.empty() && queue_index < queue_family[0].get_properties().queueCount &&
+		       queue_family[0].support_present();
+	});
 	if (queueIt != queues.end())
 	{
 		if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -472,8 +549,9 @@ inline typename Device<bindingType>::ResourceCacheType &Device<bindingType>::get
 template <vkb::BindingType bindingType>
 inline bool Device<bindingType>::is_extension_enabled(const char *extension) const
 {
-	return std::ranges::find_if(enabled_extensions, [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) !=
-	       enabled_extensions.end();
+	return std::ranges::find_if(enabled_extensions, [extension](const char *enabled_extension) {
+		       return strcmp(extension, enabled_extension) == 0;
+	       }) != enabled_extensions.end();
 }
 
 template <vkb::BindingType bindingType>
@@ -482,8 +560,12 @@ inline bool Device<bindingType>::is_image_format_supported(FormatType format) co
 	// as we want to check for an error (vk::Result::eErrorFormatNotSupported) we use the non-throwing version of getImageFormatProperties here
 	vk::ImageFormatProperties format_properties;
 	return vk::Result::eErrorFormatNotSupported !=
-	       gpu.get_handle().getImageFormatProperties(
-	           static_cast<vk::Format>(format), vk::ImageType::e2D, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eSampled, {}, &format_properties);
+	       gpu.get_handle().getImageFormatProperties(static_cast<vk::Format>(format),
+	                                                 vk::ImageType::e2D,
+	                                                 vk::ImageTiling::eOptimal,
+	                                                 vk::ImageUsageFlagBits::eSampled,
+	                                                 {},
+	                                                 &format_properties);
 }
 
 template <vkb::BindingType bindingType>
@@ -500,8 +582,11 @@ inline void Device<bindingType>::wait_idle() const
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::copy_buffer_impl(
-    vk::Device device, vkb::core::BufferCpp const &src, vkb::core::BufferCpp &dst, vk::Queue queue, vk::BufferCopy const *copy_region)
+inline void Device<bindingType>::copy_buffer_impl(vk::Device                  device,
+                                                  vkb::core::BufferCpp const &src,
+                                                  vkb::core::BufferCpp       &dst,
+                                                  vk::Queue                   queue,
+                                                  vk::BufferCopy const       *copy_region)
 {
 	vk::CommandBuffer command_buffer = create_command_buffer_impl(device, vk::CommandBufferLevel::ePrimary, true);
 
@@ -521,12 +606,14 @@ inline void Device<bindingType>::copy_buffer_impl(
 }
 
 template <vkb::BindingType bindingType>
-inline vk::CommandBuffer Device<bindingType>::create_command_buffer_impl(vk::Device device, vk::CommandBufferLevel level, bool begin) const
+inline vk::CommandBuffer
+    Device<bindingType>::create_command_buffer_impl(vk::Device device, vk::CommandBufferLevel level, bool begin) const
 {
 	assert(command_pool && "No command pool exists in the device");
 
-	vk::CommandBufferAllocateInfo command_buffer_allocate_info{.commandPool = command_pool->get_handle(), .level = level, .commandBufferCount = 1};
-	vk::CommandBuffer             command_buffer = device.allocateCommandBuffers(command_buffer_allocate_info).front();
+	vk::CommandBufferAllocateInfo command_buffer_allocate_info{
+	    .commandPool = command_pool->get_handle(), .level = level, .commandBufferCount = 1};
+	vk::CommandBuffer command_buffer = device.allocateCommandBuffers(command_buffer_allocate_info).front();
 
 	// If requested, also start recording for the new command buffer
 	if (begin)
@@ -538,8 +625,13 @@ inline vk::CommandBuffer Device<bindingType>::create_command_buffer_impl(vk::Dev
 }
 
 template <vkb::BindingType bindingType>
-inline std::pair<vk::Image, vk::DeviceMemory> Device<bindingType>::create_image_impl(
-    vk::Device device, vk::Format format, vk::Extent2D const &extent, uint32_t mip_levels, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) const
+inline std::pair<vk::Image, vk::DeviceMemory>
+    Device<bindingType>::create_image_impl(vk::Device              device,
+                                           vk::Format              format,
+                                           vk::Extent2D const     &extent,
+                                           uint32_t                mip_levels,
+                                           vk::ImageUsageFlags     usage,
+                                           vk::MemoryPropertyFlags properties) const
 {
 	vk::ImageCreateInfo image_create_info{.imageType   = vk::ImageType::e2D,
 	                                      .format      = format,
@@ -554,8 +646,9 @@ inline std::pair<vk::Image, vk::DeviceMemory> Device<bindingType>::create_image_
 
 	vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(image);
 
-	vk::MemoryAllocateInfo memory_allocation{.allocationSize  = memory_requirements.size,
-	                                         .memoryTypeIndex = gpu.get_memory_type(memory_requirements.memoryTypeBits, properties)};
+	vk::MemoryAllocateInfo memory_allocation{.allocationSize = memory_requirements.size,
+	                                         .memoryTypeIndex =
+	                                             gpu.get_memory_type(memory_requirements.memoryTypeBits, properties)};
 	vk::DeviceMemory       memory = device.allocateMemory(memory_allocation);
 	device.bindImageMemory(image, memory, 0);
 
@@ -563,8 +656,11 @@ inline std::pair<vk::Image, vk::DeviceMemory> Device<bindingType>::create_image_
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::flush_command_buffer_impl(
-    vk::Device device, vk::CommandBuffer command_buffer, vk::Queue queue, bool free, vk::Semaphore signal_semaphore) const
+inline void Device<bindingType>::flush_command_buffer_impl(vk::Device        device,
+                                                           vk::CommandBuffer command_buffer,
+                                                           vk::Queue         queue,
+                                                           bool              free,
+                                                           vk::Semaphore     signal_semaphore) const
 {
 	if (command_buffer)
 	{
@@ -600,15 +696,16 @@ inline void Device<bindingType>::flush_command_buffer_impl(
 }
 
 template <vkb::BindingType bindingType>
-vkb::core::HPPQueue const &Device<bindingType>::get_queue_by_flags_impl(vk::QueueFlags required_queue_flags, uint32_t queue_index) const
+vkb::core::HPPQueue const &Device<bindingType>::get_queue_by_flags_impl(vk::QueueFlags required_queue_flags,
+                                                                        uint32_t       queue_index) const
 {
-	auto queueIt =
-	    std::ranges::find_if(queues,
-	                         [required_queue_flags, queue_index](const std::vector<vkb::core::HPPQueue> &queue) {
-		                         assert(!queue.empty());
-		                         vk::QueueFamilyProperties const &properties = queue[0].get_properties();
-		                         return ((properties.queueFlags & required_queue_flags) == required_queue_flags) && (queue_index < properties.queueCount);
-	                         });
+	auto queueIt = std::ranges::find_if(
+	    queues, [required_queue_flags, queue_index](const std::vector<vkb::core::HPPQueue> &queue) {
+		    assert(!queue.empty());
+		    vk::QueueFamilyProperties const &properties = queue[0].get_properties();
+		    return ((properties.queueFlags & required_queue_flags) == required_queue_flags) &&
+		           (queue_index < properties.queueCount);
+	    });
 
 	if (queueIt == queues.end())
 	{
@@ -619,7 +716,9 @@ vkb::core::HPPQueue const &Device<bindingType>::get_queue_by_flags_impl(vk::Queu
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::init(std::unordered_map<const char *, bool> const &requested_extensions, std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features)
+inline void
+    Device<bindingType>::init(std::unordered_map<const char *, bool> const                 &requested_extensions,
+                              std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features)
 {
 	LOGI("Selected GPU: {}", *gpu.get_properties().deviceName);
 
@@ -636,7 +735,8 @@ inline void Device<bindingType>::init(std::unordered_map<const char *, bool> con
 
 		queue_priorities.push_back(std::vector<float>(queue_family_property.queueCount, 0.5f));
 		if (gpu.has_high_priority_graphics_queue() &&
-		    (vkb::common::get_queue_family_index(queue_family_properties, vk::QueueFlagBits::eGraphics) == queue_family_index))
+		    (vkb::common::get_queue_family_index(queue_family_properties, vk::QueueFlagBits::eGraphics) ==
+		     queue_family_index))
 		{
 			queue_priorities.back()[0] = 0.5f;
 		}
@@ -660,16 +760,16 @@ inline void Device<bindingType>::init(std::unordered_map<const char *, bool> con
 
 	// For performance queries, we also use host query reset since queryPool resets cannot
 	// live in the same command buffer as beginQuery
-	if (gpu.is_extension_supported("VK_KHR_performance_query") &&
-	    gpu.is_extension_supported("VK_EXT_host_query_reset"))
+	if (gpu.is_extension_supported("VK_KHR_performance_query") && gpu.is_extension_supported("VK_EXT_host_query_reset"))
 	{
 		auto perf_counter_features     = gpu.get_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>();
 		auto host_query_reset_features = gpu.get_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>();
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
-			gpu.add_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>().performanceCounterQueryPools = VK_TRUE;
-			gpu.add_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>().hostQueryReset                    = VK_TRUE;
+			gpu.add_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>().performanceCounterQueryPools =
+			    VK_TRUE;
+			gpu.add_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>().hostQueryReset = VK_TRUE;
 			enabled_extensions.push_back("VK_KHR_performance_query");
 			enabled_extensions.push_back("VK_EXT_host_query_reset");
 			LOGI("Performance query enabled");
@@ -754,12 +854,16 @@ inline void Device<bindingType>::init(std::unordered_map<const char *, bool> con
 		{
 			if constexpr (bindingType == BindingType::Cpp)
 			{
-				queues[queue_family_index].emplace_back(*this, queue_family_index, queue_family_property, present_supported, queue_index);
+				queues[queue_family_index].emplace_back(
+				    *this, queue_family_index, queue_family_property, present_supported, queue_index);
 			}
 			else
 			{
-				queues[queue_family_index].emplace_back(
-				    *reinterpret_cast<vkb::core::DeviceCpp *>(this), queue_family_index, queue_family_property, present_supported, queue_index);
+				queues[queue_family_index].emplace_back(*reinterpret_cast<vkb::core::DeviceCpp *>(this),
+				                                        queue_family_index,
+				                                        queue_family_property,
+				                                        present_supported,
+				                                        queue_index);
 			}
 		}
 	}
@@ -769,7 +873,8 @@ inline void Device<bindingType>::init(std::unordered_map<const char *, bool> con
 	if constexpr (bindingType == BindingType::Cpp)
 	{
 		command_pool = std::make_unique<vkb::core::CommandPoolCpp>(
-		    *this, get_queue_by_flags_impl(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index());
+		    *this,
+		    get_queue_by_flags_impl(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index());
 		fence_pool = std::make_unique<vkb::HPPFencePool>(*this);
 	}
 	else

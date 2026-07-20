@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,11 +39,13 @@ HPPImageView::HPPImageView(vkb::core::HPPImage &img,
 		this->format = format = image->get_format();
 	}
 
-	subresource_range = vk::ImageSubresourceRange{.aspectMask     = (std::string(vk::componentName(format, 0)) == "D") ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor,
-	                                              .baseMipLevel   = mip_level,
-	                                              .levelCount     = n_mip_levels == 0 ? image->get_subresource().mipLevel : n_mip_levels,
-	                                              .baseArrayLayer = array_layer,
-	                                              .layerCount     = n_array_layers == 0 ? image->get_subresource().arrayLayer : n_array_layers};
+	subresource_range = vk::ImageSubresourceRange{
+	    .aspectMask     = (std::string(vk::componentName(format, 0)) == "D") ? vk::ImageAspectFlagBits::eDepth :
+	                                                                           vk::ImageAspectFlagBits::eColor,
+	    .baseMipLevel   = mip_level,
+	    .levelCount     = n_mip_levels == 0 ? image->get_subresource().mipLevel : n_mip_levels,
+	    .baseArrayLayer = array_layer,
+	    .layerCount     = n_array_layers == 0 ? image->get_subresource().arrayLayer : n_array_layers};
 
 	vk::ImageViewCreateInfo image_view_create_info{
 	    .image = image->get_handle(), .viewType = view_type, .format = format, .subresourceRange = subresource_range};
@@ -56,7 +58,10 @@ HPPImageView::HPPImageView(vkb::core::HPPImage &img,
 }
 
 HPPImageView::HPPImageView(HPPImageView &&other) :
-    VulkanResource{std::move(other)}, image{other.image}, format{other.format}, subresource_range{other.subresource_range}
+    VulkanResource{std::move(other)},
+    image{other.image},
+    format{other.format},
+    subresource_range{other.subresource_range}
 {
 	// Remove old view from image set and add this new one
 	auto &views = image->get_views();
@@ -92,8 +97,10 @@ void HPPImageView::set_image(vkb::core::HPPImage &img)
 
 vk::ImageSubresourceLayers HPPImageView::get_subresource_layers() const
 {
-	return vk::ImageSubresourceLayers{
-	    subresource_range.aspectMask, subresource_range.baseMipLevel, subresource_range.baseArrayLayer, subresource_range.layerCount};
+	return vk::ImageSubresourceLayers{subresource_range.aspectMask,
+	                                  subresource_range.baseMipLevel,
+	                                  subresource_range.baseArrayLayer,
+	                                  subresource_range.layerCount};
 }
 
 vk::ImageSubresourceRange HPPImageView::get_subresource_range() const

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,12 +24,14 @@ namespace vkb
 {
 namespace core
 {
-ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
-                     uint32_t mip_level, uint32_t array_layer,
-                     uint32_t n_mip_levels, uint32_t n_array_layers) :
-    VulkanResource{VK_NULL_HANDLE, &img.get_device()},
-    image{&img},
-    format{format}
+ImageView::ImageView(Image          &img,
+                     VkImageViewType view_type,
+                     VkFormat        format,
+                     uint32_t        mip_level,
+                     uint32_t        array_layer,
+                     uint32_t        n_mip_levels,
+                     uint32_t        n_array_layers) :
+    VulkanResource{VK_NULL_HANDLE, &img.get_device()}, image{&img}, format{format}
 {
 	if (format == VK_FORMAT_UNDEFINED)
 	{

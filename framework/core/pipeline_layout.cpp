@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,8 +26,7 @@
 namespace vkb
 {
 PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules) :
-    device{device},
-    shader_modules{shader_modules}
+    device{device}, shader_modules{shader_modules}
 {
 	// Collect and combine all the shader resources from each of the shader modules
 	// Collate them all into a map that is indexed by the name of the resource
@@ -82,7 +81,8 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<Sha
 	// Create a descriptor set layout for each shader set in the shader modules
 	for (auto &shader_set_it : shader_sets)
 	{
-		descriptor_set_layouts.emplace_back(&device.get_resource_cache().request_descriptor_set_layout(shader_set_it.first, shader_modules, shader_set_it.second));
+		descriptor_set_layouts.emplace_back(&device.get_resource_cache().request_descriptor_set_layout(
+		    shader_set_it.first, shader_modules, shader_set_it.second));
 	}
 
 	// Collect all the descriptor set layout handles, maintaining set order
@@ -103,7 +103,8 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<Sha
 	std::vector<VkPushConstantRange> push_constant_ranges;
 	for (auto &push_constant_resource : get_resources(ShaderResourceType::PushConstant))
 	{
-		push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
+		push_constant_ranges.push_back(
+		    {push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
 	}
 
 	VkPipelineLayoutCreateInfo create_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
@@ -152,7 +153,8 @@ const std::vector<ShaderModule *> &PipelineLayout::get_shader_modules() const
 	return shader_modules;
 }
 
-const std::vector<ShaderResource> PipelineLayout::get_resources(const ShaderResourceType &type, VkShaderStageFlagBits stage) const
+const std::vector<ShaderResource> PipelineLayout::get_resources(const ShaderResourceType &type,
+                                                                VkShaderStageFlagBits     stage) const
 {
 	std::vector<ShaderResource> found_resources;
 
@@ -200,7 +202,8 @@ VkShaderStageFlags PipelineLayout::get_push_constant_range_stage(uint32_t size, 
 
 	for (auto &push_constant_resource : get_resources(ShaderResourceType::PushConstant))
 	{
-		if (offset >= push_constant_resource.offset && offset + size <= push_constant_resource.offset + push_constant_resource.size)
+		if (offset >= push_constant_resource.offset &&
+		    offset + size <= push_constant_resource.offset + push_constant_resource.size)
 		{
 			stages |= push_constant_resource.stages;
 		}
