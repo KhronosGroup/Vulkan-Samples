@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -79,7 +79,8 @@ HPPImage::HPPImage(vkb::core::DeviceCpp   &device,
 {}
 
 HPPImage::HPPImage(vkb::core::DeviceCpp &device, HPPImageBuilder const &builder) :
-    vkb::allocated::AllocatedCpp<vk::Image>{builder.get_allocation_create_info(), nullptr, &device}, create_info{builder.get_create_info()}
+    vkb::allocated::AllocatedCpp<vk::Image>{builder.get_allocation_create_info(), nullptr, &device},
+    create_info{builder.get_create_info()}
 {
 	get_handle()           = create_image(create_info);
 	subresource.arrayLayer = create_info.arrayLayers;

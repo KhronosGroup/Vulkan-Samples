@@ -41,7 +41,9 @@ using RenderTargetC = RenderTarget<vkb::BindingType::C>;
 class Framebuffer
 {
   public:
-	Framebuffer(vkb::core::DeviceC &device, const vkb::rendering::RenderTargetC &render_target, const RenderPass &render_pass);
+	Framebuffer(vkb::core::DeviceC                  &device,
+	            const vkb::rendering::RenderTargetC &render_target,
+	            const RenderPass                    &render_pass);
 
 	Framebuffer(const Framebuffer &) = delete;
 

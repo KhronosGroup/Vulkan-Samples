@@ -42,7 +42,9 @@ class HPPRenderPass;
 class HPPFramebuffer : private vkb::Framebuffer
 {
   public:
-	HPPFramebuffer(vkb::core::DeviceCpp &device, const vkb::rendering::RenderTargetCpp &render_target, const vkb::core::HPPRenderPass &render_pass) :
+	HPPFramebuffer(vkb::core::DeviceCpp                  &device,
+	               const vkb::rendering::RenderTargetCpp &render_target,
+	               const vkb::core::HPPRenderPass        &render_pass) :
 	    vkb::Framebuffer(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                     reinterpret_cast<vkb::rendering::RenderTargetC const &>(render_target),
 	                     reinterpret_cast<vkb::RenderPass const &>(render_pass))

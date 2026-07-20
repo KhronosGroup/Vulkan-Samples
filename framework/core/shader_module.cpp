@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,8 @@ ShaderModule::ShaderModule(vkb::core::DeviceC   &device,
                            const ShaderVariant  &shader_variant) :
     device{device}, stage{stage}, entry_point{entry_point}
 {
-	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
+	debug_name = fmt::format(
+	    "{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
 
 	// Shaders in binary SPIR-V format can be loaded directly
 	spirv = vkb::fs::read_shader_binary_u32(shader_source.get_filename());
@@ -90,7 +91,8 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 
 void ShaderModule::set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode)
 {
-	auto it = std::ranges::find_if(resources, [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
+	auto it = std::ranges::find_if(
+	    resources, [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
 
 	if (it != resources.end())
 	{
@@ -149,9 +151,7 @@ void ShaderVariant::clear()
 	id = 0;
 }
 
-ShaderSource::ShaderSource(const std::string &filename) :
-    filename{filename},
-    source{fs::read_text_file(filename)}
+ShaderSource::ShaderSource(const std::string &filename) : filename{filename}, source{fs::read_text_file(filename)}
 {
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
