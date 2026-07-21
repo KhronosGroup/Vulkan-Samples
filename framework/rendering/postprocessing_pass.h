@@ -89,7 +89,7 @@ class PostProcessingPassBase
 	/**
 	 * @brief Returns the parent's fullscreen triangle vertex shader source.
 	 */
-	ShaderSource &get_triangle_vs() const;
+	vkb::core::ShaderSource &get_triangle_vs() const;
 
 	struct BarrierInfo
 	{

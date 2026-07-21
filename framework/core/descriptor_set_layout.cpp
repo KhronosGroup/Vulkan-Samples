@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,26 +25,26 @@ namespace vkb
 {
 namespace
 {
-inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type, bool dynamic)
+inline VkDescriptorType find_descriptor_type(vkb::core::ShaderResourceType resource_type, bool dynamic)
 {
 	switch (resource_type)
 	{
-		case ShaderResourceType::InputAttachment:
+		case vkb::core::ShaderResourceType::InputAttachment:
 			return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 			break;
-		case ShaderResourceType::Image:
+		case vkb::core::ShaderResourceType::Image:
 			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 			break;
-		case ShaderResourceType::ImageSampler:
+		case vkb::core::ShaderResourceType::ImageSampler:
 			return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			break;
-		case ShaderResourceType::ImageStorage:
+		case vkb::core::ShaderResourceType::ImageStorage:
 			return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			break;
-		case ShaderResourceType::Sampler:
+		case vkb::core::ShaderResourceType::Sampler:
 			return VK_DESCRIPTOR_TYPE_SAMPLER;
 			break;
-		case ShaderResourceType::BufferUniform:
+		case vkb::core::ShaderResourceType::BufferUniform:
 			if (dynamic)
 			{
 				return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -54,7 +54,7 @@ inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type, b
 				return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			}
 			break;
-		case ShaderResourceType::BufferStorage:
+		case vkb::core::ShaderResourceType::BufferStorage:
 			if (dynamic)
 			{
 				return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
@@ -96,10 +96,10 @@ inline bool validate_flags(vkb::core::PhysicalDeviceC const                &gpu,
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                &device,
-                                         const uint32_t                     set_index,
-                                         const std::vector<ShaderModule *> &shader_modules,
-                                         const std::vector<ShaderResource> &resource_set) :
+DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                            &device,
+                                         const uint32_t                                 set_index,
+                                         const std::vector<vkb::core::ShaderModuleC *> &shader_modules,
+                                         const std::vector<vkb::core::ShaderResourceC> &resource_set) :
     device{device},
     set_index{set_index},
     shader_modules{shader_modules}
@@ -111,18 +111,18 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                &devi
 	for (auto &resource : resource_set)
 	{
 		// Skip shader resources whitout a binding point
-		if (resource.type == ShaderResourceType::Input ||
-		    resource.type == ShaderResourceType::Output ||
-		    resource.type == ShaderResourceType::PushConstant ||
-		    resource.type == ShaderResourceType::SpecializationConstant)
+		if (resource.type == vkb::core::ShaderResourceType::Input ||
+		    resource.type == vkb::core::ShaderResourceType::Output ||
+		    resource.type == vkb::core::ShaderResourceType::PushConstant ||
+		    resource.type == vkb::core::ShaderResourceType::SpecializationConstant)
 		{
 			continue;
 		}
 
 		// Convert from ShaderResourceType to VkDescriptorType.
-		auto descriptor_type = find_descriptor_type(resource.type, resource.mode == ShaderResourceMode::Dynamic);
+		auto descriptor_type = find_descriptor_type(resource.type, resource.mode == vkb::core::ShaderResourceMode::Dynamic);
 
-		if (resource.mode == ShaderResourceMode::UpdateAfterBind)
+		if (resource.mode == vkb::core::ShaderResourceMode::UpdateAfterBind)
 		{
 			binding_flags.push_back(VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT);
 		}
@@ -160,11 +160,11 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                &devi
 	// Handle update-after-bind extensions
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
 	if (std::ranges::find_if(resource_set,
-	                         [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
+	                         [](const vkb::core::ShaderResourceC &shader_resource) { return shader_resource.mode == vkb::core::ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
 	{
 		// Spec states you can't have ANY dynamic resources if you have one of the bindings set to update-after-bind
 		if (std::ranges::find_if(resource_set,
-		                         [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::Dynamic; }) != resource_set.end())
+		                         [](const vkb::core::ShaderResourceC &shader_resource) { return shader_resource.mode == vkb::core::ShaderResourceMode::Dynamic; }) != resource_set.end())
 		{
 			throw std::runtime_error("Cannot create descriptor set layout, dynamic resources are not allowed if at least one resource is update-after-bind.");
 		}
@@ -269,7 +269,7 @@ VkDescriptorBindingFlagsEXT DescriptorSetLayout::get_layout_binding_flag(const u
 	return it->second;
 }
 
-const std::vector<ShaderModule *> &DescriptorSetLayout::get_shader_modules() const
+const std::vector<vkb::core::ShaderModuleC *> &DescriptorSetLayout::get_shader_modules() const
 {
 	return shader_modules;
 }

@@ -758,10 +758,10 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
 
-	std::vector<vkb::ShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModuleC *> shader_modules;
 
-	vkb::ShaderSource vert_shader("uioverlay/uioverlay.vert.spv");
-	vkb::ShaderSource frag_shader("uioverlay/uioverlay.frag.spv");
+	vkb::core::ShaderSource vert_shader("uioverlay/uioverlay.vert.spv");
+	vkb::core::ShaderSource frag_shader("uioverlay/uioverlay.frag.spv");
 
 	shader_modules.push_back(&get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
 	shader_modules.push_back(&get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));

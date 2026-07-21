@@ -35,7 +35,7 @@ using SampledImageMap = std::unordered_map<std::string, core::SampledImage>;
 class PostProcessingComputePass : public PostProcessingPass<PostProcessingComputePass>
 {
   public:
-	PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant = {},
+	PostProcessingComputePass(PostProcessingPipeline *parent, const vkb::core::ShaderSource &cs_source, const vkb::core::ShaderVariant &cs_variant = {},
 	                          std::shared_ptr<core::Sampler> &&default_sampler = {});
 
 	PostProcessingComputePass(const PostProcessingComputePass &to_copy)            = delete;
@@ -146,9 +146,9 @@ class PostProcessingComputePass : public PostProcessingPass<PostProcessingComput
 	}
 
   private:
-	ShaderSource         cs_source;
-	ShaderVariant        cs_variant;
-	glm::tvec3<uint32_t> n_workgroups{1, 1, 1};
+	vkb::core::ShaderSource  cs_source;
+	vkb::core::ShaderVariant cs_variant;
+	glm::tvec3<uint32_t>     n_workgroups{1, 1, 1};
 
 	std::shared_ptr<core::Sampler> default_sampler{};
 	std::shared_ptr<core::Sampler> default_sampler_nearest{};

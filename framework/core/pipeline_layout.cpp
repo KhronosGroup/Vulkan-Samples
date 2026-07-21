@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@
 
 namespace vkb
 {
-PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules) :
+PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<vkb::core::ShaderModuleC *> &shader_modules) :
     device{device},
     shader_modules{shader_modules}
 {
@@ -38,7 +38,7 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<Sha
 			std::string key = shader_resource.name;
 
 			// Since 'Input' and 'Output' resources can have the same name, we modify the key string
-			if (shader_resource.type == ShaderResourceType::Input || shader_resource.type == ShaderResourceType::Output)
+			if (shader_resource.type == vkb::core::ShaderResourceType::Input || shader_resource.type == vkb::core::ShaderResourceType::Output)
 			{
 				key = std::to_string(shader_resource.stages) + "_" + key;
 			}
@@ -75,7 +75,7 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<Sha
 		else
 		{
 			// Create a new set index and with the first resource
-			shader_sets.emplace(shader_resource.set, std::vector<ShaderResource>{shader_resource});
+			shader_sets.emplace(shader_resource.set, std::vector<vkb::core::ShaderResourceC>{shader_resource});
 		}
 	}
 
@@ -101,7 +101,7 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<Sha
 
 	// Collect all the push constant shader resources
 	std::vector<VkPushConstantRange> push_constant_ranges;
-	for (auto &push_constant_resource : get_resources(ShaderResourceType::PushConstant))
+	for (auto &push_constant_resource : get_resources(vkb::core::ShaderResourceType::PushConstant))
 	{
 		push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
 	}
@@ -147,20 +147,20 @@ VkPipelineLayout PipelineLayout::get_handle() const
 	return handle;
 }
 
-const std::vector<ShaderModule *> &PipelineLayout::get_shader_modules() const
+const std::vector<vkb::core::ShaderModuleC *> &PipelineLayout::get_shader_modules() const
 {
 	return shader_modules;
 }
 
-const std::vector<ShaderResource> PipelineLayout::get_resources(const ShaderResourceType &type, VkShaderStageFlagBits stage) const
+const std::vector<vkb::core::ShaderResourceC> PipelineLayout::get_resources(const vkb::core::ShaderResourceType &type, VkShaderStageFlagBits stage) const
 {
-	std::vector<ShaderResource> found_resources;
+	std::vector<vkb::core::ShaderResourceC> found_resources;
 
 	for (auto &it : shader_resources)
 	{
 		auto &shader_resource = it.second;
 
-		if (shader_resource.type == type || type == ShaderResourceType::All)
+		if (shader_resource.type == type || type == vkb::core::ShaderResourceType::All)
 		{
 			if (shader_resource.stages == stage || stage == VK_SHADER_STAGE_ALL)
 			{
@@ -172,7 +172,7 @@ const std::vector<ShaderResource> PipelineLayout::get_resources(const ShaderReso
 	return found_resources;
 }
 
-const std::unordered_map<uint32_t, std::vector<ShaderResource>> &PipelineLayout::get_shader_sets() const
+const std::unordered_map<uint32_t, std::vector<vkb::core::ShaderResourceC>> &PipelineLayout::get_shader_sets() const
 {
 	return shader_sets;
 }
@@ -198,7 +198,7 @@ VkShaderStageFlags PipelineLayout::get_push_constant_range_stage(uint32_t size, 
 {
 	VkShaderStageFlags stages = 0;
 
-	for (auto &push_constant_resource : get_resources(ShaderResourceType::PushConstant))
+	for (auto &push_constant_resource : get_resources(vkb::core::ShaderResourceType::PushConstant))
 	{
 		if (offset >= push_constant_resource.offset && offset + size <= push_constant_resource.offset + push_constant_resource.size)
 		{

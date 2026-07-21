@@ -60,7 +60,7 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC             &device,
                                  vkb::rendering::PipelineStateC &pipeline_state) :
     Pipeline{device}
 {
-	const ShaderModule *shader_module = pipeline_state.get_pipeline_layout().get_shader_modules().front();
+	const vkb::core::ShaderModuleC *shader_module = pipeline_state.get_pipeline_layout().get_shader_modules().front();
 
 	if (shader_module->get_stage() != VK_SHADER_STAGE_COMPUTE_BIT)
 	{
@@ -150,7 +150,7 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC             &device,
 	specialization_info.dataSize      = data.size();
 	specialization_info.pData         = data.data();
 
-	for (const ShaderModule *shader_module : pipeline_state.get_pipeline_layout().get_shader_modules())
+	for (const vkb::core::ShaderModuleC *shader_module : pipeline_state.get_pipeline_layout().get_shader_modules())
 	{
 		VkPipelineShaderStageCreateInfo stage_create_info{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
 
