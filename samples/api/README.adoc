@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2025, The Khronos Group
+- Copyright (c) 2021-2026, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -130,3 +130,7 @@ A sample that implements an order-independent transparency algorithm using per-p
 === xref:./{api_samplespath}oit_depth_peeling/README.adoc[Order-independent transparency with depth peeling]
 
 A sample that implements order-independent transparency with depth peeling.
+
+=== xref:./{api_samplespath}swapchain_present_timing/README.adoc[Swapchain present timing]
+
+A sample that demonstrates basic usage of presentation timing features.
