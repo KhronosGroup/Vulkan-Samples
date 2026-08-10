@@ -176,6 +176,14 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * @note This performs no checking that the memory is actually mapped, so it's possible to get a nullptr
 	 */
 	const uint8_t *get_data() const;
+
+	/**
+	 * @brief Retrieves a pointer to the host visible memory as an unsigned byte array.
+	 * @return The pointer to the host visible memory.
+	 * @note Non-const. This performs no checking that the memory is actually mapped, so it's possible to get a nullptr
+	 */
+	uint8_t *get_mapped_data() const;
+
 	/**
 	 * @brief Retrieves the raw Vulkan memory object.
 	 * @return The Vulkan memory object.
@@ -584,6 +592,12 @@ inline void Allocated<bindingType, HandleType>::flush(DeviceSizeType offset, Dev
 
 template <vkb::BindingType bindingType, typename HandleType>
 inline const uint8_t *Allocated<bindingType, HandleType>::get_data() const
+{
+	return mapped_data;
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
+inline uint8_t *Allocated<bindingType, HandleType>::get_mapped_data() const
 {
 	return mapped_data;
 }
