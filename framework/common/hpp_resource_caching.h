@@ -229,6 +229,20 @@ struct HPPRecordHelper
 };
 
 template <class... A>
+struct HPPRecordHelper<vkb::core::ShaderModuleCpp, A...>
+{
+	size_t record(HPPResourceRecord &recorder, A &...args)
+	{
+		return recorder.register_shader_module(args...);
+	}
+
+	void index(HPPResourceRecord &recorder, size_t index, vkb::core::ShaderModuleCpp &shader_module)
+	{
+		recorder.set_shader_module(index, shader_module);
+	}
+};
+
+template <class... A>
 struct HPPRecordHelper<vkb::core::HPPPipelineLayout, A...>
 {
 	size_t record(HPPResourceRecord &recorder, A &...args)
