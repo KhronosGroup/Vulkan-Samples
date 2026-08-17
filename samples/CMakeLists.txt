@@ -17,6 +17,10 @@
 
 cmake_minimum_required(VERSION 3.16)
 
+if(DEFINED ENV{GITHUB_ACTIONS})
+    message(STATUS "Running inside GitHub CI")
+endif()
+
 # Creates a list of the subdirectories within this folder
 scan_dirs(
         DIR ${CMAKE_CURRENT_SOURCE_DIR}

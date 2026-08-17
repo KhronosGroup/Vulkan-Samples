@@ -155,7 +155,13 @@ function(add_project)
     endif()
 
 if(${TARGET_TYPE} STREQUAL "Sample")
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
+    if(DEFINED ENV{GITHUB_ACTIONS})
+        # The CLI variant of MSVC does have a 32-bit size limit issue, which the samples are running into e.g. in CI
+        add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
+    else()
+        # We don't use static libraries when building locally, as that heavily increases size requirements for builds
+        add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
+    endif()
 elseif(${TARGET_TYPE} STREQUAL "Test")
     add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
 endif()
