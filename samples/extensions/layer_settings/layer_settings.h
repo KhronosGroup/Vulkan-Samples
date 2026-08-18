@@ -34,6 +34,9 @@ class LayerSettingsSample : public ApiVulkanSample
 	// Install the DebugUtils messenger as early as possible by overriding instance creation.
 	std::unique_ptr<vkb::core::InstanceC> create_instance() override;
 
+	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
+	void request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const override;
+
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override

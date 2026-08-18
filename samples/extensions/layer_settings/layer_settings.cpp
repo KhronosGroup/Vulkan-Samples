@@ -391,9 +391,24 @@ LayerSettingsSample::LayerSettingsSample()
 {
 	title = "Layer settings (VK_EXT_layer_settings)";
 
+	// Initialize scenario state map so UI totals and logic have all keys even before toggling
+	scenario_states_.emplace(Scenario::WrongBufferFlags, ScenarioState{});
+	scenario_states_.emplace(Scenario::SuboptimalTransitions, ScenarioState{});
+	scenario_states_.emplace(Scenario::SmallAllocations, ScenarioState{});
+}
+
+void LayerSettingsSample::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_instance_extensions(requested_extensions);
+
 	// Request VK_EXT_layer_settings as an optional instance extension so the
 	// framework enables it when available and consumes the layer settings below.
-	add_instance_extension(VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, /*optional*/ true);
+	requested_extensions[VK_EXT_LAYER_SETTINGS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
+void LayerSettingsSample::request_layer_settings(std::vector<VkLayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderC<VkInstanceCreateInfo> &scb) const
+{
+	ApiVulkanSample::request_layer_settings(requested_layer_settings, scb);
 
 	// Configure the Khronos validation layer using layer settings. These settings are
 	// consumed by the validation layer at instance creation time.
@@ -413,7 +428,7 @@ LayerSettingsSample::LayerSettingsSample()
 		layer_setting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
 		layer_setting.valueCount   = static_cast<uint32_t>(std::size(enables));
 		layer_setting.pValues      = enables;
-		add_layer_setting(layer_setting);
+		requested_layer_settings.push_back(layer_setting);
 	}
 
 	// 2) Optionally enable debug printf so shaders using debugPrintfEXT will print via VVL
@@ -428,7 +443,7 @@ LayerSettingsSample::LayerSettingsSample()
 		layer_setting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;
 		layer_setting.valueCount   = static_cast<uint32_t>(std::size(enables));
 		layer_setting.pValues      = enables;
-		add_layer_setting(layer_setting);
+		requested_layer_settings.push_back(layer_setting);
 	}
 
 	// 3) Demonstrate disabling a known verbose message category (example)
@@ -447,13 +462,8 @@ LayerSettingsSample::LayerSettingsSample()
 		layer_setting.valueCount   = static_cast<uint32_t>(std::size(disables));
 		layer_setting.pValues      = disables;
 		// Do not add this by default as it disables all validation. Leave as commented example.
-		// add_layer_setting(layer_setting);
+		// requested_layer_settings.push_back(layer_setting);
 	}
-
-	// Initialize scenario state map so UI totals and logic have all keys even before toggling
-	scenario_states_.emplace(Scenario::WrongBufferFlags, ScenarioState{});
-	scenario_states_.emplace(Scenario::SuboptimalTransitions, ScenarioState{});
-	scenario_states_.emplace(Scenario::SmallAllocations, ScenarioState{});
 }
 
 bool LayerSettingsSample::prepare(const vkb::ApplicationOptions &options)
