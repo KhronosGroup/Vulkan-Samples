@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,13 +24,12 @@
 
 namespace vkb
 {
-class ShaderModule;
 class DescriptorSetLayout;
 
 class PipelineLayout
 {
   public:
-	PipelineLayout(vkb::core::DeviceC &device, const std::vector<ShaderModule *> &shader_modules);
+	PipelineLayout(vkb::core::DeviceC &device, const std::vector<vkb::core::ShaderModuleC *> &shader_modules);
 
 	PipelineLayout(const PipelineLayout &) = delete;
 
@@ -44,11 +43,11 @@ class PipelineLayout
 
 	VkPipelineLayout get_handle() const;
 
-	const std::vector<ShaderModule *> &get_shader_modules() const;
+	const std::vector<vkb::core::ShaderModuleC *> &get_shader_modules() const;
 
-	const std::vector<ShaderResource> get_resources(const ShaderResourceType &type = ShaderResourceType::All, VkShaderStageFlagBits stage = VK_SHADER_STAGE_ALL) const;
+	const std::vector<vkb::core::ShaderResourceC> get_resources(const vkb::core::ShaderResourceType &type = vkb::core::ShaderResourceType::All, VkShaderStageFlagBits stage = VK_SHADER_STAGE_ALL) const;
 
-	const std::unordered_map<uint32_t, std::vector<ShaderResource>> &get_shader_sets() const;
+	const std::unordered_map<uint32_t, std::vector<vkb::core::ShaderResourceC>> &get_shader_sets() const;
 
 	bool has_descriptor_set_layout(const uint32_t set_index) const;
 
@@ -62,13 +61,13 @@ class PipelineLayout
 	VkPipelineLayout handle{VK_NULL_HANDLE};
 
 	// The shader modules that this pipeline layout uses
-	std::vector<ShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModuleC *> shader_modules;
 
 	// The shader resources that this pipeline layout uses, indexed by their name
-	std::unordered_map<std::string, ShaderResource> shader_resources;
+	std::unordered_map<std::string, vkb::core::ShaderResourceC> shader_resources;
 
 	// A map of each set and the resources it owns used by the pipeline layout
-	std::unordered_map<uint32_t, std::vector<ShaderResource>> shader_sets;
+	std::unordered_map<uint32_t, std::vector<vkb::core::ShaderResourceC>> shader_sets;
 
 	// The different descriptor set layouts for this pipeline layout
 	std::vector<DescriptorSetLayout *> descriptor_set_layouts;

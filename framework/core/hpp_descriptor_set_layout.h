@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,9 +29,6 @@ class Device;
 using DeviceCpp = Device<vkb::BindingType::Cpp>;
 using DeviceC   = Device<vkb::BindingType::C>;
 
-class HPPShaderModule;
-struct HPPShaderResource;
-
 /**
  * @brief facade class around vkb::DescriptorSetLayout, providing a vulkan.hpp-based interface
  *
@@ -45,12 +42,12 @@ class HPPDescriptorSetLayout : private vkb::DescriptorSetLayout
   public:
 	HPPDescriptorSetLayout(vkb::core::DeviceCpp                            &device,
 	                       const uint32_t                                   set_index,
-	                       const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
-	                       const std::vector<vkb::core::HPPShaderResource> &resource_set) :
+	                       const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules,
+	                       const std::vector<vkb::core::ShaderResourceCpp> &resource_set) :
 	    vkb::DescriptorSetLayout(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                             set_index,
-	                             reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules),
-	                             reinterpret_cast<std::vector<vkb::ShaderResource> const &>(resource_set))
+	                             reinterpret_cast<std::vector<vkb::core::ShaderModuleC *> const &>(shader_modules),
+	                             reinterpret_cast<std::vector<vkb::core::ShaderResourceC> const &>(resource_set))
 	{}
 
 	vk::DescriptorSetLayout get_handle() const

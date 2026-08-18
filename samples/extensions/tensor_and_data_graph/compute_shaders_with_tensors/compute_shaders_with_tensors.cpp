@@ -380,8 +380,8 @@ void ComputeShadersWithTensors::prepare_data_graph_pipeline_descriptor_set()
 void ComputeShadersWithTensors::prepare_preprocessing_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &input_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/preprocessing.comp.spv"});
+	vkb::core::ShaderModuleC &input_comp =
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/preprocessing.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
@@ -420,8 +420,8 @@ void ComputeShadersWithTensors::prepare_preprocessing_pipeline_descriptor_set()
 void ComputeShadersWithTensors::prepare_postprocessing_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &output_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/postprocessing.comp.spv"});
+	vkb::core::ShaderModuleC &output_comp =
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/postprocessing.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
@@ -464,8 +464,8 @@ void ComputeShadersWithTensors::prepare_postprocessing_pipeline_descriptor_set()
 void ComputeShadersWithTensors::prepare_visualization_pipeline()
 {
 	// Load the compute shader
-	vkb::ShaderModule &visualization_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/visualization_three_tensors.comp.spv"});
+	vkb::core::ShaderModuleC &visualization_comp =
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/compute_shaders_with_tensors/glsl/visualization_three_tensors.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.
