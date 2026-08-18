@@ -26,15 +26,6 @@
 ComputeShaderDerivatives::ComputeShaderDerivatives()
 {
 	title = "Compute shader derivatives (VK_KHR_compute_shader_derivatives)";
-
-	// Device extension providing the feature (KHR is required)
-	add_device_extension(VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME);
-	// Note for developers/tooling:
-	// If your shader compiler/toolchain only emits SPV_NV_compute_shader_derivatives instead of SPV_KHR,
-	// please update to a newer Vulkan SDK, glslang, and SPIR-V Tools that support the KHR variant.
-	// This sample intentionally does not enable the NV extension and only targets VK_KHR_compute_shader_derivatives.
-	// Shader draw parameters (required for SV_VertexID in Slang-generated vertex shader SPIR-V)
-	add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME, /*optional*/ true);
 }
 
 ComputeShaderDerivatives::~ComputeShaderDerivatives()
@@ -170,6 +161,21 @@ void ComputeShaderDerivatives::create_output_buffer_and_descriptors()
 	pool_ci.poolSizeCount = 1;
 	pool_ci.pPoolSizes    = &pool_size;
 	VK_CHECK(vkCreateDescriptorPool(device, &pool_ci, nullptr, &compute_descriptor_pool));
+}
+
+void ComputeShaderDerivatives::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Device extension providing the feature (KHR is required)
+	requested_extensions[VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Note for developers/tooling:
+	// If your shader compiler/toolchain only emits SPV_NV_compute_shader_derivatives instead of SPV_KHR,
+	// please update to a newer Vulkan SDK, glslang, and SPIR-V Tools that support the KHR variant.
+	// This sample intentionally does not enable the NV extension and only targets VK_KHR_compute_shader_derivatives.
+	// Shader draw parameters (required for SV_VertexID in Slang-generated vertex shader SPIR-V)
+	requested_extensions[VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void ComputeShaderDerivatives::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

@@ -27,16 +27,21 @@
 
 ImageCompressionControlSample::ImageCompressionControlSample()
 {
-	// Extensions of interest in this sample (optional)
-	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME, true);
-	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	// Batch mode will test the toggle between different compression modes
 	config.insert<vkb::IntSetting>(0, static_cast<int>(gui_target_compression), 0);
 	config.insert<vkb::IntSetting>(1, static_cast<int>(gui_target_compression), 1);
 	config.insert<vkb::IntSetting>(2, static_cast<int>(gui_target_compression), 2);
+}
+
+void ImageCompressionControlSample::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Extensions of interest in this sample (optional)
+	requested_extensions[VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME]           = vkb::RequestMode::Optional;
+	requested_extensions[VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void ImageCompressionControlSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

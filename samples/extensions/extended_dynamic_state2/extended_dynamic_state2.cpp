@@ -28,10 +28,6 @@
 ExtendedDynamicState2::ExtendedDynamicState2()
 {
 	title = "Extended Dynamic State2";
-
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
-	add_device_extension(VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME);
 }
 
 ExtendedDynamicState2::~ExtendedDynamicState2()
@@ -719,6 +715,15 @@ void ExtendedDynamicState2::create_descriptor_sets()
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
 	                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
+}
+
+void ExtendedDynamicState2::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME]        = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME]          = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 /**

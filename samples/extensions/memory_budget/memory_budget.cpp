@@ -28,9 +28,6 @@ MemoryBudget::MemoryBudget()
 {
 	title = "Memory Budget";
 
-	// Enable instance and device extensions required to use VK_EXT_memory_budget
-	add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-
 	// Initialize physical device memory properties variables
 	MemoryBudget::initialize_device_memory_properties();
 }
@@ -47,6 +44,13 @@ MemoryBudget::~MemoryBudget()
 		vkDestroySampler(get_device().get_handle(), textures.rocks.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.planet.sampler, nullptr);
 	}
+}
+
+void MemoryBudget::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_MEMORY_BUDGET_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void MemoryBudget::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

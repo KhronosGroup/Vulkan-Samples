@@ -23,8 +23,6 @@ DynamicRendering::DynamicRendering() :
     enable_dynamic(true)
 {
 	title = "Dynamic Rendering";
-
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
 
 DynamicRendering::~DynamicRendering()
@@ -87,6 +85,13 @@ bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
 	prepared = true;
 
 	return true;
+}
+
+void DynamicRendering::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void DynamicRendering::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

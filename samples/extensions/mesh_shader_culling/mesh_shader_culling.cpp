@@ -23,11 +23,6 @@
 MeshShaderCulling::MeshShaderCulling()
 {
 	title = "Mesh shader culling";
-
-	// Adding device extensions
-	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 }
 
 MeshShaderCulling::~MeshShaderCulling()
@@ -45,6 +40,15 @@ MeshShaderCulling::~MeshShaderCulling()
 			vkFreeMemory(get_device().get_handle(), query_result.memory, nullptr);
 		}
 	}
+}
+
+void MeshShaderCulling::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME]             = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_MESH_SHADER_EXTENSION_NAME]           = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void MeshShaderCulling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

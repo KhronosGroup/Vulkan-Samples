@@ -33,7 +33,7 @@ class AFBCSample : public vkb::VulkanSampleC
 	virtual ~AFBCSample() = default;
 
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
-
+	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void update(float delta_time) override;
 
   private:

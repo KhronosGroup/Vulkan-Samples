@@ -25,13 +25,6 @@
 
 KHR16BitStorageInputOutputSample::KHR16BitStorageInputOutputSample()
 {
-	// Will be used in vertex and fragment shaders to declare varying data as FP16 rather than FP32.
-	// This significantly reduces bandwidth as varyings are stored in main memory on TBDR architectures.
-	// On Vulkan 1.1, this extension is in core, but just enable the extension in case we are running on a Vulkan 1.0 implementation.
-	add_device_extension(VK_KHR_16BIT_STORAGE_EXTENSION_NAME, true);
-	// 16-bit storage depends on this extension as well.
-	add_device_extension(VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	config.insert<vkb::BoolSetting>(0, khr_16bit_storage_input_output_enabled, false);
@@ -187,6 +180,18 @@ bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &op
 	create_gui(*window, &get_stats());
 
 	return true;
+}
+
+void KHR16BitStorageInputOutputSample::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Will be used in vertex and fragment shaders to declare varying data as FP16 rather than FP32.
+	// This significantly reduces bandwidth as varyings are stored in main memory on TBDR architectures.
+	// On Vulkan 1.1, this extension is in core, but just enable the extension in case we are running on a Vulkan 1.0 implementation.
+	requested_extensions[VK_KHR_16BIT_STORAGE_EXTENSION_NAME] = vkb::RequestMode::Optional;
+	// 16-bit storage depends on this extension as well.
+	requested_extensions[VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

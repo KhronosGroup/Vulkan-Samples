@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2023-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,13 +16,6 @@
  */
 
 #include "dynamic_line_rasterization.h"
-
-DynamicLineRasterization::DynamicLineRasterization()
-{
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
-	add_device_extension(VK_EXT_LINE_RASTERIZATION_EXTENSION_NAME);
-}
 
 DynamicLineRasterization::~DynamicLineRasterization()
 {
@@ -425,6 +418,15 @@ void DynamicLineRasterization::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(cmd_buff));
 	}
+}
+
+void DynamicLineRasterization::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME]   = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_LINE_RASTERIZATION_EXTENSION_NAME]       = vkb::RequestMode::Required;
 }
 
 void DynamicLineRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

@@ -24,21 +24,6 @@
 RaytracingBasic::RaytracingBasic()
 {
 	title = "Hardware accelerated ray tracing";
-
-	// Ray tracing related extensions required by this sample
-	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-	add_device_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-
-	// Required by VK_KHR_acceleration_structure
-	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-
-	// Required for VK_KHR_ray_tracing_pipeline
-	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-
-	// Required by VK_KHR_spirv_1_4
-	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 }
 
 RaytracingBasic::~RaytracingBasic()
@@ -57,6 +42,26 @@ RaytracingBasic::~RaytracingBasic()
 		index_buffer.reset();
 		ubo.reset();
 	}
+}
+
+void RaytracingBasic::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Ray tracing related extensions required by this sample
+	requested_extensions[VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME]   = vkb::RequestMode::Required;
+
+	// Required by VK_KHR_acceleration_structure
+	requested_extensions[VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME]      = vkb::RequestMode::Required;
+
+	// Required for VK_KHR_ray_tracing_pipeline
+	requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Required by VK_KHR_spirv_1_4
+	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void RaytracingBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

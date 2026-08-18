@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Holochip Corporation
+/* Copyright (c) 2021-2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,6 +40,7 @@ class RayQueries : public ApiVulkanSample
   public:
 	RayQueries();
 	~RayQueries() override;
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;

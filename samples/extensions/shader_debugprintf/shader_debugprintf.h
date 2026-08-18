@@ -103,6 +103,7 @@ class ShaderDebugPrintf : public ApiVulkanSample
   private:
 	// from vkb::VulkanSample
 	virtual uint32_t get_api_version() const override;
+	virtual void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;
 };
 

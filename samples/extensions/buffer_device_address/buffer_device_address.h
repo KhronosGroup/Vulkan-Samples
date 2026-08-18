@@ -28,6 +28,7 @@ class BufferDeviceAddress : public ApiVulkanSample
 	~BufferDeviceAddress();
 
   private:
+	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;

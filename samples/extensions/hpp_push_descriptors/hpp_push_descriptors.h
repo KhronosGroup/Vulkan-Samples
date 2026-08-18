@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Sascha Willems
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Sascha Willems
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,6 +41,7 @@ class HPPPushDescriptors : public HPPApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from vkb::VulkanSample
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample

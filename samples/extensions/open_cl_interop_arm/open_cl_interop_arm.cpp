@@ -44,16 +44,6 @@ OpenCLInteropArm::OpenCLInteropArm()
 {
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
-
-	add_device_extension(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
-
-	add_device_extension(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
-	add_device_extension(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
-	add_device_extension(VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 }
 
 OpenCLInteropArm::~OpenCLInteropArm()
@@ -135,6 +125,21 @@ void OpenCLInteropArm::render(float delta_time)
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, rendering_finished_fence));
 
 	ApiVulkanSample::submit_frame();
+}
+
+void OpenCLInteropArm::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	requested_extensions[VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME]  = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MAINTENANCE1_EXTENSION_NAME]              = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_BIND_MEMORY_2_EXTENSION_NAME]             = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME]           = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME]      = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME]      = vkb::RequestMode::Required;
 }
 
 void OpenCLInteropArm::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const

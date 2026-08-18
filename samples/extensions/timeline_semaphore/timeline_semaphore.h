@@ -120,6 +120,7 @@ class TimelineSemaphore : public ApiVulkanSample
 	void setup_graphics_pipeline();
 	void build_graphics_command_buffer();
 
+	void         request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void         request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;

@@ -28,17 +28,6 @@ static constexpr unsigned NumBlobs = 16;
 
 KHR16BitArithmeticSample::KHR16BitArithmeticSample()
 {
-	// Enables required extensions to use 16-bit storage.
-	// For this sample, this is not optional.
-	// This sample also serves as a tutorial on how to use 16-bit storage
-	// for SSBOs and push constants.
-	add_device_extension(VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME, false);
-	add_device_extension(VK_KHR_16BIT_STORAGE_EXTENSION_NAME, false);
-
-	// Enables the extension which allows shaders to use 16-bit float and 8-bit integer arithmetic.
-	// This sample will only make use of 16-bit floats.
-	add_device_extension(VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	config.insert<vkb::BoolSetting>(0, khr_16bit_arith_enabled, false);
@@ -220,6 +209,22 @@ void KHR16BitArithmeticSample::VisualizationSubpass::prepare()
 	auto                            &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
 	std::vector<vkb::ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 	layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
+}
+
+void KHR16BitArithmeticSample::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Enables required extensions to use 16-bit storage.
+	// For this sample, this is not optional.
+	// This sample also serves as a tutorial on how to use 16-bit storage
+	// for SSBOs and push constants.
+	requested_extensions[VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_16BIT_STORAGE_EXTENSION_NAME]                = vkb::RequestMode::Required;
+
+	// Enables the extension which allows shaders to use 16-bit float and 8-bit integer arithmetic.
+	// This sample will only make use of 16-bit floats.
+	requested_extensions[VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void KHR16BitArithmeticSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

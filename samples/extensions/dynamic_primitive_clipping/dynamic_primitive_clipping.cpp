@@ -24,10 +24,6 @@
 DynamicPrimitiveClipping::DynamicPrimitiveClipping()
 {
 	title = "Dynamic primitive clipping";
-
-	// Extensions required by vkCmdSetDepthClipEnableEXT().
-	add_device_extension(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 }
 
 DynamicPrimitiveClipping::~DynamicPrimitiveClipping()
@@ -71,6 +67,15 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 
 	prepared = true;
 	return true;
+}
+
+void DynamicPrimitiveClipping::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Extensions required by vkCmdSetDepthClipEnableEXT().
+	requested_extensions[VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME]        = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void DynamicPrimitiveClipping::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

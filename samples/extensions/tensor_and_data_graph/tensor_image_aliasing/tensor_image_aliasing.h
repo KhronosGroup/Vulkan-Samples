@@ -45,10 +45,9 @@
 class TensorImageAliasing : public vkb::VulkanSampleC
 {
   public:
-	TensorImageAliasing();
-
 	~TensorImageAliasing() override;
 
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	bool prepare(const vkb::ApplicationOptions &options) override;

@@ -19,16 +19,6 @@
 
 #include <gui.h>
 
-SimpleTensorAndDataGraph::SimpleTensorAndDataGraph()
-{
-	// Declare that we need the data graph and tensor extensions
-	add_device_extension("VK_ARM_tensors");
-	add_device_extension("VK_ARM_data_graph");
-	// These extensions are dependencies of the above, so we need to add them too.
-	add_device_extension("VK_KHR_maintenance5");
-	add_device_extension("VK_KHR_deferred_host_operations");
-}
-
 SimpleTensorAndDataGraph::~SimpleTensorAndDataGraph()
 {
 	if (data_graph_pipeline_descriptor_set != VK_NULL_HANDLE)
@@ -47,6 +37,19 @@ SimpleTensorAndDataGraph::~SimpleTensorAndDataGraph()
 uint32_t SimpleTensorAndDataGraph::get_api_version() const
 {
 	return VK_API_VERSION_1_3;        // Required by the emulation layers
+}
+
+void SimpleTensorAndDataGraph::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Declare that we need the data graph and tensor extensions
+	requested_extensions[VK_ARM_TENSORS_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_ARM_DATA_GRAPH_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// These extensions are dependencies of the above, so we need to add them too.
+	requested_extensions[VK_KHR_MAINTENANCE_5_EXTENSION_NAME]            = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 /**

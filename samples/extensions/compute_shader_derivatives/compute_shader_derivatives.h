@@ -34,6 +34,7 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 
   protected:
 	uint32_t get_api_version() const override;
+	void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void     request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:

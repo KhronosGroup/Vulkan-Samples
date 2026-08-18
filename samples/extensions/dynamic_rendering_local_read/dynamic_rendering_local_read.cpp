@@ -32,18 +32,6 @@ DynamicRenderingLocalRead::DynamicRenderingLocalRead()
 	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 256.f, 0.1f);
 
 #if defined(USE_DYNAMIC_RENDERING)
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
-	// To simplify barrier setup used for dynamic rendering, we use sync2
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
-
-	// Slang shaders require additional extensions to be enabled
-	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
-	{
-		add_device_extension(VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME);
-		add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
-	}
-
 	// Dynamic rendering doesn't use render passes
 	// To make sure that framework related classes like the user interface are aware of this, we explicitly st the base class' renderpass to a null handle
 	render_pass = VK_NULL_HANDLE;
@@ -78,6 +66,26 @@ uint32_t DynamicRenderingLocalRead::get_api_version() const
 uint32_t DynamicRenderingLocalRead::get_gui_subpass() const
 {
 	return 2;
+}
+
+void DynamicRenderingLocalRead::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+#if defined(USE_DYNAMIC_RENDERING)
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME]            = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// To simplify barrier setup used for dynamic rendering, we use sync2
+	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Slang shaders require additional extensions to be enabled
+	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
+	{
+		requested_extensions[VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+		requested_extensions[VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME] = vkb::RequestMode::Required;
+	}
+#endif
 }
 
 void DynamicRenderingLocalRead::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

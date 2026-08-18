@@ -35,9 +35,6 @@
 
 AFBCSample::AFBCSample()
 {
-	// Extension that may be used to query if AFBC is enabled
-	add_device_extension(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	config.insert<vkb::BoolSetting>(0, afbc_enabled, false);
@@ -74,6 +71,14 @@ bool AFBCSample::prepare(const vkb::ApplicationOptions &options)
 	create_gui(*window, &get_stats());
 
 	return true;
+}
+
+void AFBCSample::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Extension that may be used to query if AFBC is enabled
+	requested_extensions[VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void AFBCSample::update(float delta_time)

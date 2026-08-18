@@ -29,13 +29,6 @@
 DescriptorBufferBasic::DescriptorBufferBasic()
 {
 	title = "Descriptor buffers";
-
-	// Enable extension required for descriptor buffers
-	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
-
-	add_device_extension(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
 }
 
 DescriptorBufferBasic::~DescriptorBufferBasic()
@@ -56,6 +49,18 @@ DescriptorBufferBasic::~DescriptorBufferBasic()
 		uniform_binding_descriptor.buffer.reset();
 		image_binding_descriptor.buffer.reset();
 	}
+}
+
+void DescriptorBufferBasic::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Enable extension required for descriptor buffers
+	requested_extensions[VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME]   = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME]     = vkb::RequestMode::Required;
+
+	requested_extensions[VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void DescriptorBufferBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

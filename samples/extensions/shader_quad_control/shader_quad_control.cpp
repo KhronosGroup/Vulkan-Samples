@@ -20,10 +20,6 @@
 ShaderQuadControl::ShaderQuadControl()
 {
 	title = "Shader quad control";
-
-	// VK_KHR_shader_quad_control requires VK_KHR_shader_maximal_reconvergence per spec
-	add_device_extension(VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME);
 }
 
 ShaderQuadControl::~ShaderQuadControl()
@@ -65,6 +61,15 @@ bool ShaderQuadControl::prepare(const vkb::ApplicationOptions &options)
 
 	prepared = true;
 	return true;
+}
+
+void ShaderQuadControl::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	ApiVulkanSample::request_device_extensions(requested_extensions);
+
+	// VK_KHR_shader_quad_control requires VK_KHR_shader_maximal_reconvergence per spec
+	requested_extensions[VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME]          = vkb::RequestMode::Required;
 }
 
 void ShaderQuadControl::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
