@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2024, Arm Limited and Contributors
+# Copyright (c) 2020-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -89,3 +89,6 @@ if (IOS)
             "-framework IOSurface"
             )
 endif ()
+
+set_target_properties(apps PROPERTIES FOLDER "components")
+
