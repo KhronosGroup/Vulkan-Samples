@@ -60,7 +60,7 @@ bool RasterizationOrderAttachmentAccess::prepare(const vkb::ApplicationOptions &
 	}
 
 	// Add INPUT_ATTACHMENT_BIT so fragment shaders can read the color attachment with subpassLoad()
-	update_swapchain_image_usage_flags({VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT});
+	update_swapchain_image_usage_flags({VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.0f, 0.0f, -4.0f});

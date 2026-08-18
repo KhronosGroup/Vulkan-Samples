@@ -836,7 +836,7 @@ bool RaytracingBasic::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// This sample copies the ray traced output to the swap chain image, so we need to enable the required image usage flags
-	const std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
+	const std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT};
 	update_swapchain_image_usage_flags(image_usage_flags);
 
 	// This sample renders the UI overlay on top of the ray tracing output, so we need to disable color attachment clears
