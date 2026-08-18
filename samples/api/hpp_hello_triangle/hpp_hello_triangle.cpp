@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,13 +35,24 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
                                                                 void                                         *user_data)
 {
 	// Log debug message
-	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+	std::string message = std::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
+	switch (message_severity)
 	{
-		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
-	{
-		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+			LOGD("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+			LOGI("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+			LOGW("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+			LOGE("{}", message);
+			break;
+		default:
+			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
+			break;
 	}
 	return VK_FALSE;
 }
