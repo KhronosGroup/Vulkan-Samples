@@ -47,12 +47,12 @@ jobs:
         name: Configure and build
         shell: pwsh
         run: |
-          cmake -B"build/${{ matrix.platform }}" -G"Ninja" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -B"build/${{ matrix.platform }}" -G"Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
         run: |
-          cmake -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DGLFW_BUILD_WAYLAND=OFF
+          cmake -B"build/${{ matrix.platform }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DGLFW_BUILD_WAYLAND=OFF
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_v2:
