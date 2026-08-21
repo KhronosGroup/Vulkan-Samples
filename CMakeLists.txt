@@ -125,6 +125,9 @@ if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER))
     string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
     message(DEBUG "New flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+    add_link_options(
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/DEBUG:FASTLINK>
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/INCREMENTAL:NO>)
 endif()
 
 # create output folder

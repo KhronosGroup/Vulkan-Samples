@@ -159,6 +159,7 @@ if(${TARGET_TYPE} STREQUAL "Sample")
 elseif(${TARGET_TYPE} STREQUAL "Test")
     add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL} ${SHADERS_HLSL} ${SHADERS_SLANG} ${SHADERS_SPVASM})
 endif()
+    vkb__trim_static_lib_objects(${PROJECT_NAME})
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target

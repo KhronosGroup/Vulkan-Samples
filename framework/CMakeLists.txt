@@ -404,7 +404,8 @@ if(WIN32)
 endif()
 
 #NB: switch this to shared library and things stop working. (there is likely two copies of volk somewhere.
-add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
+add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
+vkb__trim_static_lib_objects(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # compiler flags based on compiler type

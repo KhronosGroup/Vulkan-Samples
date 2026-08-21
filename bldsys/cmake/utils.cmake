@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2021, Arm Limited and Contributors
+ Copyright (c) 2019-2026, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -39,4 +39,13 @@ function(scan_dirs)
     endforeach()
 
     set(${TARGET_LIST} ${DIR_LIST} PARENT_SCOPE)
+endfunction()
+
+function(vkb__trim_static_lib_objects TARGET_NAME)
+    if(MSVC)
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${TARGET_NAME}.dir"
+            COMMENT "Trimming intermediate objects for ${TARGET_NAME} (already embedded in its .lib)"
+            VERBATIM)
+    endif()
 endfunction()
