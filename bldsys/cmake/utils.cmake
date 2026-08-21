@@ -42,7 +42,7 @@ function(scan_dirs)
 endfunction()
 
 function(vkb__trim_static_lib_objects TARGET_NAME)
-    if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER) AND (CMAKE_GENERATOR MATCHES "Ninja|Makefiles"))
+    if(MSVC)
         add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${TARGET_NAME}.dir"
             COMMENT "Trimming intermediate objects for ${TARGET_NAME} (already embedded in its .lib)"
