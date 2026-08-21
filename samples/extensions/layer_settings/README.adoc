@@ -62,7 +62,7 @@ When you run the sample, you'll see an interactive UI with checkboxes for each v
 Demonstrates the importance of declaring correct usage flags at buffer creation time. Using a buffer without the appropriate usage bit (e.g., `VERTEX_BUFFER_BIT`) can lead to undefined behavior or performance issues on some implementations.
 
 *Suboptimal Transitions*::
-Shows why choosing the right image layout matters. Transitioning to `GENERAL` layout is legal but often suboptimal—specific layouts like `COLOR_ATTACHMENT_OPTIMAL` or `SHADER_READ_ONLY_OPTIMAL` enable better performance.
+Shows why choosing the right image layout matters. Transitioning to `GENERAL` layout is legal but potentially suboptimal—specific layouts like `COLOR_ATTACHMENT_OPTIMAL` or `SHADER_READ_ONLY_OPTIMAL` enable better performance.
 
 *Many Small Allocations*::
 Demonstrates why suballocation is important. Creating hundreds of tiny memory allocations wastes resources and can hit driver limits. Use a memory allocator library (like VMA) or implement suballocation.
@@ -90,15 +90,15 @@ If you are integrating layer settings directly into your own Vulkan app, the flo
 #include <cstring>
 #include <ranges>
 
-static const char *kValidationLayer = "VK_LAYER_KHRONOS_validation";
+static const char *kValidationLayerName = "VK_LAYER_KHRONOS_validation";
 
 // Helper to check if VK_EXT_layer_settings is advertised by the validation layer
 bool layer_settings_supported()
 {
     uint32_t count = 0;
-    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, nullptr);
+    vkEnumerateInstanceExtensionProperties(kValidationLayerName, &count, nullptr);
     std::vector<VkExtensionProperties> exts(count);
-    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, exts.data());
+    vkEnumerateInstanceExtensionProperties(kValidationLayerName, &count, exts.data());
     return std::ranges::find_if(exts, [](auto const &e) {
                return std::strcmp(e.extensionName, VK_EXT_LAYER_SETTINGS_EXTENSION_NAME) == 0;
            }) != exts.end();
@@ -108,9 +108,9 @@ bool layer_settings_supported()
 bool validation_features_supported()
 {
     uint32_t count = 0;
-    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, nullptr);
+    vkEnumerateInstanceExtensionProperties(kValidationLayerName, &count, nullptr);
     std::vector<VkExtensionProperties> exts(count);
-    vkEnumerateInstanceExtensionProperties(kValidationLayer, &count, exts.data());
+    vkEnumerateInstanceExtensionProperties(kValidationLayerName, &count, exts.data());
     return std::ranges::find_if(exts, [](auto const &e) {
                return std::strcmp(e.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0;
            }) != exts.end();
@@ -122,7 +122,7 @@ VkInstance create_instance_with_layer_settings()
     instance_exts.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
     // Add your platform surface extension(s), e.g. VK_KHR_xcb_surface, VK_KHR_win32_surface, etc.
 
-    const char *layers[] = {kValidationLayer};
+    const char *layers[] = {kValidationLayerName};
 
     // Prepare layer settings (strings) we want to enable
     static const char *enables[] = {
@@ -132,7 +132,7 @@ VkInstance create_instance_with_layer_settings()
 
     // One setting object that enables both features above
     VkLayerSettingEXT setting{};
-    setting.pLayerName   = kValidationLayer;
+    setting.pLayerName   = kValidationLayerName;
     setting.pSettingName = "enables";                         // well-known name used by VVL
     setting.type         = VK_LAYER_SETTING_TYPE_STRING_EXT;   // string list
     setting.valueCount   = static_cast<uint32_t>(std::size(enables));
