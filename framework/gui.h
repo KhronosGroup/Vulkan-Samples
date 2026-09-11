@@ -645,7 +645,10 @@ inline void
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 		// iOS Simulator does not support vkCmdDrawIndexed() with vertex_offset > 0, so rebind vertex buffer instead
 		vertex_offsets[0] += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
-		command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
+		if (vertex_offsets[0] < vertex_buffer->get_size())
+		{
+			command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
+		}
 #else
 		vertex_offset += cmd_list->VtxBuffer.Size;
 #endif
@@ -753,6 +756,7 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 
 	std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> vertex_buffers;
 	std::vector<vk::DeviceSize>                                     vertex_offsets;
+	vk::DeviceSize                                                  vertex_size;
 
 	// If a render context is used, then use the frames buffer pools to allocate GUI vertex/index data from
 	if (!explicit_update)
@@ -763,12 +767,14 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 		{
 			vertex_buffers.push_back(vertex_allocation.get_buffer());
 			vertex_offsets.push_back(vertex_allocation.get_offset());
+			vertex_size = vertex_allocation.get_size();
 		}
 	}
 	else
 	{
 		vertex_buffers.push_back(*vertex_buffer);
 		vertex_offsets.push_back(0);
+		vertex_size = vertex_buffer->get_size();
 		command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
 		command_buffer.bind_index_buffer(*index_buffer, 0, vk::IndexType::eUint16);
 	}
@@ -821,7 +827,10 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 		if (!vertex_offsets.empty())
 		{
 			vertex_offsets.back() += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
-			command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+			if (vertex_offsets.back() < vertex_size)
+			{
+				command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+			}
 		}
 #else
 		vertex_offset += cmd_list->VtxBuffer.Size;
