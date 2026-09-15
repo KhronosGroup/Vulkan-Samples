@@ -1406,7 +1406,7 @@ inline bool Gui<bindingType>::update_buffers()
 	}
 
 	bool updated = false;
-	if (!vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
+	if (!vertex_buffer || !vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
 	{
 		vertex_buffer.reset();
 		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size,
@@ -1416,7 +1416,7 @@ inline bool Gui<bindingType>::update_buffers()
 		updated = true;
 	}
 
-	if (!index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
+	if (!index_buffer || !index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
 	{
 		index_buffer.reset();
 		index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size,
