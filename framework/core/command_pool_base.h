@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,7 +65,8 @@ class CommandPoolBase
 	vkb::rendering::RenderFrameCpp              *get_render_frame();
 	vkb::CommandBufferResetMode                  get_reset_mode() const;
 	size_t                                       get_thread_index() const;
-	std::shared_ptr<vkb::core::CommandBufferCpp> request_command_buffer(vkb::core::CommandPoolCpp &commandPool, vk::CommandBufferLevel level);
+	std::shared_ptr<vkb::core::CommandBufferCpp> request_command_buffer(vkb::core::CommandPoolCpp &commandPool,
+	                                                                    vk::CommandBufferLevel     level);
 	void                                         reset_pool();
 
   private:
@@ -78,7 +79,7 @@ class CommandPoolBase
 	uint32_t                                                  active_primary_command_buffer_count = 0;
 	std::vector<std::shared_ptr<vkb::core::CommandBufferCpp>> secondary_command_buffers;
 	uint32_t                                                  active_secondary_command_buffer_count = 0;
-	vkb::CommandBufferResetMode                               reset_mode                            = vkb::CommandBufferResetMode::ResetPool;
+	vkb::CommandBufferResetMode                               reset_mode = vkb::CommandBufferResetMode::ResetPool;
 };
 }        // namespace core
 }        // namespace vkb

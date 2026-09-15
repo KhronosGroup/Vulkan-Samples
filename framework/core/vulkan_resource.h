@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,7 +46,8 @@ class VulkanResource
 	using ResourceType = typename vkb::VulkanTypeMapping<bindingType, Handle>::Type;
 
   public:
-	using ObjectType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ObjectType, VkObjectType>::type;
+	using ObjectType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ObjectType, VkObjectType>::type;
 
 	VulkanResource(Handle handle = nullptr, Device<bindingType> *device_ = nullptr);
 
@@ -184,7 +185,8 @@ inline uint64_t VulkanResource<bindingType, Handle>::get_handle_u64() const
 }
 
 template <vkb::BindingType bindingType, typename Handle>
-inline typename VulkanResource<bindingType, Handle>::ObjectType VulkanResource<bindingType, Handle>::get_object_type() const
+inline typename VulkanResource<bindingType, Handle>::ObjectType
+    VulkanResource<bindingType, Handle>::get_object_type() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -197,7 +199,8 @@ inline typename VulkanResource<bindingType, Handle>::ObjectType VulkanResource<b
 }
 
 template <vkb::BindingType bindingType, typename Handle>
-inline typename VulkanResource<bindingType, Handle>::ResourceType const &VulkanResource<bindingType, Handle>::get_resource() const
+inline typename VulkanResource<bindingType, Handle>::ResourceType const &
+    VulkanResource<bindingType, Handle>::get_resource() const
 {
 	return handle;
 }
@@ -221,7 +224,8 @@ inline void VulkanResource<bindingType, Handle>::set_debug_name(const std::strin
 
 	if (device && !debug_name.empty())
 	{
-		get_device().get_debug_utils().set_debug_name(get_device().get_handle(), get_object_type(), get_handle_u64(), debug_name.c_str());
+		get_device().get_debug_utils().set_debug_name(
+		    get_device().get_handle(), get_object_type(), get_handle_u64(), debug_name.c_str());
 	}
 }
 
