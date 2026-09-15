@@ -26,9 +26,9 @@ constexpr uint32_t ATTACHMENT_BITMASK    = 0x7FFFFFFF;
 
 PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass       *parent,
                                              vkb::rendering::RenderContextC &render_context,
-                                             ShaderSource                  &&triangle_vs,
-                                             ShaderSource                  &&fs,
-                                             ShaderVariant                 &&fs_variant) :
+                                             vkb::core::ShaderSource       &&triangle_vs,
+                                             vkb::core::ShaderSource       &&fs,
+                                             vkb::core::ShaderVariant      &&fs_variant) :
     Subpass(render_context, std::move(triangle_vs), std::move(fs)),
     parent{parent},
     fs_variant{std::move(fs_variant)}
@@ -129,7 +129,7 @@ void PostProcessingSubpass::draw(vkb::core::CommandBufferC &command_buffer)
 	auto &vert_shader_module = resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
 	auto &frag_shader_module = resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), fs_variant);
 
-	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
+	std::vector<vkb::core::ShaderModuleC *> shader_modules{&vert_shader_module, &frag_shader_module};
 
 	// Create pipeline layout and bind it
 	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_modules);

@@ -1477,31 +1477,31 @@ const std::string to_string(bool flag)
 	return "false";
 }
 
-const std::string to_string(ShaderResourceType type)
+const std::string to_string(vkb::core::ShaderResourceType type)
 {
 	switch (type)
 	{
-		case ShaderResourceType::Input:
+		case vkb::core::ShaderResourceType::Input:
 			return "Input";
-		case ShaderResourceType::InputAttachment:
+		case vkb::core::ShaderResourceType::InputAttachment:
 			return "InputAttachment";
-		case ShaderResourceType::Output:
+		case vkb::core::ShaderResourceType::Output:
 			return "Output";
-		case ShaderResourceType::Image:
+		case vkb::core::ShaderResourceType::Image:
 			return "Image";
-		case ShaderResourceType::ImageSampler:
+		case vkb::core::ShaderResourceType::ImageSampler:
 			return "ImageSampler";
-		case ShaderResourceType::ImageStorage:
+		case vkb::core::ShaderResourceType::ImageStorage:
 			return "ImageStorage";
-		case ShaderResourceType::Sampler:
+		case vkb::core::ShaderResourceType::Sampler:
 			return "Sampler";
-		case ShaderResourceType::BufferUniform:
+		case vkb::core::ShaderResourceType::BufferUniform:
 			return "BufferUniform";
-		case ShaderResourceType::BufferStorage:
+		case vkb::core::ShaderResourceType::BufferStorage:
 			return "BufferStorage";
-		case ShaderResourceType::PushConstant:
+		case vkb::core::ShaderResourceType::PushConstant:
 			return "PushConstant";
-		case ShaderResourceType::SpecializationConstant:
+		case vkb::core::ShaderResourceType::SpecializationConstant:
 			return "SpecializationConstant";
 		default:
 			return "Unkown Type";

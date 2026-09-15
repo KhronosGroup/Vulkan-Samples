@@ -113,8 +113,8 @@ std::unique_ptr<vkb::rendering::RenderTargetC> MultithreadingRenderPasses::creat
 std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_shadow_renderpass()
 {
 	// Shadowmap subpass
-	auto shadowmap_vs  = vkb::ShaderSource{"shadows/shadowmap.vert.spv"};
-	auto shadowmap_fs  = vkb::ShaderSource{"shadows/shadowmap.frag.spv"};
+	auto shadowmap_vs  = vkb::core::ShaderSource{"shadows/shadowmap.vert.spv"};
+	auto shadowmap_fs  = vkb::core::ShaderSource{"shadows/shadowmap.frag.spv"};
 	auto scene_subpass = std::make_unique<ShadowSubpass>(get_render_context(), std::move(shadowmap_vs), std::move(shadowmap_fs), get_scene(), *shadowmap_camera);
 
 	shadow_subpass = scene_subpass.get();
@@ -129,8 +129,8 @@ std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::cre
 std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_main_renderpass()
 {
 	// Main subpass
-	auto main_vs       = vkb::ShaderSource{"shadows/main.vert.spv"};
-	auto main_fs       = vkb::ShaderSource{"shadows/main.frag.spv"};
+	auto main_vs       = vkb::core::ShaderSource{"shadows/main.vert.spv"};
+	auto main_fs       = vkb::core::ShaderSource{"shadows/main.frag.spv"};
 	auto scene_subpass = std::make_unique<MainSubpass>(
 	    get_render_context(), std::move(main_vs), std::move(main_fs), get_scene(), *camera, *shadowmap_camera, shadow_render_targets);
 
@@ -442,8 +442,8 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::core::CommandBufferC &comma
 }
 
 MultithreadingRenderPasses::MainSubpass::MainSubpass(vkb::rendering::RenderContextC                              &render_context,
-                                                     vkb::ShaderSource                                          &&vertex_source,
-                                                     vkb::ShaderSource                                          &&fragment_source,
+                                                     vkb::core::ShaderSource                                    &&vertex_source,
+                                                     vkb::core::ShaderSource                                    &&fragment_source,
                                                      vkb::scene_graph::SceneC                                    &scene,
                                                      vkb::sg::Camera                                             &camera,
                                                      vkb::sg::Camera                                             &shadowmap_camera,
@@ -499,8 +499,8 @@ void MultithreadingRenderPasses::MainSubpass::draw(vkb::core::CommandBufferC &co
 }
 
 MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::rendering::RenderContextC &render_context,
-                                                         vkb::ShaderSource             &&vertex_source,
-                                                         vkb::ShaderSource             &&fragment_source,
+                                                         vkb::core::ShaderSource       &&vertex_source,
+                                                         vkb::core::ShaderSource       &&fragment_source,
                                                          vkb::scene_graph::SceneC       &scene,
                                                          vkb::sg::Camera                &camera) :
     vkb::rendering::subpasses::GeometrySubpassC{render_context, std::move(vertex_source), std::move(fragment_source), scene, camera}
@@ -531,14 +531,14 @@ void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::core
 	command_buffer.set_multisample_state(multisample_state);
 }
 
-vkb::PipelineLayout &MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-                                                                                        const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+                                                                                        const std::vector<vkb::core::ShaderModuleC *> &shader_modules)
 {
 	// Only vertex shader is needed in the shadow subpass
 	assert(!shader_modules.empty());
 	auto vertex_shader_module = shader_modules[0];
 
-	vertex_shader_module->set_resource_mode("GlobalUniform", vkb::ShaderResourceMode::Dynamic);
+	vertex_shader_module->set_resource_mode("GlobalUniform", vkb::core::ShaderResourceMode::Dynamic);
 
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout({vertex_shader_module});
 }

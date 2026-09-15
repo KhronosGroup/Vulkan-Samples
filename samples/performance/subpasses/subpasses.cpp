@@ -300,8 +300,8 @@ void Subpasses::draw_gui()
 std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
-	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
-	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
+	auto geometry_vs   = vkb::core::ShaderSource{"deferred/geometry.vert.spv"};
+	auto geometry_fs   = vkb::core::ShaderSource{"deferred/geometry.frag.spv"};
 	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
 	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 
@@ -309,8 +309,8 @@ std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_one_renderpas
 	scene_subpass->set_output_attachments({1, 2, 3});
 
 	// Lighting subpass
-	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert.spv"};
-	auto lighting_fs      = vkb::ShaderSource{"deferred/lighting.frag.spv"};
+	auto lighting_vs      = vkb::core::ShaderSource{"deferred/lighting.vert.spv"};
+	auto lighting_fs      = vkb::core::ShaderSource{"deferred/lighting.frag.spv"};
 	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
@@ -333,8 +333,8 @@ std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_one_renderpas
 std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_geometry_renderpass()
 {
 	// Geometry subpass
-	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert.spv"};
-	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag.spv"};
+	auto geometry_vs   = vkb::core::ShaderSource{"deferred/geometry.vert.spv"};
+	auto geometry_fs   = vkb::core::ShaderSource{"deferred/geometry.frag.spv"};
 	auto scene_subpass = std::make_unique<vkb::rendering::subpasses::GeometrySubpassC>(
 	    get_render_context(), std::move(geometry_vs), std::move(geometry_fs), get_scene(), *camera);
 
@@ -357,8 +357,8 @@ std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_geometry_rend
 std::unique_ptr<vkb::rendering::RenderPipelineC> Subpasses::create_lighting_renderpass()
 {
 	// Lighting subpass
-	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert.spv"};
-	auto lighting_fs      = vkb::ShaderSource{"deferred/lighting.frag.spv"};
+	auto lighting_vs      = vkb::core::ShaderSource{"deferred/lighting.vert.spv"};
+	auto lighting_fs      = vkb::core::ShaderSource{"deferred/lighting.frag.spv"};
 	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, get_scene());
 
 	// Inputs are depth, albedo, and normal from the geometry subpass

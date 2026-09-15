@@ -52,7 +52,6 @@ set(FRAMEWORK_FILES
     structure_chain_builder.h
     # Source Files
     drawer.cpp
-    spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
     fence_pool.cpp
@@ -238,14 +237,12 @@ set(CORE_FILES
     core/hpp_queue.h
 	core/hpp_render_pass.h
     core/hpp_sampler.h
-    core/hpp_shader_module.h
     core/hpp_swapchain.h
     core/vulkan_resource.h
     # Source Files
     core/command_pool_base.cpp
     core/debug.cpp
     core/image_core.cpp
-    core/shader_module.cpp
     core/pipeline_layout.cpp
     core/pipeline.cpp
     core/descriptor_set_layout.cpp
