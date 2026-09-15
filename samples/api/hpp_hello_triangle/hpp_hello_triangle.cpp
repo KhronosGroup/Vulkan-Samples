@@ -35,7 +35,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
                                                                 void                                         *user_data)
 {
 	// Log debug message
-	std::string message = std::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
+	std::string message = fmt::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
 	switch (message_severity)
 	{
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
@@ -54,7 +54,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
 			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
 			break;
 	}
-	return VK_FALSE;
+	return vk::False;
 }
 #endif
 
