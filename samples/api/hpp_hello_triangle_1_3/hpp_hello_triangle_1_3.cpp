@@ -323,7 +323,7 @@ vk::Result HPPHelloTriangleV13::acquire_next_swapchain_image(uint32_t *image)
 		}
 
 		context.per_frame[*image].swapchain_acquire_semaphore = acquire_semaphore;
-		result = vk::Result::eSuccess;
+		result                                                = vk::Result::eSuccess;
 	}
 	return result;
 }
