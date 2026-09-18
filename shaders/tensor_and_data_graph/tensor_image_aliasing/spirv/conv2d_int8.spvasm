@@ -62,6 +62,7 @@
                 %uint_tensor_r1_s2 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_2
                 %uint_tensor_r1_s4 = OpTypeTensorARM %uint %uint_1 %uint_array_l1_4
                %uint8_tensor_r1_s1 = OpTypeTensorARM %uint8 %uint_1 %uint_array_l1_1
+               %uint16_tensor_r1_s1 = OpTypeTensorARM %uint16 %uint_1 %uint_array_l1_1
         %uint8_tensor_r4_s_4_3_3_4 = OpTypeTensorARM %uint8 %uint_4 %uint_array_l4_4_3_3_4
         %uint8_tensor_r4_s_1_h_w_4 = OpTypeTensorARM %uint8 %uint_4 %uint_array_l4_1_h_w_4
        %uint16_tensor_r4_s_1_h_w_4 = OpTypeTensorARM %uint16 %uint_4 %uint_array_l4_1_h_w_4
@@ -98,8 +99,8 @@
               %rescale1_multiplier = OpConstantComposite %uint_tensor_r1_s1 %rescale1_multiplier_value
              %rescale1_shift_value = OpConstant %uint8 2
                    %rescale1_shift = OpConstantComposite %uint8_tensor_r1_s1 %rescale1_shift_value
-  %rescale1_input_zero_point_value = OpConstant %uint 0
-        %rescale1_input_zero_point = OpConstantComposite %uint_tensor_r1_s1 %rescale1_input_zero_point_value
+  %rescale1_input_zero_point_value = OpConstant %uint16 0
+        %rescale1_input_zero_point = OpConstantComposite %uint16_tensor_r1_s1 %rescale1_input_zero_point_value
  %rescale1_output_zero_point_value = OpConstant %uint8 0
        %rescale1_output_zero_point = OpConstantComposite %uint8_tensor_r1_s1 %rescale1_output_zero_point_value
 
@@ -112,9 +113,9 @@
                                      OpGraphEntryPointARM %graph "main" %input_tensor_ptr %output_tensor_ptr
                             %graph = OpGraphARM %graph_type
                                %in = OpGraphInputARM %uint8_tensor_r4_s_1_h_w_4 %uint_0
-                        %in_signed = OpExtInst %uint8_tensor_r4_s_1_h_w_4 %tosa RESCALE %true %uint_0 %false %rescale0_input_unsigned %rescale0_output_unsigned %in %rescale0_multiplier %rescale0_shift %rescale0_input_zero_point %rescale0_output_zero_point
+                        %in_signed = OpExtInst %uint8_tensor_r4_s_1_h_w_4 %tosa RESCALE %true %uint_1 %false %rescale0_input_unsigned %rescale0_output_unsigned %in %rescale0_multiplier %rescale0_shift %rescale0_input_zero_point %rescale0_output_zero_point
                        %out_signed = OpExtInst %uint_tensor_r4_s_1_h_w_4 %tosa CONV2D %conv_pad %conv_stride %conv_dilation %uint_1 %false %in_signed %conv_weights %conv_bias %conv_input_zero_point %conv_weights_zero_point
                      %out_signed16 = OpExtInst %uint16_tensor_r4_s_1_h_w_4 %tosa CAST %out_signed
-                     %out_unsigned = OpExtInst %uint8_tensor_r4_s_1_h_w_4 %tosa RESCALE %true %uint_0 %false %rescale1_input_unsigned %rescale1_output_unsigned %out_signed16 %rescale1_multiplier %rescale1_shift %rescale1_input_zero_point %rescale1_output_zero_point
+                     %out_unsigned = OpExtInst %uint8_tensor_r4_s_1_h_w_4 %tosa RESCALE %true %uint_1 %false %rescale1_input_unsigned %rescale1_output_unsigned %out_signed16 %rescale1_multiplier %rescale1_shift %rescale1_input_zero_point %rescale1_output_zero_point
                                      OpGraphSetOutputARM %out_unsigned %uint_0
                                      OpGraphEndARM
