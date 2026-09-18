@@ -382,7 +382,7 @@ if (VKB_PROFILING)
     set(TRACY_ENABLE ${VKB_PROFILING})
     set(TRACY_TIMER_FALLBACK ON)
     add_subdirectory(tracy)
-    add_compile_definitions(TRACY_NO_INVARIANT_CHECK=1)
+    add_compile_definitions(TRACY_TIMER_FALLBACK=1)
     set_property(TARGET TracyClient PROPERTY FOLDER "ThirdParty")
 endif()
 
