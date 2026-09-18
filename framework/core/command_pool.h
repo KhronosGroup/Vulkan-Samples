@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2024-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,15 +60,17 @@ template <vkb::BindingType bindingType>
 class CommandPool : private vkb::core::CommandPoolBase
 {
   public:
-	using CommandBufferLevelType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBufferLevel, VkCommandBufferLevel>::type;
-	using CommandPoolType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
+	using CommandBufferLevelType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBufferLevel, VkCommandBufferLevel>::type;
+	using CommandPoolType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
 
   public:
 	CommandPool(vkb::core::Device<bindingType>           &device,
 	            uint32_t                                  queue_family_index,
 	            vkb::rendering::RenderFrame<bindingType> *render_frame = nullptr,
 	            size_t                                    thread_index = 0,
-	            vkb::CommandBufferResetMode               reset_mode   = vkb::CommandBufferResetMode::ResetIndividually);
+	            vkb::CommandBufferResetMode               reset_mode = vkb::CommandBufferResetMode::ResetIndividually);
 	CommandPool(CommandPool<bindingType> const &)            = delete;
 	CommandPool(CommandPool<bindingType> &&other)            = default;
 	CommandPool &operator=(CommandPool<bindingType> const &) = delete;
@@ -81,8 +83,9 @@ class CommandPool : private vkb::core::CommandPoolBase
 	vkb::rendering::RenderFrame<bindingType>              *get_render_frame();
 	vkb::CommandBufferResetMode                            get_reset_mode() const;
 	size_t                                                 get_thread_index() const;
-	std::shared_ptr<vkb::core::CommandBuffer<bindingType>> request_command_buffer(CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
-	void                                                   reset_pool();
+	std::shared_ptr<vkb::core::CommandBuffer<bindingType>> request_command_buffer(
+	    CommandBufferLevelType level = DefaultCommandBufferLevelValue<CommandBufferLevelType>::value);
+	void reset_pool();
 };
 
 using CommandPoolC   = CommandPool<vkb::BindingType::C>;
@@ -159,7 +162,8 @@ inline size_t CommandPool<bindingType>::get_thread_index() const
 }
 
 template <vkb::BindingType bindingType>
-std::shared_ptr<vkb::core::CommandBuffer<bindingType>> CommandPool<bindingType>::request_command_buffer(CommandBufferLevelType level)
+std::shared_ptr<vkb::core::CommandBuffer<bindingType>>
+    CommandPool<bindingType>::request_command_buffer(CommandBufferLevelType level)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -167,8 +171,8 @@ std::shared_ptr<vkb::core::CommandBuffer<bindingType>> CommandPool<bindingType>:
 	}
 	else
 	{
-		std::shared_ptr<vkb::core::CommandBufferCpp> command_buffer =
-		    CommandPoolBase::request_command_buffer(reinterpret_cast<vkb::core::CommandPoolCpp &>(*this), static_cast<vk::CommandBufferLevel>(level));
+		std::shared_ptr<vkb::core::CommandBufferCpp> command_buffer = CommandPoolBase::request_command_buffer(
+		    reinterpret_cast<vkb::core::CommandPoolCpp &>(*this), static_cast<vk::CommandBufferLevel>(level));
 		return *reinterpret_cast<std::shared_ptr<CommandBufferC> *>(&command_buffer);
 	}
 }

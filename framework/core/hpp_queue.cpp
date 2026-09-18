@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,11 @@ namespace vkb
 {
 namespace core
 {
-HPPQueue::HPPQueue(vkb::core::DeviceCpp &device, uint32_t family_index, vk::QueueFamilyProperties const &properties, vk::Bool32 can_present, uint32_t index) :
+HPPQueue::HPPQueue(vkb::core::DeviceCpp            &device,
+                   uint32_t                         family_index,
+                   vk::QueueFamilyProperties const &properties,
+                   vk::Bool32                       can_present,
+                   uint32_t                         index) :
     device{device}, family_index{family_index}, index{index}, can_present{can_present}, properties{properties}
 {
 	handle = device.get_handle().getQueue(family_index, index);
