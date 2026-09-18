@@ -827,7 +827,7 @@ VkResult HelloTriangle::acquire_next_image(uint32_t *image)
 
 	VkResult res = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, image);
 
-	if (res != VK_SUCCESS)
+	if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR)
 	{
 		context.recycled_semaphores.push_back(acquire_semaphore);
 		return res;
