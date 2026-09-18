@@ -18,7 +18,7 @@
 #pragma once
 
 #include "core/render_pass.h"
-#include "rendering/pipeline_state.h"
+#include "core/shader_module.h"
 #include <vector>
 
 namespace vkb
@@ -26,13 +26,16 @@ namespace vkb
 class GraphicsPipeline;
 class PipelineLayout;
 class RenderPass;
-class ShaderModule;
 
 namespace rendering
 {
 template <vkb::BindingType bindingType>
 struct Attachment;
 using AttachmentC = Attachment<vkb::BindingType::C>;
+
+template <vkb::BindingType bindingType>
+class PipelineState;
+using PipelineStateC = PipelineState<vkb::BindingType::C>;
 }        // namespace rendering
 
 enum class ResourceType
@@ -55,12 +58,12 @@ class ResourceRecord
 
 	const std::ostringstream &get_stream();
 
-	size_t register_shader_module(VkShaderStageFlagBits stage,
-	                              const ShaderSource   &glsl_source,
-	                              const std::string    &entry_point,
-	                              const ShaderVariant  &shader_variant);
+	size_t register_shader_module(VkShaderStageFlagBits           stage,
+	                              const vkb::core::ShaderSource  &glsl_source,
+	                              const std::string              &entry_point,
+	                              const vkb::core::ShaderVariant &shader_variant);
 
-	size_t register_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
+	size_t register_pipeline_layout(const std::vector<vkb::core::ShaderModuleC *> &shader_modules);
 
 	size_t register_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments,
 	                            const std::vector<LoadStoreInfo>               &load_store_infos,
@@ -69,7 +72,7 @@ class ResourceRecord
 	size_t register_graphics_pipeline(VkPipelineCache                 pipeline_cache,
 	                                  vkb::rendering::PipelineStateC &pipeline_state);
 
-	void set_shader_module(size_t index, const ShaderModule &shader_module);
+	void set_shader_module(size_t index, const vkb::core::ShaderModuleC &shader_module);
 
 	void set_pipeline_layout(size_t index, const PipelineLayout &pipeline_layout);
 
@@ -88,7 +91,7 @@ class ResourceRecord
 
 	std::vector<size_t> graphics_pipeline_indices;
 
-	std::unordered_map<const ShaderModule *, size_t> shader_module_to_index;
+	std::unordered_map<const vkb::core::ShaderModuleC *, size_t> shader_module_to_index;
 
 	std::unordered_map<const PipelineLayout *, size_t> pipeline_layout_to_index;
 

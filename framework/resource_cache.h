@@ -47,7 +47,7 @@ class ImageView;
  */
 struct ResourceCacheState
 {
-	std::unordered_map<std::size_t, ShaderModule> shader_modules;
+	std::unordered_map<std::size_t, vkb::core::ShaderModuleC> shader_modules;
 
 	std::unordered_map<std::size_t, PipelineLayout> pipeline_layouts;
 
@@ -97,13 +97,13 @@ class ResourceCache
 
 	void set_pipeline_cache(VkPipelineCache pipeline_cache);
 
-	ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {});
+	vkb::core::ShaderModuleC &request_shader_module(VkShaderStageFlagBits stage, const vkb::core::ShaderSource &glsl_source, const vkb::core::ShaderVariant &shader_variant = {});
 
-	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
+	PipelineLayout &request_pipeline_layout(const std::vector<vkb::core::ShaderModuleC *> &shader_modules);
 
-	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t                     set_index,
-	                                                   const std::vector<ShaderModule *> &shader_modules,
-	                                                   const std::vector<ShaderResource> &set_resources);
+	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t                                 set_index,
+	                                                   const std::vector<vkb::core::ShaderModuleC *> &shader_modules,
+	                                                   const std::vector<vkb::core::ShaderResourceC> &set_resources);
 
 	GraphicsPipeline &request_graphics_pipeline(vkb::rendering::PipelineStateC &pipeline_state);
 

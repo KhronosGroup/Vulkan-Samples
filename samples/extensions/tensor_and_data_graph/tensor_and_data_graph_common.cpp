@@ -589,15 +589,15 @@ DataGraphPipelineSession::~DataGraphPipelineSession()
 	}
 }
 
-ComputePipelineLayoutWithTensors::ComputePipelineLayoutWithTensors(vkb::core::DeviceC &device, vkb::ShaderModule &shader_module) :
+ComputePipelineLayoutWithTensors::ComputePipelineLayoutWithTensors(vkb::core::DeviceC &device, vkb::core::ShaderModuleC &shader_module) :
     vkb::core::VulkanResourceC<VkPipelineLayout>(nullptr, &device)
 {
 	// Create a regular vkb::PipelineLayout to reflect all the regular shader resources except tensors
-	std::unique_ptr<vkb::PipelineLayout> layout_without_tensors = std::make_unique<vkb::PipelineLayout>(device, std::vector<vkb::ShaderModule *>{&shader_module});
+	std::unique_ptr<vkb::PipelineLayout> layout_without_tensors = std::make_unique<vkb::PipelineLayout>(device, std::vector<vkb::core::ShaderModuleC *>{&shader_module});
 
 	// Gather all the binding info that was found
 	std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> all_bindings;
-	for (const std::pair<uint32_t, std::vector<vkb::ShaderResource>> set_and_resources : layout_without_tensors->get_shader_sets())
+	for (const std::pair<uint32_t, std::vector<vkb::core::ShaderResourceC>> set_and_resources : layout_without_tensors->get_shader_sets())
 	{
 		uint32_t set_idx      = set_and_resources.first;
 		all_bindings[set_idx] = layout_without_tensors->get_descriptor_set_layout(set_idx).get_bindings();
@@ -650,7 +650,7 @@ ComputePipelineLayoutWithTensors::ComputePipelineLayoutWithTensors(vkb::core::De
 
 	// Collect all the push constant shader resources
 	std::vector<VkPushConstantRange> push_constant_ranges;
-	for (const auto &push_constant_resource : layout_without_tensors->get_resources(vkb::ShaderResourceType::PushConstant))
+	for (const auto &push_constant_resource : layout_without_tensors->get_resources(vkb::core::ShaderResourceType::PushConstant))
 	{
 		push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
 	}
@@ -675,7 +675,7 @@ const std::map<uint32_t, VkDescriptorSetLayout> &ComputePipelineLayoutWithTensor
 	return descriptor_set_layouts;
 }
 
-ComputePipelineWithTensors::ComputePipelineWithTensors(vkb::core::DeviceC &device, VkPipelineLayout layout, vkb::ShaderModule &shader) :
+ComputePipelineWithTensors::ComputePipelineWithTensors(vkb::core::DeviceC &device, VkPipelineLayout layout, vkb::core::ShaderModuleC &shader) :
     vkb::core::VulkanResourceC<VkPipeline>(VK_NULL_HANDLE, &device)
 {
 	// Create shader module
@@ -705,17 +705,17 @@ ComputePipelineWithTensors::~ComputePipelineWithTensors()
 }
 
 BlitSubpass::BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::core::ImageView *source) :
-    vkb::rendering::SubpassC(renderContext, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"}, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
+    vkb::rendering::SubpassC(renderContext, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"}, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
     source(source)
 {
 }
 
 void BlitSubpass::prepare()
 {
-	vkb::ShaderModule &fullscreen_vert =
-	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"});
-	vkb::ShaderModule &blit_frag =
-	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, vkb::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"});
+	vkb::core::ShaderModuleC &fullscreen_vert =
+	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"});
+	vkb::core::ShaderModuleC &blit_frag =
+	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"});
 	pipeline_layout = &get_render_context().get_device().get_resource_cache().request_pipeline_layout({&fullscreen_vert, &blit_frag});
 
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};

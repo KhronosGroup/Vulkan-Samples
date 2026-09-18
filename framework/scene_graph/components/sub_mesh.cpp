@@ -87,12 +87,12 @@ const Material *SubMesh::get_material() const
 	return material;
 }
 
-const ShaderVariant &SubMesh::get_shader_variant() const
+const vkb::core::ShaderVariant &SubMesh::get_shader_variant() const
 {
 	return shader_variant;
 }
 
-ShaderVariant &SubMesh::get_mut_shader_variant()
+vkb::core::ShaderVariant &SubMesh::get_mut_shader_variant()
 {
 	return shader_variant;
 }

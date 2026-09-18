@@ -34,9 +34,9 @@
 namespace std
 {
 template <>
-struct hash<vkb::ShaderSource>
+struct hash<vkb::core::ShaderSource>
 {
-	std::size_t operator()(const vkb::ShaderSource &shader_source) const
+	std::size_t operator()(const vkb::core::ShaderSource &shader_source) const
 	{
 		std::size_t result = 0;
 
@@ -47,9 +47,9 @@ struct hash<vkb::ShaderSource>
 };
 
 template <>
-struct hash<vkb::ShaderVariant>
+struct hash<vkb::core::ShaderVariant>
 {
-	std::size_t operator()(const vkb::ShaderVariant &shader_variant) const
+	std::size_t operator()(const vkb::core::ShaderVariant &shader_variant) const
 	{
 		std::size_t result = 0;
 
@@ -59,10 +59,10 @@ struct hash<vkb::ShaderVariant>
 	}
 };
 
-template <>
-struct hash<vkb::ShaderModule>
+template <vkb::BindingType bindingType>
+struct hash<vkb::core::ShaderModule<bindingType>>
 {
-	std::size_t operator()(const vkb::ShaderModule &shader_module) const
+	std::size_t operator()(const vkb::core::ShaderModule<bindingType> &shader_module) const
 	{
 		std::size_t result = 0;
 
@@ -205,17 +205,17 @@ struct hash<vkb::rendering::SpecializationConstantState>
 	}
 };
 
-template <>
-struct hash<vkb::ShaderResource>
+template <vkb::BindingType bindingType>
+struct hash<vkb::core::ShaderResource<bindingType>>
 {
-	std::size_t operator()(const vkb::ShaderResource &shader_resource) const
+	std::size_t operator()(const vkb::core::ShaderResource<bindingType> &shader_resource) const
 	{
 		std::size_t result = 0;
 
-		if (shader_resource.type == vkb::ShaderResourceType::Input ||
-		    shader_resource.type == vkb::ShaderResourceType::Output ||
-		    shader_resource.type == vkb::ShaderResourceType::PushConstant ||
-		    shader_resource.type == vkb::ShaderResourceType::SpecializationConstant)
+		if (shader_resource.type == vkb::core::ShaderResourceType::Input ||
+		    shader_resource.type == vkb::core::ShaderResourceType::Output ||
+		    shader_resource.type == vkb::core::ShaderResourceType::PushConstant ||
+		    shader_resource.type == vkb::core::ShaderResourceType::SpecializationConstant)
 		{
 			return result;
 		}
@@ -223,7 +223,7 @@ struct hash<vkb::ShaderResource>
 		vkb::hash_combine(result, shader_resource.set);
 		vkb::hash_combine(result, shader_resource.binding);
 		vkb::hash_combine(result,
-		                  static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
+		                  static_cast<std::underlying_type<vkb::core::ShaderResourceType>::type>(shader_resource.type));
 		vkb::hash_combine(result, shader_resource.mode);
 
 		return result;
@@ -617,7 +617,8 @@ inline void hash_param<std::vector<SubpassInfo>>(size_t &seed, const std::vector
 }
 
 template <>
-inline void hash_param<std::vector<ShaderModule *>>(size_t &seed, const std::vector<ShaderModule *> &value)
+inline void hash_param<std::vector<vkb::core::ShaderModuleC *>>(size_t                                        &seed,
+                                                                const std::vector<vkb::core::ShaderModuleC *> &value)
 {
 	for (auto &shader_module : value)
 	{
@@ -626,7 +627,8 @@ inline void hash_param<std::vector<ShaderModule *>>(size_t &seed, const std::vec
 }
 
 template <>
-inline void hash_param<std::vector<ShaderResource>>(size_t &seed, const std::vector<ShaderResource> &value)
+inline void hash_param<std::vector<vkb::core::ShaderResourceC>>(size_t                                        &seed,
+                                                                const std::vector<vkb::core::ShaderResourceC> &value)
 {
 	for (auto &resource : value)
 	{
@@ -686,15 +688,15 @@ struct RecordHelper
 	{}
 };
 
-template <class... A>
-struct RecordHelper<ShaderModule, A...>
+template <vkb::BindingType bindingType, class... A>
+struct RecordHelper<vkb::core::ShaderModule<bindingType>, A...>
 {
 	size_t record(ResourceRecord &recorder, A &...args)
 	{
 		return recorder.register_shader_module(args...);
 	}
 
-	void index(ResourceRecord &recorder, size_t index, ShaderModule &shader_module)
+	void index(ResourceRecord &recorder, size_t index, vkb::core::ShaderModule<bindingType> &shader_module)
 	{
 		recorder.set_shader_module(index, shader_module);
 	}
