@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,31 +24,31 @@
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
-                                                       vk::DebugUtilsMessageTypeFlagsEXT             message_types,
+                                                       vk::DebugUtilsMessageTypeFlagsEXT             message_type,
                                                        vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
                                                        void                                         *user_data)
 {
-	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
+	// Log debug message
+	std::string message = fmt::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
+	switch (message_severity)
 	{
-		LOGE("{} Validation Layer: Error: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+			LOGD("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+			LOGI("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+			LOGW("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+			LOGE("{}", message);
+			break;
+		default:
+			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
+			break;
 	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
-	{
-		LOGW("{} Validation Layer: Warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo)
-	{
-		LOGI("{} Validation Layer: Information: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_types & vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance)
-	{
-		LOGI("{} Validation Layer: Performance warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose)
-	{
-		LOGD("{} Validation Layer: Verbose: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	return false;
+	return vk::False;
 }
 #endif
 

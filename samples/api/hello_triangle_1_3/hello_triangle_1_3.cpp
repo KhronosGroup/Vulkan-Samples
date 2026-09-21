@@ -25,29 +25,32 @@
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity,
-                                                     VkDebugUtilsMessageTypeFlagsEXT             message_types,
+                                                     VkDebugUtilsMessageTypeFlagsEXT             message_type,
                                                      const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                      void                                       *user_data)
 {
-	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	// Log debug message
+	std::string message = fmt::format("Debug callback {}\n{}: {}",
+	                                  vk::to_string(static_cast<vk::DebugUtilsMessageTypeFlagsEXT>(message_type)),
+	                                  callback_data->pMessageIdName,
+	                                  callback_data->pMessage);
+	switch (message_severity)
 	{
-		LOGE("{} Validation Layer: Error: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-	{
-		LOGW("{} Validation Layer: Warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
-	{
-		LOGI("{} Validation Layer: Information: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_types & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-	{
-		LOGI("{} Validation Layer: Performance warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
-	{
-		LOGD("{} Validation Layer: Verbose: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+			LOGD("{}", message);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+			LOGI("{}", message);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			LOGW("{}", message);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+			LOGE("{}", message);
+			break;
+		default:
+			LOGE("Unknown message severity {}!\n{}", vk::to_string(static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(message_severity)), message);
+			break;
 	}
 	return VK_FALSE;
 }
