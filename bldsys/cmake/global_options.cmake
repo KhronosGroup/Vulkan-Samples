@@ -37,8 +37,9 @@ if(APPLE)
 
 	# the following assumes MoltenVK is used for these cases: a) standalone deployment on macOS (i.e. set USE_MoltenVK=ON), and b) for iOS deployment
 	# if this assumption changes (e.g. KosmicKrisp adds standalone or iOS support), then this section will require modification to handle optionality
+	# note: Vulkan SDK 1.4.357+ now provides xcframeworks for the Vulkan loader and Validation Layers for iphonesimulator on arm64 and x86_64 hosts
 	find_package(Vulkan QUIET OPTIONAL_COMPONENTS MoltenVK)
-	if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR ${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator")))
+	if(USE_MoltenVK OR (IOS AND (NOT Vulkan_MoltenVK_FOUND OR (${CMAKE_OSX_SYSROOT} STREQUAL "iphonesimulator" AND Vulkan_VERSION VERSION_LESS "1.4.357"))))
 		# if using MoltenVK standalone, or MoltenVK for iOS not found or using iOS Simulator, look for MoltenVK in Vulkan SDK and MoltenVK project paths
 		if(NOT Vulkan_MoltenVK_LIBRARY)
 			# since both are available in the Vulkan SDK and MoltenVK github project, make sure we look for MoltenVK framework on iOS and dylib on macOS
