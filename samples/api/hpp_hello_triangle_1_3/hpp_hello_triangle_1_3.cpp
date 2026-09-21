@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -286,7 +286,7 @@ vk::Result HPPHelloTriangleV13::acquire_next_swapchain_image(uint32_t *image)
 		result = vk::Result::eErrorOutOfDateKHR;
 	}
 
-	if (result != vk::Result::eSuccess)
+	if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
 	{
 		context.recycled_semaphores.push_back(acquire_semaphore);
 	}
@@ -304,8 +304,8 @@ vk::Result HPPHelloTriangleV13::acquire_next_swapchain_image(uint32_t *image)
 		// since we're waiting for old frames to have been completed, but just in case.
 		if (context.per_frame[*image].queue_submit_fence)
 		{
-			result = context.device.waitForFences(context.per_frame[*image].queue_submit_fence, true, UINT64_MAX);
-			assert(result == vk::Result::eSuccess);
+			vk::Result wait_result = context.device.waitForFences(context.per_frame[*image].queue_submit_fence, true, UINT64_MAX);
+			assert(wait_result == vk::Result::eSuccess);
 			context.device.resetFences(context.per_frame[*image].queue_submit_fence);
 		}
 
@@ -323,6 +323,7 @@ vk::Result HPPHelloTriangleV13::acquire_next_swapchain_image(uint32_t *image)
 		}
 
 		context.per_frame[*image].swapchain_acquire_semaphore = acquire_semaphore;
+		result                                                = vk::Result::eSuccess;
 	}
 	return result;
 }

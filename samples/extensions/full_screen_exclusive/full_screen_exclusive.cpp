@@ -594,7 +594,7 @@ VkResult FullScreenExclusive::acquire_next_image(uint32_t *image)
 
 	VkResult result = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, image);
 
-	if (result != VK_SUCCESS)
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		context.recycled_semaphores.push_back(acquire_semaphore);
 		return result;
