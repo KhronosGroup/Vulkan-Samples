@@ -1,4 +1,4 @@
-/* Copyright (c) 2024, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2026, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -259,7 +259,7 @@ void main(void)
 
           // Sample feature maps and check transparency
           const vec2 flipped = vec2( hitpoint_uv.x, 1.0 - hitpoint_uv.y );
-          vec4 test_pixel = texture(textureInput_0[nonuniformEXT(instanceID)], flipped);
+          vec4 test_pixel = textureLod(textureInput_0[nonuniformEXT(instanceID)], flipped, 0);
 
           if (test_pixel.r != 0.0) {
             rayQueryConfirmIntersectionEXT(rayQuery);
@@ -272,7 +272,7 @@ void main(void)
 
     if (rayQueryGetIntersectionTypeEXT(rayQuery, true) == gl_RayQueryCommittedIntersectionTriangleEXT) {
       // Output feature inputs for mlp
-      vec4 pixel_1 = texture(textureInput_1[nonuniformEXT(commited_instanceID)], commited_flipped);
+      vec4 pixel_1 = textureLod(textureInput_1[nonuniformEXT(commited_instanceID)], commited_flipped, 0);
 
       pixel_0.a = pixel_0.a*2.0-1.0;
       pixel_1.a = pixel_1.a*2.0-1.0;
@@ -327,8 +327,8 @@ void main(void)
 
       // Sample feature maps then output to second subpass
       vec2 flipped = vec2( hitpoint_uv.x, 1.0 - hitpoint_uv.y );
-      vec4 pixel_0 = texture(textureInput_0[nonuniformEXT(instanceID)], flipped);
-      vec4 pixel_1 = texture(textureInput_1[nonuniformEXT(instanceID)], flipped);
+      vec4 pixel_0 = textureLod(textureInput_0[nonuniformEXT(instanceID)], flipped, 0);
+      vec4 pixel_1 = textureLod(textureInput_1[nonuniformEXT(instanceID)], flipped, 0);
 
       pixel_0.a = pixel_0.a*2.0-1.0;
       pixel_1.a = pixel_1.a*2.0-1.0;
