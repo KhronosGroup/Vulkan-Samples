@@ -50,11 +50,11 @@ class HPPPipelineLayout
 	vk::PipelineLayout                       get_handle() const;
 	vk::ShaderStageFlags                     get_push_constant_range_stage(uint32_t size, uint32_t offset = 0) const;
 	std::vector<vkb::core::ShaderResourceCpp>
-	                                                                               get_resources(const vkb::core::ShaderResourceType &type  = vkb::core::ShaderResourceType::All,
-	                                                                                             vk::ShaderStageFlagBits              stage = vk::ShaderStageFlagBits::eAll) const;
+	    get_resources(const vkb::core::ShaderResourceType &type  = vkb::core::ShaderResourceType::All,
+	                  vk::ShaderStageFlagBits              stage = vk::ShaderStageFlagBits::eAll) const;
 	const std::vector<vkb::core::ShaderModuleCpp *>                               &get_shader_modules() const;
 	const std::unordered_map<uint32_t, std::vector<vkb::core::ShaderResourceCpp>> &get_shader_sets() const;
-	bool                                                                           has_descriptor_set_layout(const uint32_t set_index) const;
+	bool has_descriptor_set_layout(const uint32_t set_index) const;
 
   private:
 	vkb::core::DeviceCpp &device;

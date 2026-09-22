@@ -1,4 +1,4 @@
-/* Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2025-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -105,7 +105,8 @@ size_t CommandPoolBase::get_thread_index() const
 	return thread_index;
 }
 
-std::shared_ptr<vkb::core::CommandBufferCpp> CommandPoolBase::request_command_buffer(vkb::core::CommandPoolCpp &commandPool, vk::CommandBufferLevel level)
+std::shared_ptr<vkb::core::CommandBufferCpp>
+    CommandPoolBase::request_command_buffer(vkb::core::CommandPoolCpp &commandPool, vk::CommandBufferLevel level)
 {
 	if (static_cast<vk::CommandBufferLevel>(level) == vk::CommandBufferLevel::ePrimary)
 	{

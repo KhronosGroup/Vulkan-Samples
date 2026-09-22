@@ -40,18 +40,26 @@ class HPPDebugUtils
 	/**
 	 * @brief Sets the debug name for a Vulkan object.
 	 */
-	virtual void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const = 0;
+	virtual void set_debug_name(vk::Device     device,
+	                            vk::ObjectType object_type,
+	                            uint64_t       object_handle,
+	                            const char    *name) const = 0;
 
 	/**
 	 * @brief Tags the given Vulkan object with some data.
 	 */
-	virtual void set_debug_tag(
-	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const = 0;
+	virtual void set_debug_tag(vk::Device     device,
+	                           vk::ObjectType object_type,
+	                           uint64_t       object_handle,
+	                           uint64_t       tag_name,
+	                           const void    *tag_data,
+	                           size_t         tag_data_size) const = 0;
 
 	/**
 	 * @brief Inserts a command to begin a new debug label/marker scope.
 	 */
-	virtual void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
+	virtual void
+	    cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
 
 	/**
 	 * @brief Inserts a command to end the current debug label/marker scope.
@@ -61,7 +69,8 @@ class HPPDebugUtils
 	/**
 	 * @brief Inserts a (non-scoped) debug label/marker in the command buffer.
 	 */
-	virtual void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
+	virtual void
+	    cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
 };
 
 /**
@@ -72,10 +81,17 @@ class HPPDebugUtilsExtDebugUtils final : public vkb::core::HPPDebugUtils
   public:
 	~HPPDebugUtilsExtDebugUtils() override = default;
 
-	void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const override;
+	void set_debug_name(vk::Device     device,
+	                    vk::ObjectType object_type,
+	                    uint64_t       object_handle,
+	                    const char    *name) const override;
 
-	void set_debug_tag(
-	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
+	void set_debug_tag(vk::Device     device,
+	                   vk::ObjectType object_type,
+	                   uint64_t       object_handle,
+	                   uint64_t       tag_name,
+	                   const void    *tag_data,
+	                   size_t         tag_data_size) const override;
 
 	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
@@ -92,10 +108,17 @@ class HPPDebugMarkerExtDebugUtils final : public vkb::core::HPPDebugUtils
   public:
 	~HPPDebugMarkerExtDebugUtils() override = default;
 
-	void set_debug_name(vk::Device device, vk::ObjectType object_type, uint64_t object_handle, const char *name) const override;
+	void set_debug_name(vk::Device     device,
+	                    vk::ObjectType object_type,
+	                    uint64_t       object_handle,
+	                    const char    *name) const override;
 
-	void set_debug_tag(
-	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
+	void set_debug_tag(vk::Device     device,
+	                   vk::ObjectType object_type,
+	                   uint64_t       object_handle,
+	                   uint64_t       tag_name,
+	                   const void    *tag_data,
+	                   size_t         tag_data_size) const override;
 
 	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
@@ -137,9 +160,14 @@ class HPPDummyDebugUtils final : public vkb::core::HPPDebugUtils
 class HPPScopedDebugLabel final
 {
   public:
-	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color = {});
+	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils,
+	                    vk::CommandBuffer               command_buffer,
+	                    std::string const              &name,
+	                    glm::vec4 const                 color = {});
 
-	HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer, std::string const &name, glm::vec4 const color = {});
+	HPPScopedDebugLabel(const vkb::core::CommandBufferCpp &command_buffer,
+	                    std::string const                 &name,
+	                    glm::vec4 const                    color = {});
 
 	~HPPScopedDebugLabel();
 
@@ -149,10 +177,11 @@ class HPPScopedDebugLabel final
 };
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
-                                                                       vk::DebugUtilsMessageTypeFlagsEXT             message_type,
-                                                                       vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
-                                                                       void                                         *user_data)
+inline VKAPI_ATTR vk::Bool32 VKAPI_CALL
+                  debug_utils_messenger_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      message_severity,
+                                                 vk::DebugUtilsMessageTypeFlagsEXT             message_type,
+                                                 vk::DebugUtilsMessengerCallbackDataEXT const *callback_data,
+                                                 void                                         *user_data)
 {
 	// Log debug message
 	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
