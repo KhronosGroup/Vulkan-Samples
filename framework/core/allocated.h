@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include "common/error.h"
+#include "common/VulkanException.h"
+#include "common/macros.h"
 #include "core/physical_device.h"
 #include "core/vulkan_resource.h"
 
@@ -479,7 +480,7 @@ inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::Buf
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create Buffer"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create Buffer"};
 	}
 	post_create(allocation_info);
 	return buffer;
@@ -531,7 +532,7 @@ inline vk::Image Allocated<bindingType, HandleType>::create_image_impl(vk::Image
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create Image"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create Image"};
 	}
 
 	post_create(allocation_info);

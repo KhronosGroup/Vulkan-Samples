@@ -21,6 +21,7 @@
 #include <array>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <functional>
 #include <iterator>
@@ -33,8 +34,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include "common/error.h"
 
 #include "common/glm_common.h"
 #include <glm/gtx/hash.hpp>

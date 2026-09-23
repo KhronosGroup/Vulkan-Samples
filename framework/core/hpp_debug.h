@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/vk_common.h"
+#include "core/util/logging.hpp"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 

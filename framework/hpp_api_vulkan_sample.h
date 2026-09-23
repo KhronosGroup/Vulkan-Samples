@@ -19,7 +19,6 @@
 #pragma once
 
 #include <camera.h>
-#include <common/hpp_error.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
 

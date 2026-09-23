@@ -17,6 +17,7 @@
 
 #include "core/swapchain.h"
 
+#include "common/strings.h"
 #include "core/util/logging.hpp"
 #include "device.h"
 #include "image.h"
@@ -474,7 +475,7 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create Swapchain"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create Swapchain"};
 	}
 
 	uint32_t image_available{0u};

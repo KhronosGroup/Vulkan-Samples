@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/hpp_strings.h"
 #include "common/hpp_utils.h"
 #include "core/debug.h"
 #include "core/hpp_debug.h"
@@ -1175,7 +1176,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	VkResult result = volkInitialize();
 	if (result)
 	{
-		throw VulkanException(result, "Failed to initialize volk.");
+		throw vkb::common::VulkanExceptionC(result, "Failed to initialize volk.");
 	}
 
 	if constexpr (bindingType == BindingType::Cpp)
@@ -1612,8 +1613,7 @@ inline void VulkanSample<bindingType>::update_debug_window()
 	std::string driver_version_str = fmt::format("major: {} minor: {} patch: {}", driver_version.major, driver_version.minor, driver_version.patch);
 
 	get_debug_info().template insert<field::Static, std::string>("driver_version", driver_version_str);
-	get_debug_info().template insert<field::Static, std::string>("resolution",
-	                                                             to_string(static_cast<VkExtent2D const &>(render_context->get_swapchain().get_extent())));
+	get_debug_info().template insert<field::Static, std::string>("resolution", to_string(render_context->get_swapchain().get_extent()));
 	get_debug_info().template insert<field::Static, std::string>("surface_format",
 	                                                             to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                                 to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +

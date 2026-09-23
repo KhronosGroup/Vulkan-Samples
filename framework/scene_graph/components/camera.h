@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,8 +21,6 @@
 #include <string>
 #include <typeinfo>
 #include <vector>
-
-#include "common/error.h"
 
 #include "common/glm_common.h"
 

@@ -501,7 +501,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create RenderPass"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create RenderPass"};
 	}
 
 	if (needs_debug_name)

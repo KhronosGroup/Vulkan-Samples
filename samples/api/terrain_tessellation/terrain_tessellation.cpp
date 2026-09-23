@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,7 +75,7 @@ void TerrainTessellation::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 	else
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
+		throw vkb::common::VulkanExceptionC(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
 	}
 
 	// Fill mode non solid is required for wireframe display

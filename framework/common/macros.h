@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,42 +17,6 @@
 
 #pragma once
 
-#include <cassert>
-#include <stdexcept>
-#include <string>
-
-#include "core/util/error.hpp"
-
-#include "common/strings.h"
-#include "core/util/logging.hpp"
-#include "vk_common.h"
-
-namespace vkb
-{
-/**
- * @brief Vulkan exception structure
- */
-class VulkanException : public std::runtime_error
-{
-  public:
-	/**
-	 * @brief Vulkan exception constructor
-	 */
-	VulkanException(VkResult result, const std::string &msg = "Vulkan error");
-
-	/**
-	 * @brief Returns the Vulkan error code as string
-	 * @return String message of exception
-	 */
-	const char *what() const noexcept override;
-
-	VkResult result;
-
-  private:
-	std::string error_message;
-};
-}        // namespace vkb
-
 /// @brief Helper macro to test the result of Vulkan calls which can return an error.
 #define VK_CHECK(x)                                                                    \
 	do                                                                                 \
@@ -62,14 +26,4 @@ class VulkanException : public std::runtime_error
 		{                                                                              \
 			throw std::runtime_error("Detected Vulkan error: " + vkb::to_string(err)); \
 		}                                                                              \
-	} while (0)
-
-#define ASSERT_VK_HANDLE(handle)        \
-	do                                  \
-	{                                   \
-		if ((handle) == VK_NULL_HANDLE) \
-		{                               \
-			LOGE("Handle is NULL");     \
-			abort();                    \
-		}                               \
 	} while (0)

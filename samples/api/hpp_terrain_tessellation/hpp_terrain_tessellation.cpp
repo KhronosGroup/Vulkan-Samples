@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,7 +72,7 @@ void HPPTerrainTessellation::request_gpu_features(vkb::core::PhysicalDeviceCpp &
 	auto &available_features = gpu.get_features();
 	if (!available_features.tessellationShader)
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
+		throw vkb::common::VulkanExceptionCpp(vk::Result::eErrorFeatureNotPresent, "Selected GPU does not support tessellation shaders!");
 	}
 
 	auto &requested_features = gpu.get_mutable_requested_features();

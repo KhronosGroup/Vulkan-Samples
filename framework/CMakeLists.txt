@@ -75,17 +75,16 @@ set(COMMON_FILES
     common/glm_common.h
     common/resource_caching.h
     common/helpers.h
-    common/error.h
     common/utils.h
     common/strings.h
     common/tags.h
-    common/hpp_error.h
     common/hpp_resource_caching.h
     common/hpp_strings.h
     common/hpp_utils.h
     common/hpp_vk_common.h
+    common/macros.h
+    common/VulkanException.h
     # Source Files
-    common/error.cpp
     common/ktx_common.cpp
     common/vk_common.cpp
     common/utils.cpp

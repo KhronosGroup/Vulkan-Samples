@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/hpp_error.h"
+#include "common/VulkanException.h"
 #include "common/vk_common.h"
 #include "filesystem/legacy.h"
 #include <vulkan/vulkan.hpp>
@@ -291,7 +291,7 @@ inline void ShaderModule<bindingType>::init(vkb::core::ShaderSource const &shade
 	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
-		throw vkb::common::HPPVulkanException(vk::Result::eErrorInitializationFailed);
+		throw vkb::common::VulkanExceptionCpp(vk::Result::eErrorInitializationFailed);
 	}
 
 	// Generate a unique id, determined by source and variant

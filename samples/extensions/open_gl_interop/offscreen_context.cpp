@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2024, Arm Limited
- * Copyright (c) 2020-2024, Bradley Austin Davis
+/* Copyright (c) 2020-2026, Arm Limited
+ * Copyright (c) 2020-2026, Bradley Austin Davis
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,10 +17,10 @@
  */
 #include "offscreen_context.h"
 
-#include <common/error.h>
 #include <string>
 #include <vector>
 
+#include "common/VulkanException.h"
 #include "core/util/logging.hpp"
 
 void APIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_param)
@@ -158,7 +158,7 @@ void OffscreenContext::init_context()
 	if (glGenSemaphoresEXT == nullptr)
 	{
 		LOGE("Required openGL extension glGenSemaphoresEXT not available, cannot run");
-		throw vkb::VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
+		throw vkb::common::VulkanExceptionC(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
 	}
 }
 

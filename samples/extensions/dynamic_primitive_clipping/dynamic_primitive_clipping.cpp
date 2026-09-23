@@ -87,7 +87,7 @@ void DynamicPrimitiveClipping::request_gpu_features(vkb::core::PhysicalDeviceC &
 	}
 	else
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support gl_ClipDistance builtin shader variable");
+		throw vkb::common::VulkanExceptionC(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support gl_ClipDistance builtin shader variable");
 	}
 
 	// Features required by vkCmdSetDepthClipEnableEXT().

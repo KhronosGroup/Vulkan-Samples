@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2020-2025, Broadcom Inc.
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "common/error.h"
 #include "common/vk_common.h"
 
+#include "core/util/error.hpp"
 #include "stats_provider.h"
 
 VKBP_DISABLE_WARNINGS()

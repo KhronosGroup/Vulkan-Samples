@@ -113,6 +113,10 @@ else()
     option(VKB_ENABLE_PORTABILITY "Enable portability enumeration and subset features in the framework. This is default OFF for non-Apple platforms." OFF)
 endif()
 
+if (WIN32)
+  add_compile_definitions(NOMINMAX)
+endif()
+
 set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every application.")
 set(VKB_VALIDATION_LAYERS_GPU_ASSISTED OFF CACHE BOOL "Enable GPU assisted validation layers for every application (implicitly enables VKB_VALIDATION_LAYERS).")

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2024, Holochip Inc.
+/* Copyright (c) 2023-2026, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
 
 #include "ios_platform.h"
 
-#include "common/error.h"
 #include "ios/context.hpp"
 #include "platform/headless_window.h"
 #include "platform/ios/ios_window.h"

@@ -20,6 +20,7 @@
 
 #include "common/helpers.h"
 #include "core/shader_module.h"
+#include "core/util/logging.hpp"
 
 #pragma warning(push)
 #pragma warning(disable : 4065)
