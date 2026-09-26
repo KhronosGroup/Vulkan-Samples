@@ -1,0 +1,22 @@
+////
+Copyright (c) 2026 Suhaib
+
+SPDX-FileCopyrightText: 2026 Suhaib
+SPDX-License-Identifier: Apache-2.0
+////
+
+== Device-Generated Commands Query Sample
+
+[.badges]
+image:https://img.shields.io/badge/Vulkan-Extension-blue.svg[Vulkan Extension]
+image:https://img.shields.io/badge/Vendor-NVIDIA-green.svg[NVIDIA Vendor Extension Support]
+
+=== Overview
+
+This sample demonstrates how to query and handle architectural disparities between legacy vendor-specific **`VK_NV_device_generated_commands`** and the modern unified cross-vendor **`VK_EXT_device_generated_commands`** specification structures.
+
+=== Implementation Details
+
+* Queries physical device extensions using `vkEnumerateDeviceExtensionProperties`.
+* Dynamically chains `VkPhysicalDeviceProperties2` to inspect extension properties safely via `pNext`.
+* Highlights structural header variations between modern `maxIndirectPipelineCount` fields and legacy `maxGraphicsShaderGroupCount` layouts.
