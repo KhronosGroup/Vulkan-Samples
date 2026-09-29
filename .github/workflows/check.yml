@@ -14,7 +14,6 @@ concurrency:
 
 jobs:
   changed-files:
-    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
     # Map a step output to a job output
     outputs:
@@ -27,7 +26,6 @@ jobs:
         id: changes
         # Set outputs using the command.
         run: |
-          git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
           git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
           echo all="$(git diff --name-only --diff-filter=ACMRT $TARGET_BRANCH | grep -v -e .github -e third_party -e 'samples/complex/render_octomap/octomap' -e .in$ | xargs)" >> $GITHUB_OUTPUT
 
@@ -63,17 +61,16 @@ jobs:
 
   clang_format:
     name: Clang Format Check
-    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
       - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+      - run: python3 -m pip install clang-format==21.1.8
       - name: Run Clang Format diff
         id: clang-diff
         run: |
-          echo "changes=$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> $GITHUB_OUTPUT
-          echo "$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> clang-issues.diff
+          echo "changes=$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 -m clang_format.clang_format_diff -p1 -v -sort-include))" >> $GITHUB_OUTPUT
+          echo "$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 -m clang_format.clang_format_diff -p1 -v -sort-include))" >> clang-issues.diff
       - name: Count Diff Lines
         continue-on-error: true
         id: count-diff
@@ -89,7 +86,6 @@ jobs:
 
   clang_tidy:
     name: Clang Tidy Check
-    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
     needs: changed-files
     continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
@@ -98,10 +94,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: "recursive"
-      - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+      - name: Install clang-tools 21 and build dependencies
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 21
+          sudo apt-get install -y clang-tidy-21 clang-tools-21 xorg-dev libglu1-mesa-dev
       - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGLFW_BUILD_WAYLAND=OFF -Bbuild/clang
       - run: |
-          /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }} 2>&1 | grep -v "third_party/glfw"
+          run-clang-tidy-21 -clang-tidy-binary clang-tidy-21 -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }} 2>&1 | grep -v "third_party/glfw"
 
   pre-commit:
     name: Pre-Commit Checks
