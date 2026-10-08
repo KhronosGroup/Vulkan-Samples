@@ -469,6 +469,22 @@ bool MobileNerf::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
+void MobileNerf::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderUniformBufferArrayNonUniformIndexing);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
+}
+
 void MobileNerf::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -480,13 +496,6 @@ void MobileNerf::request_device_extensions(std::unordered_map<std::string, vkb::
 
 	// For choosing different sets of weights
 	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void MobileNerf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderUniformBufferArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
 }
 
 void MobileNerf::render(float delta_time)

@@ -42,6 +42,7 @@ class PhysicalDevice
 {
   public:
 	using Bool32Type              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Bool32, VkBool32>::type;
+	using DeviceCreateInfoType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceCreateInfo, VkDeviceCreateInfo>::type;
 	using FormatPropertiesType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::FormatProperties, VkFormatProperties>::type;
 	using FormatType              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Format, VkFormat>::type;
 	using MemoryPropertyFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::MemoryPropertyFlags, VkMemoryPropertyFlags>::type;
@@ -71,44 +72,22 @@ class PhysicalDevice
 	PhysicalDevice &operator=(PhysicalDevice const &) = delete;
 	PhysicalDevice &operator=(PhysicalDevice &&)      = delete;
 
-	/**
-	 * @brief Add an extension features struct to the structure chain used for device creation
-	 *
-	 *        To have the features enabled, this function must be called before the logical device
-	 *        is created. To do this request sample specific features inside
-	 *        VulkanSample::request_gpu_features(vkb::core::PhysicalDevice<bindingType> &gpu).
-	 *
-	 *        If the feature extension requires you to ask for certain features to be enabled, you can
-	 *        modify the struct returned by this function, it will propagate the changes to the logical
-	 *        device.
-	 * @returns A reference to extension feature struct in the structure chain
-	 */
-	template <typename FeatureType>
-	FeatureType &add_extension_features();
-
 	std::pair<std::vector<PerformanceCounterKHRType>, std::vector<PerformanceCounterDescriptionKHRType>>
 	    enumerate_queue_family_performance_query_counters(uint32_t queue_family_index) const;
 
 	DriverVersion get_driver_version() const;
 
 	/**
-	 * @brief Used at logical device creation to pass the extensions feature chain to vkCreateDevice
-	 * @returns A void pointer to the start of the extension linked list
-	 */
-	void *get_extension_feature_chain() const;
-
-	/**
 	 * @brief Get an extension features struct
 	 *
 	 *        Gets the actual extension features struct with the supported flags set.
 	 *        The flags you're interested in can be set in a corresponding struct in the structure chain
-	 *        by calling PhysicalDevice::add_extension_features()
+	 *        by overriding vkb::VulkanSampleC::extend_device_create_info().
 	 * @returns The extension feature struct
 	 */
 	template <typename T>
-	T get_extension_features();
+	T get_extension_features() const;
 
-	PhysicalDeviceFeaturesType const             &get_features() const;
 	FormatPropertiesType                          get_format_properties(FormatType format) const;
 	PhysicalDeviceType                            get_handle() const;
 	vkb::core::Instance<bindingType>             &get_instance() const;
@@ -119,6 +98,7 @@ class PhysicalDevice
 	uint32_t                                      get_queue_family_performance_query_passes(QueryPoolPerformanceCreateInfoKHRType const *perf_query_create_info) const;
 	std::vector<QueueFamilyPropertiesType> const &get_queue_family_properties() const;
 	PhysicalDeviceFeaturesType const             &get_requested_features() const;
+	PhysicalDeviceFeaturesType const             &get_supported_features() const;
 
 	/**
 	 * @brief Returns high priority graphics queue state.
@@ -133,21 +113,27 @@ class PhysicalDevice
 	 * @brief Request an optional features flag
 	 *
 	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
-	 *        add_extension_features is called, otherwise a log message is generated.
+	 *        scb.set_feature_flag() is called, otherwise a log message is generated.
 	 *
 	 * @returns true if the requested feature is supported, otherwise false
 	 */
 	template <typename Feature>
-	Bool32Type request_optional_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName);
+	Bool32Type enable_optional_feature(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &scb,
+	                                   Bool32Type Feature::*flag,
+	                                   std::string const   &featureName,
+	                                   std::string const   &flagName) const;
 
 	/**
 	 * @brief Request a required features flag
 	 *
 	 *        Calls get_extension_features to get the support of the requested flag. If it's supported,
-	 *        add_extension_features is called, otherwise a runtime_error is thrown.
+	 *        scb.set_feature_flag() is called, otherwise a runtime_error is thrown.
 	 */
 	template <typename Feature>
-	void request_required_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName);
+	void enable_required_feature(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &scb,
+	                             Bool32Type Feature::*flag,
+	                             std::string const   &featureName,
+	                             std::string const   &flagName) const;
 
 	/**
 	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
@@ -159,34 +145,27 @@ class PhysicalDevice
 
   private:
 	template <typename FeatureType>
-	FeatureType &add_extension_features_impl();
-	template <typename FeatureType>
-	FeatureType get_extension_features_impl();
+	FeatureType get_extension_features_impl() const;
 	uint32_t    get_memory_type_impl(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found = nullptr) const;
 	void        init();
-	template <typename FeatureType>
-	void request_required_feature_impl(vk::Bool32 FeatureType::*flag, std::string const &featureName, std::string const &flagName);
 
   private:
-	std::vector<vk::ExtensionProperties> device_extensions;        // The extensions that this GPU supports
-	std::map<vk::StructureType, std::shared_ptr<void>>
-	                                       extension_features;        // Holds the extension feature structures, we use a map to retain an order of requested structures
-	vk::PhysicalDeviceFeatures             features;                  // The features that this GPU supports
-	vk::PhysicalDevice                     handle;                    // Handle to the Vulkan physical device
+	std::vector<vk::ExtensionProperties>   device_extensions;        // The extensions that this GPU supports
+	vk::PhysicalDevice                     handle;                   // Handle to the Vulkan physical device
 	bool                                   high_priority_graphics_queue = {};
-	vkb::core::InstanceCpp                &instance;                                          // Handle to the Vulkan instance
-	void                                  *last_requested_extension_feature = nullptr;        // The extension feature pointer
-	vk::PhysicalDeviceMemoryProperties     memory_properties;                                 // The GPU memory properties
-	vk::PhysicalDeviceProperties           properties;                                        // The GPU properties
-	std::vector<vk::QueueFamilyProperties> queue_family_properties;                           // The GPU queue family properties
-	vk::PhysicalDeviceFeatures             requested_features;                                // The features that will be requested to be enabled in the logical device
+	vkb::core::InstanceCpp                &instance;                       // Handle to the Vulkan instance
+	vk::PhysicalDeviceMemoryProperties     memory_properties;              // The GPU memory properties
+	vk::PhysicalDeviceProperties           properties;                     // The GPU properties
+	std::vector<vk::QueueFamilyProperties> queue_family_properties;        // The GPU queue family properties
+	vk::PhysicalDeviceFeatures             requested_features;             // The features that will be requested to be enabled in the logical device
+	vk::PhysicalDeviceFeatures             supported_features;             // The features that this GPU supports
 };
 
 using PhysicalDeviceC   = PhysicalDevice<vkb::BindingType::C>;
 using PhysicalDeviceCpp = PhysicalDevice<vkb::BindingType::Cpp>;
 
-#define REQUEST_OPTIONAL_FEATURE(gpu, Feature, flag) gpu.request_optional_feature<Feature>(&Feature::flag, #Feature, #flag)
-#define REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
+#define ENABLE_OPTIONAL_FEATURE(gpu, scb, Feature, flag) gpu.enable_optional_feature<Feature>(scb, &Feature::flag, #Feature, #flag)
+#define ENABLE_REQUIRED_FEATURE(gpu, scb, Feature, flag) gpu.enable_required_feature<Feature>(scb, &Feature::flag, #Feature, #flag)
 
 template <>
 inline PhysicalDevice<vkb::BindingType::C>::PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device) :
@@ -205,7 +184,7 @@ inline PhysicalDevice<vkb::BindingType::Cpp>::PhysicalDevice(vkb::core::Instance
 template <vkb::BindingType bindingType>
 inline void PhysicalDevice<bindingType>::init()
 {
-	features                = handle.getFeatures();
+	supported_features      = handle.getFeatures();
 	properties              = handle.getProperties();
 	memory_properties       = handle.getMemoryProperties();
 	queue_family_properties = handle.getQueueFamilyProperties();
@@ -222,46 +201,6 @@ inline void PhysicalDevice<bindingType>::init()
 			LOGD("  \t{}", extension.extensionName.data());
 		}
 	}
-}
-
-template <vkb::BindingType bindingType>
-template <typename FeatureType>
-inline FeatureType &PhysicalDevice<bindingType>::add_extension_features()
-{
-	if constexpr (bindingType == vkb::BindingType::Cpp)
-	{
-		return add_extension_features_impl<FeatureType>();
-	}
-	else
-	{
-		return static_cast<FeatureType &>(add_extension_features_impl<typename vk::CppType<FeatureType>::Type>());
-	}
-}
-
-template <vkb::BindingType bindingType>
-template <typename FeatureType>
-inline FeatureType &PhysicalDevice<bindingType>::add_extension_features_impl()
-{
-	// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
-	if (!instance.is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
-	{
-		throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
-		                         " isn't enabled!");
-	}
-
-	// Add an (empty) extension features into the map of extension features
-	auto [it, added] = extension_features.insert({FeatureType::structureType, std::make_shared<FeatureType>()});
-	if (added)
-	{
-		// if it was actually added, also add it to the structure chain
-		if (last_requested_extension_feature)
-		{
-			static_cast<FeatureType *>(it->second.get())->pNext = last_requested_extension_feature;
-		}
-		last_requested_extension_feature = it->second.get();
-	}
-
-	return *static_cast<FeatureType *>(it->second.get());
 }
 
 template <vkb::BindingType bindingType>
@@ -310,14 +249,8 @@ inline DriverVersion PhysicalDevice<bindingType>::get_driver_version() const
 }
 
 template <vkb::BindingType bindingType>
-inline void *PhysicalDevice<bindingType>::get_extension_feature_chain() const
-{
-	return last_requested_extension_feature;
-}
-
-template <vkb::BindingType bindingType>
 template <typename FeatureType>
-inline FeatureType PhysicalDevice<bindingType>::get_extension_features()
+inline FeatureType PhysicalDevice<bindingType>::get_extension_features() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -331,7 +264,7 @@ inline FeatureType PhysicalDevice<bindingType>::get_extension_features()
 
 template <vkb::BindingType bindingType>
 template <typename FeatureType>
-inline FeatureType PhysicalDevice<bindingType>::get_extension_features_impl()
+inline FeatureType PhysicalDevice<bindingType>::get_extension_features_impl() const
 {
 	// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 	if (!instance.is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
@@ -342,12 +275,6 @@ inline FeatureType PhysicalDevice<bindingType>::get_extension_features_impl()
 
 	// Get the extension feature
 	return handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, FeatureType>().template get<FeatureType>();
-}
-
-template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &PhysicalDevice<bindingType>::get_features() const
-{
-	return features;
 }
 
 template <vkb::BindingType bindingType>
@@ -477,6 +404,12 @@ inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &P
 }
 
 template <vkb::BindingType bindingType>
+inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &PhysicalDevice<bindingType>::get_supported_features() const
+{
+	return supported_features;
+}
+
+template <vkb::BindingType bindingType>
 inline bool PhysicalDevice<bindingType>::has_high_priority_graphics_queue() const
 {
 	return high_priority_graphics_queue;
@@ -499,12 +432,12 @@ inline typename PhysicalDevice<bindingType>::Bool32Type PhysicalDevice<bindingTy
 template <vkb::BindingType bindingType>
 template <typename Feature>
 inline typename PhysicalDevice<bindingType>::Bool32Type
-    PhysicalDevice<bindingType>::request_optional_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName)
+    PhysicalDevice<bindingType>::enable_optional_feature(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &scb, Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName) const
 {
 	Bool32Type supported = get_extension_features<Feature>().*flag;
 	if (supported)
 	{
-		add_extension_features<Feature>().*flag = true;
+		scb.set_feature_flag(flag);
 	}
 	else
 	{
@@ -516,27 +449,11 @@ inline typename PhysicalDevice<bindingType>::Bool32Type
 template <vkb::BindingType bindingType>
 template <typename Feature>
 inline void
-    PhysicalDevice<bindingType>::request_required_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName)
+    PhysicalDevice<bindingType>::enable_required_feature(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &scb, Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName) const
 {
-	if constexpr (bindingType == BindingType::Cpp)
+	if (get_extension_features<Feature>().*flag)
 	{
-		request_required_feature_impl(flag, featureName, flagName);
-	}
-	else
-	{
-		request_required_feature_impl<typename vk::CppType<Feature>::Type>(
-		    reinterpret_cast<vk::Bool32 vk::CppType<Feature>::Type::*>(flag), featureName, flagName);
-	}
-}
-
-template <vkb::BindingType bindingType>
-template <typename Feature>
-inline void
-    PhysicalDevice<bindingType>::request_required_feature_impl(vk::Bool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
-{
-	if (get_extension_features_impl<Feature>().*flag)
-	{
-		add_extension_features_impl<Feature>().*flag = true;
+		scb.set_feature_flag(flag);
 	}
 	else
 	{

@@ -36,6 +36,21 @@ HostImageCopy::~HostImageCopy()
 	}
 }
 
+void HostImageCopy::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Enable host image copy feature (required for this sample to work)
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceHostImageCopyFeaturesEXT, hostImageCopy);
+}
+
 void HostImageCopy::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -48,11 +63,8 @@ void HostImageCopy::request_device_extensions(std::unordered_map<std::string, vk
 // Enable physical device features required for this example
 void HostImageCopy::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Enable host image copy feature (required for this sample to work)
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceHostImageCopyFeaturesEXT, hostImageCopy);
-
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
@@ -213,7 +225,7 @@ void HostImageCopy::load_texture()
 	sampler.minLod              = 0.0f;
 	sampler.maxLod              = static_cast<float>(texture.mip_levels);
 	sampler.borderColor         = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_supported_features().samplerAnisotropy)
 	{
 		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 		sampler.anisotropyEnable = VK_TRUE;

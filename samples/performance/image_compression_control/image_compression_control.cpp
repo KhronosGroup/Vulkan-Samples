@@ -44,23 +44,27 @@ void ImageCompressionControlSample::request_device_extensions(std::unordered_map
 	requested_extensions[VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
-void ImageCompressionControlSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
-	{
-		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceImageCompressionControlFeaturesEXT, imageCompressionControl);
-	}
-
-	if (gpu.is_extension_supported(VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
-	{
-		REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT, imageCompressionControlSwapchain);
-	}
-}
-
 void ImageCompressionControlSample::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_instance_extensions(requested_extensions);
 	requested_extensions[VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME] = vkb::RequestMode::Optional;
+}
+
+void ImageCompressionControlSample::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+
+	auto const &gpu = get_physical_device();
+	if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+	{
+		ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceImageCompressionControlFeaturesEXT, imageCompressionControl);
+	}
+	if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
+	{
+		ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT, imageCompressionControlSwapchain);
+	}
 }
 
 bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &options)

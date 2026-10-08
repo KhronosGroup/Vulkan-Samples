@@ -29,8 +29,8 @@ class ShaderRelaxedExtendedInstruction : public ApiVulkanSample
 
 	void build_command_buffers() override;        // Not used; per-frame recording in render()
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
+	void     extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	uint32_t get_api_version() const override;
 	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void     request_layers(std::unordered_map<std::string, vkb::RequestMode> &requested_layers) const override;

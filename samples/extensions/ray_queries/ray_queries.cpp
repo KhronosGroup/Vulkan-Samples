@@ -78,6 +78,25 @@ RayQueries::~RayQueries()
 	}
 }
 
+void RayQueries::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+
+	auto const &gpu = get_physical_device();
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan12Features, shaderInt8);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan13Features, synchronization2);
+
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_RAY_QUERY_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
+}
+
 void RayQueries::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -97,13 +116,6 @@ void RayQueries::request_device_extensions(std::unordered_map<std::string, vkb::
 
 	// Required by VK_KHR_spirv_1_4
 	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void RayQueries::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
 }
 
 void RayQueries::render(float delta_time)

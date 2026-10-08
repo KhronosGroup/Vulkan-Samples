@@ -69,6 +69,24 @@ bool DynamicPrimitiveClipping::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+void DynamicPrimitiveClipping::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Features required by vkCmdSetDepthClipEnableEXT().
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDepthClipEnableFeaturesEXT, depthClipEnable);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3DepthClipEnable);
+}
+
 void DynamicPrimitiveClipping::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -81,7 +99,7 @@ void DynamicPrimitiveClipping::request_device_extensions(std::unordered_map<std:
 void DynamicPrimitiveClipping::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// shaderClipDistance feature is required in order to gl_ClipDistance builtin shader variable to work.
-	if (gpu.get_features().shaderClipDistance)
+	if (gpu.get_supported_features().shaderClipDistance)
 	{
 		gpu.get_mutable_requested_features().shaderClipDistance = VK_TRUE;
 	}
@@ -89,10 +107,6 @@ void DynamicPrimitiveClipping::request_gpu_features(vkb::core::PhysicalDeviceC &
 	{
 		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support gl_ClipDistance builtin shader variable");
 	}
-
-	// Features required by vkCmdSetDepthClipEnableEXT().
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDepthClipEnableFeaturesEXT, depthClipEnable);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3DepthClipEnable);
 }
 
 void DynamicPrimitiveClipping::build_command_buffers()

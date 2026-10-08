@@ -106,15 +106,17 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 #endif
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-	create_info.pNext                   = gpu.get_extension_feature_chain();
 	create_info.pQueueCreateInfos       = &queue_create_info;
 	create_info.queueCreateInfoCount    = 1;
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
+	vkb::StructureChainBuilderC<VkDeviceCreateInfo> scb(create_info);
+	extend_device_create_info(scb);
+
 	// Create the device using the profiles library
 	VpDeviceCreateInfo deviceCreateInfo{};
-	deviceCreateInfo.pCreateInfo             = &create_info;
+	deviceCreateInfo.pCreateInfo             = scb.get_struct<VkDeviceCreateInfo>();
 	deviceCreateInfo.pEnabledFullProfiles    = &profile_properties;
 	deviceCreateInfo.enabledFullProfileCount = 1;
 	VkDevice vulkan_device;
