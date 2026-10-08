@@ -570,6 +570,29 @@ void DeviceFault::render(float delta_time)
 	}
 }
 
+void DeviceFault::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	LOGI("Requesting features from GPU.");
+	// Need to enable the bufferDeviceAddress feature.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
+
+	// Enable the deviceFault feature for handling hardware faults.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEVICE_FAULT_EXTENSION_NAME));
+
+	// Enable binding report for getting more information on GPU virtual address spaces
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAddressBindingReportFeaturesEXT, reportAddressBinding);
+}
+
 void DeviceFault::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	ApiVulkanSample::request_device_extensions(requested_extensions);
@@ -585,25 +608,6 @@ void DeviceFault::request_device_extensions(std::unordered_map<std::string, vkb:
 
 	// Gives more information about GPU Virtual Address space
 	requested_extensions[VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME] = vkb::RequestMode::Optional;
-}
-
-void DeviceFault::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	LOGI("Requesting features from GPU.");
-	// Need to enable the bufferDeviceAddress feature.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceBufferDeviceAddressFeaturesKHR,
-	                         bufferDeviceAddress);
-
-	// Enable the deviceFault feature for handling hardware faults.
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceFaultFeaturesEXT,
-	                         deviceFault);
-
-	// Enable binding report for getting more information on GPU virtual address spaces
-	REQUEST_OPTIONAL_FEATURE(gpu,
-	                         VkPhysicalDeviceAddressBindingReportFeaturesEXT,
-	                         reportAddressBinding);
 }
 
 void DeviceFault::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const

@@ -48,7 +48,7 @@ TextureMipMapGeneration::~TextureMipMapGeneration()
 void TextureMipMapGeneration::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
@@ -261,7 +261,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &samplers[1]));
 
 	// With mip mapping and anisotropic filtering (when supported)
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_supported_features().samplerAnisotropy)
 	{
 		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 		sampler.anisotropyEnable = VK_TRUE;

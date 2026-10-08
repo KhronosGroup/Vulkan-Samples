@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -77,7 +77,7 @@ bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 void HPPTextureLoading::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}
@@ -499,7 +499,7 @@ void HPPTextureLoading::load_texture()
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
 	float maxAnisotropy = 1.0f;
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_supported_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
 		maxAnisotropy = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;

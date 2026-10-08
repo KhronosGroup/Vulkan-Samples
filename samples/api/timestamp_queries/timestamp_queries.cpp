@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, Sascha Willems
+/* Copyright (c) 2022-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,7 +70,7 @@ TimestampQueries::~TimestampQueries()
 void TimestampQueries::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}

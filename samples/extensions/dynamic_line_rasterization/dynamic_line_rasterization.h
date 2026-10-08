@@ -26,6 +26,7 @@ class DynamicLineRasterization : public ApiVulkanSample
 
 	void render(float delta_time) override;
 	void build_command_buffers() override;
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
