@@ -84,6 +84,7 @@ class FragmentShadingRate : public ApiVulkanSample
 
 	FragmentShadingRate();
 	~FragmentShadingRate();
+	virtual void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         create_shading_rate_attachment();

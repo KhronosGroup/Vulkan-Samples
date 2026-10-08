@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Google
+/* Copyright (c) 2024-2026, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -108,7 +108,7 @@ void OITDepthPeeling::render(float delta_time)
 
 void OITDepthPeeling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}

@@ -52,7 +52,7 @@ TextureLoading::~TextureLoading()
 void TextureLoading::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
@@ -368,7 +368,7 @@ void TextureLoading::load_texture()
 	sampler.maxLod = (use_staging) ? static_cast<float>(texture.mip_levels) : 0.0f;
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_supported_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
 		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;

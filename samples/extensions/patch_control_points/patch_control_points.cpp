@@ -176,7 +176,7 @@ void PatchControlPoints::create_pipelines()
 	        0);
 
 	/* Wireframe mode */
-	if (get_device().get_gpu().get_features().fillModeNonSolid)
+	if (get_device().get_gpu().get_supported_features().fillModeNonSolid)
 	{
 		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 	}
@@ -539,6 +539,26 @@ void PatchControlPoints::create_descriptor_sets()
 	                       VK_NULL_HANDLE);
 }
 
+void PatchControlPoints::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	/* Enable extension features required by this sample
+	   These are passed to device creation via a pNext structure chain */
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2PatchControlPoints);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
+}
+
 void PatchControlPoints::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -553,16 +573,9 @@ void PatchControlPoints::request_device_extensions(std::unordered_map<std::strin
  */
 void PatchControlPoints::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	/* Enable extension features required by this sample
-	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2PatchControlPoints);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
-
 	// Tessellation shader support is required for this example
 	auto &requested_features = gpu.get_mutable_requested_features();
-	if (gpu.get_features().tessellationShader)
+	if (gpu.get_supported_features().tessellationShader)
 	{
 		requested_features.tessellationShader = VK_TRUE;
 	}
@@ -571,12 +584,12 @@ void PatchControlPoints::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
 	}
 
-	if (gpu.get_features().fillModeNonSolid)
+	if (gpu.get_supported_features().fillModeNonSolid)
 	{
 		requested_features.fillModeNonSolid = VK_TRUE;
 	}
 
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}

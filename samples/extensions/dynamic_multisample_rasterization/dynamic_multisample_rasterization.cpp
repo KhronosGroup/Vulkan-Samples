@@ -47,6 +47,23 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 	}
 }
 
+void DynamicMultisampleRasterization::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3RasterizationSamples);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
+}
+
 uint32_t DynamicMultisampleRasterization::get_api_version() const
 {
 	return VK_API_VERSION_1_2;
@@ -58,12 +75,6 @@ void DynamicMultisampleRasterization::request_device_extensions(std::unordered_m
 
 	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME] = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME]        = vkb::RequestMode::Required;
-}
-
-void DynamicMultisampleRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3RasterizationSamples);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
 }
 
 const std::string to_string(VkSampleCountFlagBits count)

@@ -37,6 +37,20 @@ ShaderQuadControl::~ShaderQuadControl()
 	}
 }
 
+void ShaderQuadControl::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceShaderQuadControlFeaturesKHR, shaderQuadControl);
+}
+
 void ShaderQuadControl::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	ApiVulkanSample::request_device_extensions(requested_extensions);
@@ -70,11 +84,6 @@ bool ShaderQuadControl::prepare(const vkb::ApplicationOptions &options)
 
 	prepared = true;
 	return true;
-}
-
-void ShaderQuadControl::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceShaderQuadControlFeaturesKHR, shaderQuadControl);
 }
 
 void ShaderQuadControl::create_pipeline_layout()

@@ -202,6 +202,27 @@ void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::core::CommandBuff
 	command_buffer.draw(3, 1, 0, 0);
 }
 
+void KHR16BitArithmeticSample::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Required features.
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevice16BitStorageFeatures, storageBuffer16BitAccess);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevice16BitStorageFeatures, uniformAndStorageBuffer16BitAccess);
+
+	// Optional features.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME));
+	supported_extensions = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceFloat16Int8FeaturesKHR, shaderFloat16);
+
+	supports_push_constant16 = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevice16BitStorageFeatures, storagePushConstant16);
+}
+
 void KHR16BitArithmeticSample::VisualizationSubpass::prepare()
 {
 	auto                                   &device             = get_render_context().get_device();
@@ -225,19 +246,6 @@ void KHR16BitArithmeticSample::request_device_extensions(std::unordered_map<std:
 	// Enables the extension which allows shaders to use 16-bit float and 8-bit integer arithmetic.
 	// This sample will only make use of 16-bit floats.
 	requested_extensions[VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME] = vkb::RequestMode::Optional;
-}
-
-void KHR16BitArithmeticSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// Required features.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, storageBuffer16BitAccess);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, uniformAndStorageBuffer16BitAccess);
-
-	// Optional features.
-	supported_extensions = REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceFloat16Int8FeaturesKHR, shaderFloat16);
-
-	supports_push_constant16 =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, storagePushConstant16);
 }
 
 void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)

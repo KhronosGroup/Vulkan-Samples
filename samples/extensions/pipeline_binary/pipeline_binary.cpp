@@ -50,6 +50,21 @@ PipelineBinary::~PipelineBinary()
 	}
 }
 
+void PipelineBinary::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Enable the pipeline binary feature using the framework's feature chaining
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_PIPELINE_BINARY_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevicePipelineBinaryFeaturesKHR, pipelineBinaries);
+}
+
 void PipelineBinary::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	ApiVulkanSample::request_device_extensions(requested_extensions);
@@ -60,12 +75,6 @@ void PipelineBinary::request_device_extensions(std::unordered_map<std::string, v
 	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME]     = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME] = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME]   = vkb::RequestMode::Required;
-}
-
-void PipelineBinary::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// Enable the pipeline binary feature using the framework's feature chaining
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePipelineBinaryFeaturesKHR, pipelineBinaries);
 }
 
 bool PipelineBinary::prepare(const vkb::ApplicationOptions &options)

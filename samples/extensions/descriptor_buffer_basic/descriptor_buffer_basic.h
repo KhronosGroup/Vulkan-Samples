@@ -72,6 +72,7 @@ class DescriptorBufferBasic : public ApiVulkanSample
 
 	DescriptorBufferBasic();
 	~DescriptorBufferBasic() override;
+	virtual void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void         build_command_buffers() override;

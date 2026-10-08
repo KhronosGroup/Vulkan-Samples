@@ -175,7 +175,7 @@ const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCom
 
 bool TextureCompressionComparison::is_texture_format_supported(const TextureCompressionComparison::CompressedTexture_t &format)
 {
-	const auto device_features = get_device().get_gpu().get_features();
+	const auto device_features = get_device().get_gpu().get_supported_features();
 
 	const bool supported_by_feature   = format.feature_ptr && device_features.*format.feature_ptr;
 	const bool supported_by_extension = strlen(format.extension_name) && get_device().get_gpu().is_extension_supported(format.extension_name);

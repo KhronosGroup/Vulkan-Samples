@@ -42,6 +42,23 @@ MeshShaderCulling::~MeshShaderCulling()
 	}
 }
 
+void MeshShaderCulling::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Check whether the device supports task and mesh shaders
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_MESH_SHADER_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShaderQueries);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceMeshShaderFeaturesEXT, taskShader);
+}
+
 void MeshShaderCulling::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -53,14 +70,9 @@ void MeshShaderCulling::request_device_extensions(std::unordered_map<std::string
 
 void MeshShaderCulling::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Check whether the device supports task and mesh shaders
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShaderQueries);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, taskShader);
-
 	// Pipeline statistics
 	auto &requested_features = gpu.get_mutable_requested_features();
-	if (gpu.get_features().pipelineStatisticsQuery)
+	if (gpu.get_supported_features().pipelineStatisticsQuery)
 	{
 		requested_features.pipelineStatisticsQuery = VK_TRUE;
 	}
@@ -87,7 +99,7 @@ void MeshShaderCulling::build_command_buffers()
 	{
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 		{
 			vkCmdResetQueryPool(draw_cmd_buffers[i], query_pool, 0, 3);
 		}
@@ -110,7 +122,7 @@ void MeshShaderCulling::build_command_buffers()
 		uint32_t num_workgroups_y = N;
 		uint32_t num_workgroups_z = 1;
 
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 		{
 			// Begin pipeline statistics query
 			vkCmdBeginQuery(draw_cmd_buffers[i], query_pool, 0, 0);
@@ -118,7 +130,7 @@ void MeshShaderCulling::build_command_buffers()
 
 		vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, num_workgroups_z);
 
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 		{
 			// Begin pipeline statistics query
 			vkCmdEndQuery(draw_cmd_buffers[i], query_pool, 0);
@@ -267,7 +279,7 @@ void MeshShaderCulling::draw()
 	// Submit to queue
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 	{
 		// Read query results for displaying in next frame
 		get_query_results();
@@ -289,7 +301,7 @@ bool MeshShaderCulling::prepare(const vkb::ApplicationOptions &options)
 	ubo_cull.cull_center_x = -camera.position.x;
 	ubo_cull.cull_center_y = -camera.position.z;
 
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 	{
 		setup_query_result_buffer();
 	}
@@ -336,7 +348,7 @@ void MeshShaderCulling::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_uniform_buffers();
 		}
 
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 		{
 			if (drawer.header("Pipeline statistics"))
 			{
@@ -382,7 +394,7 @@ void MeshShaderCulling::setup_query_result_buffer()
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), query_result.buffer, query_result.memory, 0));
 
 	// Create query pool
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_supported_features().pipelineStatisticsQuery)
 	{
 		VkQueryPoolCreateInfo query_pool_info = {};
 		query_pool_info.sType                 = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
