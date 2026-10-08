@@ -189,6 +189,29 @@ void LogicOpDynamicState::build_command_buffers()
 	}
 }
 
+void LogicOpDynamicState::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	/* Enable extension features required by this sample
+	   These are passed to device creation via a pNext structure chain */
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2LogicOp);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_PRIMITIVE_TOPOLOGY_LIST_RESTART_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT, primitiveTopologyListRestart);
+}
+
 void LogicOpDynamicState::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -205,16 +228,7 @@ void LogicOpDynamicState::request_device_extensions(std::unordered_map<std::stri
  */
 void LogicOpDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	/* Enable extension features required by this sample
-	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState2FeaturesEXT, extendedDynamicState2LogicOp);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT, primitiveTopologyListRestart);
-
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}

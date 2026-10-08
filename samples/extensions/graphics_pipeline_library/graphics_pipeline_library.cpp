@@ -53,6 +53,21 @@ GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 	title = "Graphics pipeline library";
 }
 
+void GraphicsPipelineLibrary::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Enable extension features required by this sample
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT, graphicsPipelineLibrary);
+}
+
 void GraphicsPipelineLibrary::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -60,12 +75,6 @@ void GraphicsPipelineLibrary::request_device_extensions(std::unordered_map<std::
 	// Graphics pipeline library related extensions required by this sample
 	requested_extensions[VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME]          = vkb::RequestMode::Required;
 	requested_extensions[VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void GraphicsPipelineLibrary::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// Enable extension features required by this sample
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT, graphicsPipelineLibrary);
 }
 
 GraphicsPipelineLibrary::~GraphicsPipelineLibrary()

@@ -44,6 +44,7 @@ class ColorWriteEnable : public ApiVulkanSample
 
   private:
 	// from ApiVulkanSample
+	void     extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	uint32_t get_gui_subpass() const override;
 
   private:

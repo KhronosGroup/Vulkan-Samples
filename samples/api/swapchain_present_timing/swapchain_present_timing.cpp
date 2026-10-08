@@ -867,6 +867,33 @@ SwapchainPresentTiming::~SwapchainPresentTiming()
 	}
 }
 
+void SwapchainPresentTiming::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_PRESENT_TIMING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevicePresentTimingFeaturesEXT, presentTiming);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_PRESENT_ID_2_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevicePresentId2FeaturesKHR, presentId2);
+
+	// Not technically required but makes the reduces the amount of boilerplate
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDynamicRenderingFeatures, dynamicRendering);
+
+	bool presentAtAbsoluteTime = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevicePresentTimingFeaturesEXT, presentAtAbsoluteTime);
+	bool presentAtRelativeTime = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevicePresentTimingFeaturesEXT, presentAtRelativeTime);
+	if (!presentAtAbsoluteTime && !presentAtRelativeTime)
+	{
+		throw std::runtime_error("Requested required feature <VkPhysicalDevicePresentTimingFeaturesEXT::presentAt*> is not supported");
+	}
+}
+
 void SwapchainPresentTiming::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -875,23 +902,6 @@ void SwapchainPresentTiming::request_device_extensions(std::unordered_map<std::s
 	requested_extensions[VK_KHR_PRESENT_ID_2_EXTENSION_NAME]          = vkb::RequestMode::Required;
 	requested_extensions[VK_EXT_PRESENT_TIMING_EXTENSION_NAME]        = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void SwapchainPresentTiming::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePresentTimingFeaturesEXT, presentTiming);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevicePresentId2FeaturesKHR, presentId2);
-
-	// Not technically required but makes the reduces the amount of boilerplate
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeatures, dynamicRendering);
-
-	bool presentAtAbsoluteTime = REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePresentTimingFeaturesEXT, presentAtAbsoluteTime);
-	bool presentAtRelativeTime = REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePresentTimingFeaturesEXT, presentAtRelativeTime);
-
-	if (!presentAtAbsoluteTime && !presentAtRelativeTime)
-	{
-		throw std::runtime_error("Requested required feature <VkPhysicalDevicePresentTimingFeaturesEXT::presentAt*> is not supported");
-	}
 }
 
 void SwapchainPresentTiming::create_render_context()

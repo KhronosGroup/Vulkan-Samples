@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -97,7 +97,7 @@ bool HPPSeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 void HPPSeparateImageSampler::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}
@@ -259,7 +259,7 @@ vk::Sampler HPPSeparateImageSampler::create_sampler(vk::Filter filter)
 	    texture.image->get_format(),
 	    filter,
 	    vk::SamplerAddressMode::eRepeat,
-	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    get_device().get_gpu().get_supported_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(texture.image->get_mipmaps().size()));
 }
 

@@ -28,6 +28,9 @@ class StructureChainBuilder
 	static_assert((offsetof(AnchorStructType, sType) == 0) && (offsetof(AnchorStructType, pNext) == sizeof(void *)));
 
   public:
+	using Bool32Type = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Bool32, VkBool32>::type;
+
+  public:
 	StructureChainBuilder(AnchorStructType const &anchor_struct);
 
 	template <typename T>
@@ -40,9 +43,10 @@ class StructureChainBuilder
 	template <typename StructType>
 	StructType const *get_struct(size_t skip = 0) const;
 
-  private:
 	template <typename StructType>
-	StructType &add_struct_impl(StructType const &struct_to_add);
+	void set_feature_flag(Bool32Type StructType::*flag);
+
+  private:
 	template <typename StructType>
 	StructType const *get_struct_impl(size_t skip) const;
 
@@ -60,7 +64,15 @@ using StructureChainBuilderCpp = StructureChainBuilder<vkb::BindingType::Cpp, An
 template <vkb::BindingType bindingType, typename AnchorStructType>
 inline StructureChainBuilder<bindingType, AnchorStructType>::StructureChainBuilder(AnchorStructType const &anchor_struct)
 {
-	structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>(anchor_struct)));
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>(anchor_struct)));
+	}
+	else
+	{
+		structure_chain.push_back(std::make_unique<std::any>(
+		    std::make_any<typename vk::CppType<AnchorStructType>::Type>(reinterpret_cast<typename vk::CppType<AnchorStructType>::Type const &>(anchor_struct))));
+	}
 }
 
 template <vkb::BindingType bindingType, typename AnchorStructType>
@@ -77,30 +89,23 @@ inline StructType &StructureChainBuilder<bindingType, AnchorStructType>::add_str
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
-		return add_struct_impl(struct_to_add);
+#if !defined(NDEBUG)
+		auto it = std::ranges::find_if(structure_chain, [](auto const &chain_element) {
+			return std::any_cast<StructType>(chain_element.get()) != nullptr;
+		});
+		assert(it == structure_chain.end() || StructType::allowDuplicate);        // If the struct type already exists in the structure chain, it must allow duplicates
+#endif
+
+		structure_chain.push_back(std::make_unique<std::any>(std::make_any<StructType>(struct_to_add)));
+		std::any_cast<StructType>(structure_chain.back().get())->pNext        = const_cast<void *>(std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext);
+		std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext = std::any_cast<StructType>(structure_chain.back().get());
+		return *std::any_cast<StructType>(structure_chain.back().get());
 	}
 	else
 	{
 		return reinterpret_cast<StructureChainBuilder<vkb::BindingType::Cpp, typename vk::CppType<AnchorStructType>::Type> *>(this)->add_struct(
 		    reinterpret_cast<typename vk::CppType<StructType>::Type const &>(struct_to_add));
 	}
-}
-
-template <vkb::BindingType bindingType, typename AnchorStructType>
-template <typename StructType>
-inline StructType &StructureChainBuilder<bindingType, AnchorStructType>::add_struct_impl(StructType const &struct_to_add)
-{
-#if !defined(NDEBUG)
-	auto it = std::ranges::find_if(structure_chain, [](auto const &chain_element) {
-		return std::any_cast<StructType>(chain_element.get()) != nullptr;
-	});
-	assert(it == structure_chain.end() || StructType::allowDuplicate);        // If the struct type already exists in the structure chain, it must allow duplicates
-#endif
-
-	structure_chain.push_back(std::make_unique<std::any>(std::make_any<StructType>(struct_to_add)));
-	std::any_cast<StructType>(structure_chain.back().get())->pNext        = std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext;
-	std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext = std::any_cast<StructType>(structure_chain.back().get());
-	return *std::any_cast<StructType>(structure_chain.back().get());
 }
 
 template <vkb::BindingType bindingType, typename AnchorStructType>
@@ -135,4 +140,31 @@ inline StructType const *StructureChainBuilder<bindingType, AnchorStructType>::g
 	return (it != structure_chain.end()) ? std::any_cast<StructType>(it->get()) : nullptr;
 }
 
+template <vkb::BindingType bindingType, typename AnchorStructType>
+template <typename StructType>
+inline void StructureChainBuilder<bindingType, AnchorStructType>::set_feature_flag(Bool32Type StructType::*flag)
+{
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		auto it = std::ranges::find_if(structure_chain, [](auto const &chain_element) {
+			return std::any_cast<StructType>(chain_element.get()) != nullptr;
+		});
+
+		if (it == structure_chain.end())
+		{
+			StructType featureStruct = {};
+			featureStruct.*flag      = vk::True;
+			add_struct(featureStruct);
+		}
+		else
+		{
+			*std::any_cast<StructType>(it->get()).*flag = vk::True;
+		}
+	}
+	else
+	{
+		reinterpret_cast<StructureChainBuilder<vkb::BindingType::Cpp, typename vk::CppType<AnchorStructType>::Type> *>(this)
+		    ->template set_feature_flag<typename vk::CppType<StructType>::Type>(reinterpret_cast<vk::Bool32 vk::CppType<StructType>::Type::*>(flag));
+	}
+}
 }        // namespace vkb

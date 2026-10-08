@@ -150,9 +150,9 @@ class SwapchainPresentTiming : public vkb::VulkanSampleC
 	uint64_t display_time_ns         = 0;
 	uint64_t display_time_present_id = 0;
 
+	void     extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	uint32_t get_api_version() const override;
 	void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void     request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void     request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 
 	void select_surface_format();

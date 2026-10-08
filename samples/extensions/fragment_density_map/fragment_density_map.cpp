@@ -981,6 +981,27 @@ void FragmentDensityMap::update_uniform_buffer(float delta_time)
 	}
 }
 
+void FragmentDensityMap::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME));
+	assert(!scb.get_struct<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>());
+	VkPhysicalDeviceFragmentDensityMapFeaturesEXT fragmentDensityMapFeatures{
+	    .fragmentDensityMap        = available_options.supports_fdm,
+	    .fragmentDensityMapDynamic = available_options.supports_dynamic_fdm,
+	    // fragmentDensityMapNonSubsampledImages is not supported on all GPUs.
+	    // It is not necessary in this sample since we create resources with the flag VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT.
+	    // If supported, we could skip the present pass and render directly to the swapchain.
+	    // However, this is not recommended, since UI and composition are usually done at full resolution.
+	    .fragmentDensityMapNonSubsampledImages = VK_FALSE};
+	scb.add_struct(fragmentDensityMapFeatures);
+}
+
 void FragmentDensityMap::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -996,21 +1017,21 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	auto &requested_features = gpu.get_mutable_requested_features();
 
 	// Enable anisotropic filtering if supported.
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		requested_features.samplerAnisotropy = VK_TRUE;
 	}
 
 	// Enable texture compression.
-	if (gpu.get_features().textureCompressionBC)
+	if (gpu.get_supported_features().textureCompressionBC)
 	{
 		requested_features.textureCompressionBC = VK_TRUE;
 	}
-	else if (gpu.get_features().textureCompressionASTC_LDR)
+	else if (gpu.get_supported_features().textureCompressionASTC_LDR)
 	{
 		requested_features.textureCompressionASTC_LDR = VK_TRUE;
 	}
-	else if (gpu.get_features().textureCompressionETC2)
+	else if (gpu.get_supported_features().textureCompressionETC2)
 	{
 		requested_features.textureCompressionETC2 = VK_TRUE;
 	}
@@ -1029,22 +1050,12 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		else
 		{
 			available_options.supports_fdm = true;
-
 			available_options.supports_dynamic_fdm &= static_cast<bool>(supported_extension_features.fragmentDensityMapDynamic);
 			if (!available_options.supports_dynamic_fdm)
 			{
 				LOGW("Dynamic FDM is not supported. The FDM cannot be updated.");
 				current_options.update_fdm = false;
 			}
-
-			auto &requested_extension_features                     = gpu.add_extension_features<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>();
-			requested_extension_features.fragmentDensityMap        = VK_TRUE;
-			requested_extension_features.fragmentDensityMapDynamic = available_options.supports_dynamic_fdm;
-			// fragmentDensityMapNonSubsampledImages is not supported on all GPUs.
-			// It is not necessary in this sample since we create resources with the flag VK_IMAGE_CREATE_SUBSAMPLED_BIT_EXT.
-			// If supported, we could skip the present pass and render directly to the swapchain.
-			// However, this is not recommended, since UI and composition are usually done at full resolution.
-			requested_extension_features.fragmentDensityMapNonSubsampledImages = VK_FALSE;
 		}
 	}
 	if (!available_options.supports_fdm)

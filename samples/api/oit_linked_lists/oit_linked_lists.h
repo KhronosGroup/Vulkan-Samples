@@ -31,6 +31,7 @@ class OITLinkedLists : public ApiVulkanSample
 	bool resize(const uint32_t width, const uint32_t height) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;

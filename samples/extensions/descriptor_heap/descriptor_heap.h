@@ -28,6 +28,7 @@ class DescriptorHeap : public ApiVulkanSample
 
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void render(float delta_time) override;
 	void create_command_pool() override;
 	void build_command_buffers() override;

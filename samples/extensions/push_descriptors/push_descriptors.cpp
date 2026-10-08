@@ -63,7 +63,7 @@ void PushDescriptors::request_device_extensions(std::unordered_map<std::string, 
 void PushDescriptors::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
