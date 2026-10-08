@@ -1220,8 +1220,8 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	// Max level-of-detail should match mip level count
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_supported_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_supported_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1319,8 +1319,8 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	// Max level-of-detail should match mip level count
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_supported_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_supported_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 

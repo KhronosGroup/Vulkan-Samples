@@ -25,11 +25,11 @@ class DynamicBlending : public ApiVulkanSample
 	DynamicBlending();
 	~DynamicBlending();
 
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 

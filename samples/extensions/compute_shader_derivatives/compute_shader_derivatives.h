@@ -28,6 +28,7 @@ class ComputeShaderDerivatives : public ApiVulkanSample
 	~ComputeShaderDerivatives() override;
 
 	void build_command_buffers() override;        // unused, per-frame recording
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;

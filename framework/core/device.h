@@ -54,6 +54,7 @@ class Device
 	using CommandBufferType          = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandBuffer, VkCommandBuffer>::type;
 	using CommandPoolCreateFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPoolCreateFlags, VkCommandPoolCreateFlags>::type;
 	using CommandPoolType            = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::CommandPool, VkCommandPool>::type;
+	using DeviceCreateInfoType       = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceCreateInfo, VkDeviceCreateInfo>::type;
 	using DeviceMemoryType           = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::DeviceMemory, VkDeviceMemory>::type;
 	using DeviceType                 = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Device, VkDevice>::type;
 	using Extent2DType               = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
@@ -83,12 +84,14 @@ class Device
 	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 * @param request_gpu_features (Optional) A function that will be called to request specific gpu features before device creation
+	 * @param extend_device_create_info (Optional) A function that will be called to extend the device create info before device creation
 	 */
-	Device(PhysicalDevice<bindingType>                                  &gpu,
-	       SurfaceType                                                   surface,
-	       std::unique_ptr<DebugUtilsType>                             &&debug_utils,
-	       std::unordered_map<std::string, vkb::RequestMode> const      &requested_extensions = {},
-	       std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features = {});
+	Device(PhysicalDevice<bindingType>                                                         &gpu,
+	       SurfaceType                                                                          surface,
+	       std::unique_ptr<DebugUtilsType>                                                    &&debug_utils,
+	       std::unordered_map<std::string, vkb::RequestMode> const                             &requested_extensions,
+	       std::function<void(vkb::core::PhysicalDevice<bindingType> &)>                        request_gpu_features,
+	       std::function<void(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &)> extend_device_create_info);
 
 	/**
 	 * @brief Device constructor
@@ -136,7 +139,9 @@ class Device
 	void flush_command_buffer_impl(
 	    vk::Device device, vk::CommandBuffer command_buffer, vk::Queue queue, bool free = true, vk::Semaphore signal_semaphore = nullptr) const;
 	vkb::core::HPPQueue const &get_queue_by_flags_impl(vk::QueueFlags queue_flags, uint32_t queue_index) const;
-	void                       init(std::unordered_map<std::string, vkb::RequestMode> const &requested_extensions, std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features);
+	void                       init(std::unordered_map<std::string, vkb::RequestMode> const                             &requested_extensions,
+	                                std::function<void(vkb::core::PhysicalDevice<bindingType> &)>                        request_gpu_features,
+	                                std::function<void(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &)> extend_device_create_info);
 
   private:
 	std::unique_ptr<vkb::core::CommandPoolCpp>    command_pool;
@@ -163,25 +168,37 @@ namespace core
 {
 
 template <>
-inline Device<vkb::BindingType::Cpp>::Device(vkb::core::PhysicalDeviceCpp                            &gpu,
-                                             vk::SurfaceKHR                                           surface,
-                                             std::unique_ptr<vkb::core::HPPDebugUtils>              &&debug_utils,
-                                             std::unordered_map<std::string, vkb::RequestMode> const &requested_extensions,
-                                             std::function<void(vkb::core::PhysicalDeviceCpp &)>      request_gpu_features) :
-    vkb::core::VulkanResourceCpp<vk::Device>{nullptr, this}, debug_utils{std::move(debug_utils)}, gpu{gpu}, resource_cache{*this}, surface(surface)
+inline Device<vkb::BindingType::Cpp>::Device(
+    vkb::core::PhysicalDeviceCpp                                                                  &gpu,
+    vk::SurfaceKHR                                                                                 surface,
+    std::unique_ptr<vkb::core::HPPDebugUtils>                                                    &&debug_utils,
+    std::unordered_map<std::string, vkb::RequestMode> const                                       &requested_extensions,
+    std::function<void(vkb::core::PhysicalDeviceCpp &)>                                            request_gpu_features,
+    std::function<void(vkb::StructureChainBuilder<vkb::BindingType::Cpp, vk::DeviceCreateInfo> &)> extend_device_create_info) :
+    vkb::core::VulkanResourceCpp<vk::Device>{nullptr, this},
+    debug_utils{std::move(debug_utils)},
+    gpu{gpu},
+    resource_cache{*this},
+    surface(surface)
 {
-	init(requested_extensions, request_gpu_features);
+	init(requested_extensions, request_gpu_features, extend_device_create_info);
 }
 
 template <>
-inline Device<vkb::BindingType::C>::Device(vkb::core::PhysicalDeviceC                              &gpu,
-                                           VkSurfaceKHR                                             surface,
-                                           std::unique_ptr<vkb::DebugUtils>                       &&debug_utils,
-                                           std::unordered_map<std::string, vkb::RequestMode> const &requested_extensions,
-                                           std::function<void(vkb::core::PhysicalDeviceC &)>        request_gpu_features) :
-    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this}, debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())}, gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)}, resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)}, surface(static_cast<vk::SurfaceKHR>(surface))
+inline Device<vkb::BindingType::C>::Device(
+    vkb::core::PhysicalDeviceC                                                                &gpu,
+    VkSurfaceKHR                                                                               surface,
+    std::unique_ptr<vkb::DebugUtils>                                                         &&debug_utils,
+    std::unordered_map<std::string, vkb::RequestMode> const                                   &requested_extensions,
+    std::function<void(vkb::core::PhysicalDeviceC &)>                                          request_gpu_features,
+    std::function<void(vkb::StructureChainBuilder<vkb::BindingType::C, VkDeviceCreateInfo> &)> extend_device_create_info) :
+    vkb::core::VulkanResourceC<VkDevice>{VK_NULL_HANDLE, this},
+    debug_utils{reinterpret_cast<vkb::core::HPPDebugUtils *>(debug_utils.release())},
+    gpu{reinterpret_cast<vkb::core::PhysicalDeviceCpp &>(gpu)},
+    resource_cache{*reinterpret_cast<vkb::core::DeviceCpp *>(this)},
+    surface(static_cast<vk::SurfaceKHR>(surface))
 {
-	init(requested_extensions, request_gpu_features);
+	init(requested_extensions, request_gpu_features, extend_device_create_info);
 }
 
 template <>
@@ -619,7 +636,9 @@ vkb::core::HPPQueue const &Device<bindingType>::get_queue_by_flags_impl(vk::Queu
 }
 
 template <vkb::BindingType bindingType>
-inline void Device<bindingType>::init(std::unordered_map<std::string, vkb::RequestMode> const &requested_extensions, std::function<void(vkb::core::PhysicalDevice<bindingType> &)> request_gpu_features)
+inline void Device<bindingType>::init(std::unordered_map<std::string, vkb::RequestMode> const                             &requested_extensions,
+                                      std::function<void(vkb::core::PhysicalDevice<bindingType> &)>                        request_gpu_features,
+                                      std::function<void(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &)> extend_device_create_info)
 {
 	LOGI("Selected GPU: {}", *gpu.get_properties().deviceName);
 
@@ -660,18 +679,16 @@ inline void Device<bindingType>::init(std::unordered_map<std::string, vkb::Reque
 
 	// For performance queries, we also use host query reset since queryPool resets cannot
 	// live in the same command buffer as beginQuery
-	if (gpu.is_extension_supported("VK_KHR_performance_query") &&
-	    gpu.is_extension_supported("VK_EXT_host_query_reset"))
+	if (gpu.is_extension_supported(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME) &&
+	    gpu.is_extension_supported(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME))
 	{
 		auto perf_counter_features     = gpu.get_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>();
 		auto host_query_reset_features = gpu.get_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>();
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
-			gpu.add_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>().performanceCounterQueryPools = VK_TRUE;
-			gpu.add_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>().hostQueryReset                    = VK_TRUE;
-			enabled_extensions.push_back("VK_KHR_performance_query");
-			enabled_extensions.push_back("VK_EXT_host_query_reset");
+			enabled_extensions.push_back(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME);
+			enabled_extensions.push_back(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
 			LOGI("Performance query enabled");
 		}
 	}
@@ -739,14 +756,23 @@ inline void Device<bindingType>::init(std::unordered_map<std::string, vkb::Reque
 	}
 
 	// Latest requested feature will have the pNext's all set up for device creation.
-	vk::DeviceCreateInfo create_info{.pNext                   = gpu.get_extension_feature_chain(),
-	                                 .queueCreateInfoCount    = static_cast<uint32_t>(queue_create_infos.size()),
+	vk::DeviceCreateInfo create_info{.queueCreateInfoCount    = static_cast<uint32_t>(queue_create_infos.size()),
 	                                 .pQueueCreateInfos       = queue_create_infos.data(),
 	                                 .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions_cstr.size()),
 	                                 .ppEnabledExtensionNames = enabled_extensions_cstr.data(),
 	                                 .pEnabledFeatures        = &gpu.get_requested_features()};
 
-	this->set_handle(gpu.get_handle().createDevice(create_info));
+	vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> scb(create_info);
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		extend_device_create_info(scb);
+	}
+	else
+	{
+		extend_device_create_info(reinterpret_cast<vkb::StructureChainBuilder<vkb::BindingType::C, VkDeviceCreateInfo> &>(scb));
+	}
+
+	this->set_handle(gpu.get_handle().createDevice(*scb.get_struct<vk::DeviceCreateInfo>()));
 
 	queues.resize(queue_family_properties.size());
 

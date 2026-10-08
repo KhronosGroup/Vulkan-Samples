@@ -442,6 +442,22 @@ void VertexDynamicState::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
+void VertexDynamicState::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	/* Enable extension features required by this sample
+	   These are passed to device creation via a pNext structure chain */
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT, vertexInputDynamicState);
+}
+
 void VertexDynamicState::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -451,11 +467,7 @@ void VertexDynamicState::request_device_extensions(std::unordered_map<std::strin
 
 void VertexDynamicState::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	/* Enable extension features required by this sample
-	   These are passed to device creation via a pNext structure chain */
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT, vertexInputDynamicState);
-
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}

@@ -44,6 +44,27 @@ RaytracingBasic::~RaytracingBasic()
 	}
 }
 
+void RaytracingBasic::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Enable extension features required by this sample
+	// These are passed to device creation via a pNext structure chain
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+}
+
 void RaytracingBasic::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -66,16 +87,8 @@ void RaytracingBasic::request_device_extensions(std::unordered_map<std::string, 
 
 void RaytracingBasic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Enable extension features required by this sample
-	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
-
 	// Using this removes the need to explicitly force an image format inside the shader
-	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	if (gpu.get_supported_features().shaderStorageImageReadWithoutFormat && gpu.get_supported_features().shaderStorageImageWriteWithoutFormat)
 	{
 		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
 		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;

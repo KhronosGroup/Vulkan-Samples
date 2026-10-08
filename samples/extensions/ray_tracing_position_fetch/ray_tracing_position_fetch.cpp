@@ -39,6 +39,30 @@ RayTracingPositionFetch::~RayTracingPositionFetch()
 	}
 }
 
+void RayTracingPositionFetch::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Features required for ray tracing
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+
+	// Sample sepcific feature
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR, rayTracingPositionFetch);
+}
+
 void RayTracingPositionFetch::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -64,16 +88,8 @@ void RayTracingPositionFetch::request_device_extensions(std::unordered_map<std::
 
 void RayTracingPositionFetch::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Features required for ray tracing
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
-
-	// Sample sepcific feature
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPositionFetchFeaturesKHR, rayTracingPositionFetch);
-
 	// Using this removes the need to explicitly force an image format inside the shader
-	if (gpu.get_features().shaderStorageImageReadWithoutFormat && gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	if (gpu.get_supported_features().shaderStorageImageReadWithoutFormat && gpu.get_supported_features().shaderStorageImageWriteWithoutFormat)
 	{
 		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
 		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;

@@ -33,7 +33,9 @@ class AsyncComputeSample : public vkb::VulkanSampleC
 
 	virtual ~AsyncComputeSample() = default;
 
-	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
+#ifdef VKB_ENABLE_PORTABILITY
+	virtual void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
+#endif
 
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 

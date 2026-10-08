@@ -420,6 +420,20 @@ void GshaderToMshader::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
+void GshaderToMshader::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_MESH_SHADER_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
+}
+
 void GshaderToMshader::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -431,9 +445,7 @@ void GshaderToMshader::request_device_extensions(std::unordered_map<std::string,
 
 void GshaderToMshader::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceMeshShaderFeaturesEXT, meshShader);
-
-	if (gpu.get_features().geometryShader)
+	if (gpu.get_supported_features().geometryShader)
 	{
 		gpu.get_mutable_requested_features().geometryShader = VK_TRUE;
 	}

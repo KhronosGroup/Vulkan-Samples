@@ -227,6 +227,20 @@ void ColorWriteEnable::create_attachments()
 	create_attachment(format, &attachments.blue);
 }
 
+void ColorWriteEnable::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceColorWriteEnableFeaturesEXT, colorWriteEnable);
+}
+
 void ColorWriteEnable::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -237,16 +251,14 @@ void ColorWriteEnable::request_device_extensions(std::unordered_map<std::string,
 
 void ColorWriteEnable::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceColorWriteEnableFeaturesEXT, colorWriteEnable);
-
-	if (gpu.get_features().independentBlend)
+	if (gpu.get_supported_features().independentBlend)
 	{
 		gpu.get_mutable_requested_features().independentBlend = true;
 	}
 
 	if (get_shading_language() == vkb::ShadingLanguage::SLANG)
 	{
-		if (gpu.get_features().shaderStorageImageReadWithoutFormat)
+		if (gpu.get_supported_features().shaderStorageImageReadWithoutFormat)
 		{
 			gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = true;
 		}

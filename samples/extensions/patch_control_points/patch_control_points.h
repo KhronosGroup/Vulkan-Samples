@@ -88,6 +88,7 @@ class PatchControlPoints : public ApiVulkanSample
 	PatchControlPoints();
 	~PatchControlPoints() override;
 
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;

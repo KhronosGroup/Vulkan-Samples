@@ -60,6 +60,31 @@ bool DescriptorHeap::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+void DescriptorHeap::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Enable features required for this example
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
+
+	// We need to enable the descriptor heap feature to make use of them
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DESCRIPTOR_HEAP_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorHeapFeaturesEXT, descriptorHeap);
+
+	// The way we index inside the shader also requires use of non-uniform indexing
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
+}
+
 void DescriptorHeap::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	ApiVulkanSample::request_device_extensions(requested_extensions);
@@ -73,16 +98,7 @@ void DescriptorHeap::request_device_extensions(std::unordered_map<std::string, v
 
 void DescriptorHeap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Enable features required for this example
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
-
-	// We need to enable the descriptor heap feature to make use of them
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorHeapFeaturesEXT, descriptorHeap);
-	// The way we index inside the shader also requires use of non-uniform indexing
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
-
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}

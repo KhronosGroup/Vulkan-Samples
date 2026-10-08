@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2023-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1371,7 +1371,7 @@ void SparseImage::create_texture_sampler()
  */
 void SparseImage::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency)
+	if (gpu.get_supported_features().sparseBinding && gpu.get_supported_features().sparseResidencyImage2D && gpu.get_supported_features().shaderResourceResidency)
 	{
 		gpu.get_mutable_requested_features().sparseBinding           = VK_TRUE;
 		gpu.get_mutable_requested_features().sparseResidencyImage2D  = VK_TRUE;
