@@ -292,7 +292,7 @@ std::pair<vk::Result, uint32_t> HPPHelloTriangle::acquire_next_image()
 	uint32_t   image;
 	std::tie(res, image) = device.acquireNextImageKHR(swapchain_data.swapchain, UINT64_MAX, acquire_semaphore);
 
-	if (res != vk::Result::eSuccess)
+	if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR)
 	{
 		recycled_semaphores.push_back(acquire_semaphore);
 		return {res, image};
