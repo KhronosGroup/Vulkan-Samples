@@ -155,15 +155,26 @@ inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::Debug
                                                                        void                                         *user_data)
 {
 	// Log debug message
-	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+	std::string message = fmt::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
+	switch (message_severity)
 	{
-		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+			LOGD("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+			LOGI("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+			LOGW("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+			LOGE("{}", message);
+			break;
+		default:
+			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
+			break;
 	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
-	{
-		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	return false;
+	return vk::False;
 }
 
 inline VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_callback(vk::DebugReportFlagsEXT flags,

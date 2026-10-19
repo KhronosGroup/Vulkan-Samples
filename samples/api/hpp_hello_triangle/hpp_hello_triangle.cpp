@@ -54,7 +54,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
 			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
 			break;
 	}
-	return VK_FALSE;
+	return vk::False;
 }
 #endif
 
