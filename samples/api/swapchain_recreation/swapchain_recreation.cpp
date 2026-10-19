@@ -88,6 +88,14 @@ void SwapchainRecreation::query_compatible_present_modes(VkPresentModeKHR presen
 	compatible_modes.resize(modes.presentModeCount);
 	modes.pPresentModes = compatible_modes.data();
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilities2KHR(get_gpu_handle(), &surface_info, &surface_caps));
+
+	// The driver may report FIFO latest ready even when its device extension is not enabled.
+	// Remove it in that case, since passing it to swapchain creation would be invalid.
+	if (!get_device().is_extension_enabled(
+	        VK_EXT_PRESENT_MODE_FIFO_LATEST_READY_EXTENSION_NAME))
+	{
+		std::erase(compatible_modes, VK_PRESENT_MODE_FIFO_LATEST_READY_EXT);
+	}
 }
 
 void SwapchainRecreation::adjust_desired_present_mode()
