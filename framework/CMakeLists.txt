@@ -83,7 +83,7 @@ set(COMMON_FILES
     common/hpp_utils.h
     common/hpp_vk_common.h
     common/macros.h
-    common/VulkanException.h
+    common/vulkan_exception.h
     # Source Files
     common/ktx_common.cpp
     common/vk_common.cpp

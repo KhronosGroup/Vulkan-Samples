@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "common/VulkanException.h"
 #include "common/macros.h"
+#include "common/vulkan_exception.h"
 #include "core/physical_device.h"
 #include "core/vulkan_resource.h"
 

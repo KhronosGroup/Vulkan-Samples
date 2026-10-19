@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "common/VulkanException.h"
 #include "common/vk_common.h"
+#include "common/vulkan_exception.h"
 #include "filesystem/legacy.h"
 #include <vulkan/vulkan.hpp>
 
