@@ -66,7 +66,7 @@ class LightingSubpass : public vkb::rendering::SubpassC
 {
   public:
 	LightingSubpass(
-	    vkb::rendering::RenderContextC &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, vkb::scene_graph::SceneC &scene);
+	    vkb::rendering::RenderContextC &render_context, vkb::core::ShaderSource &&vertex_shader, vkb::core::ShaderSource &&fragment_shader, sg::Camera &camera, vkb::scene_graph::SceneC &scene);
 
 	virtual void prepare() override;
 
@@ -77,7 +77,7 @@ class LightingSubpass : public vkb::rendering::SubpassC
 
 	vkb::scene_graph::SceneC &scene;
 
-	ShaderVariant lighting_variant;
+	vkb::core::ShaderVariant lighting_variant;
 };
 
 }        // namespace vkb

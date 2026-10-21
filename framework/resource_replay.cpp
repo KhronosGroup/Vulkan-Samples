@@ -90,9 +90,9 @@ void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::is
 	     glsl_source,
 	     entry_point);
 
-	ShaderSource shader_source{};
+	vkb::core::ShaderSource shader_source{};
 	shader_source.set_source(std::move(glsl_source));
-	ShaderVariant shader_variant;
+	vkb::core::ShaderVariant shader_variant;
 
 	auto &shader_module = resource_cache.request_shader_module(stage, shader_source, shader_variant);
 
@@ -106,7 +106,7 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 	read(stream,
 	     shader_indices);
 
-	std::vector<ShaderModule *> shader_stages(shader_indices.size());
+	std::vector<vkb::core::ShaderModuleC *> shader_stages(shader_indices.size());
 	std::transform(shader_indices.begin(),
 	               shader_indices.end(),
 	               shader_stages.begin(),

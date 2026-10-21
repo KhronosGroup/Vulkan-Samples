@@ -52,7 +52,6 @@ set(FRAMEWORK_FILES
     structure_chain_builder.h
     # Source Files
     drawer.cpp
-    spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
     fence_pool.cpp
@@ -104,7 +103,6 @@ set(RENDERING_FILES
     rendering/postprocessing_pipeline.h
     rendering/postprocessing_pass.h
     rendering/postprocessing_renderpass.h
-    rendering/postprocessing_computepass.h
     rendering/render_context.h
     rendering/render_frame.h
     rendering/render_pipeline.h
@@ -113,8 +111,7 @@ set(RENDERING_FILES
     # Source files
     rendering/postprocessing_pipeline.cpp
     rendering/postprocessing_pass.cpp
-    rendering/postprocessing_renderpass.cpp
-    rendering/postprocessing_computepass.cpp)
+    rendering/postprocessing_renderpass.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
@@ -238,14 +235,12 @@ set(CORE_FILES
     core/hpp_queue.h
 	core/hpp_render_pass.h
     core/hpp_sampler.h
-    core/hpp_shader_module.h
     core/hpp_swapchain.h
     core/vulkan_resource.h
     # Source Files
     core/command_pool_base.cpp
     core/debug.cpp
     core/image_core.cpp
-    core/shader_module.cpp
     core/pipeline_layout.cpp
     core/pipeline.cpp
     core/descriptor_set_layout.cpp

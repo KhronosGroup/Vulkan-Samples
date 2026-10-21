@@ -35,7 +35,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
                                                                 void                                         *user_data)
 {
 	// Log debug message
-	std::string message = std::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
+	std::string message = fmt::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
 	switch (message_severity)
 	{
 		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
@@ -54,7 +54,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
 			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
 			break;
 	}
-	return VK_FALSE;
+	return vk::False;
 }
 #endif
 
@@ -292,7 +292,7 @@ std::pair<vk::Result, uint32_t> HPPHelloTriangle::acquire_next_image()
 	uint32_t   image;
 	std::tie(res, image) = device.acquireNextImageKHR(swapchain_data.swapchain, UINT64_MAX, acquire_semaphore);
 
-	if (res != vk::Result::eSuccess)
+	if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR)
 	{
 		recycled_semaphores.push_back(acquire_semaphore);
 		return {res, image};

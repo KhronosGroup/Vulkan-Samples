@@ -265,21 +265,21 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 	prepare_render_targets();
 
-	vkb::ShaderSource vert_shader("async_compute/forward.vert.spv");
-	vkb::ShaderSource frag_shader("async_compute/forward.frag.spv");
-	auto              scene_subpass =
+	vkb::core::ShaderSource vert_shader("async_compute/forward.vert.spv");
+	vkb::core::ShaderSource frag_shader("async_compute/forward.frag.spv");
+	auto                    scene_subpass =
 	    std::make_unique<ShadowMapForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera, *shadow_camera);
 
-	vkb::ShaderSource shadow_vert_shader("async_compute/shadow.vert.spv");
-	vkb::ShaderSource shadow_frag_shader("async_compute/shadow.frag.spv");
-	auto              shadow_scene_subpass =
+	vkb::core::ShaderSource shadow_vert_shader("async_compute/shadow.vert.spv");
+	vkb::core::ShaderSource shadow_frag_shader("async_compute/shadow.frag.spv");
+	auto                    shadow_scene_subpass =
 	    std::make_unique<DepthMapSubpass>(get_render_context(), std::move(shadow_vert_shader), std::move(shadow_frag_shader), get_scene(), *shadow_camera);
 	shadow_render_pipeline.add_subpass(std::move(shadow_scene_subpass));
 	shadow_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE}});
 
-	vkb::ShaderSource composite_vert_shader("async_compute/composite.vert.spv");
-	vkb::ShaderSource composite_frag_shader("async_compute/composite.frag.spv");
-	auto              composite_scene_subpass =
+	vkb::core::ShaderSource composite_vert_shader("async_compute/composite.vert.spv");
+	vkb::core::ShaderSource composite_frag_shader("async_compute/composite.frag.spv");
+	auto                    composite_scene_subpass =
 	    std::make_unique<CompositeSubpass>(get_render_context(), std::move(composite_vert_shader), std::move(composite_frag_shader));
 
 	forward_render_pipeline.add_subpass(std::move(scene_subpass));
@@ -306,11 +306,11 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	create_gui(*window, &get_stats());
 
 	auto &threshold_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::ShaderSource("async_compute/threshold.comp.spv"));
+	                                                                                 vkb::core::ShaderSource("async_compute/threshold.comp.spv"));
 	auto &blur_up_module   = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::ShaderSource("async_compute/blur_up.comp.spv"));
+	                                                                                 vkb::core::ShaderSource("async_compute/blur_up.comp.spv"));
 	auto &blur_down_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::ShaderSource("async_compute/blur_down.comp.spv"));
+	                                                                                 vkb::core::ShaderSource("async_compute/blur_down.comp.spv"));
 	threshold_pipeline     = &get_device().get_resource_cache().request_pipeline_layout({&threshold_module});
 	blur_up_pipeline       = &get_device().get_resource_cache().request_pipeline_layout({&blur_up_module});
 	blur_down_pipeline     = &get_device().get_resource_cache().request_pipeline_layout({&blur_down_module});
@@ -824,7 +824,7 @@ std::unique_ptr<vkb::VulkanSampleC> create_async_compute()
 }
 
 AsyncComputeSample::DepthMapSubpass::DepthMapSubpass(vkb::rendering::RenderContextC &render_context,
-                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
+                                                     vkb::core::ShaderSource &&vertex_shader, vkb::core::ShaderSource &&fragment_shader,
                                                      vkb::scene_graph::SceneC &scene, vkb::sg::Camera &camera) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
 {
@@ -842,7 +842,7 @@ void AsyncComputeSample::DepthMapSubpass::draw(vkb::core::CommandBufferC &comman
 }
 
 AsyncComputeSample::ShadowMapForwardSubpass::ShadowMapForwardSubpass(vkb::rendering::RenderContextC &render_context,
-                                                                     vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
+                                                                     vkb::core::ShaderSource &&vertex_shader, vkb::core::ShaderSource &&fragment_shader,
                                                                      vkb::scene_graph::SceneC &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera_) :
     vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera),
     shadow_camera(shadow_camera_)
@@ -875,8 +875,8 @@ void AsyncComputeSample::ShadowMapForwardSubpass::draw(vkb::core::CommandBufferC
 }
 
 AsyncComputeSample::CompositeSubpass::CompositeSubpass(vkb::rendering::RenderContextC &render_context,
-                                                       vkb::ShaderSource             &&vertex_shader,
-                                                       vkb::ShaderSource             &&fragment_shader) :
+                                                       vkb::core::ShaderSource       &&vertex_shader,
+                                                       vkb::core::ShaderSource       &&fragment_shader) :
     vkb::rendering::SubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader))
 {
 }

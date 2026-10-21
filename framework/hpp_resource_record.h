@@ -31,11 +31,16 @@ namespace core
 class HPPGraphicsPipeline;
 class HPPPipelineLayout;
 class HPPRenderPass;
-class HPPShaderModule;
-class HPPShaderSource;
-class HPPShaderVariant;
 struct HPPSubpassInfo;
 }        // namespace core
+
+namespace rendering
+{
+template <vkb::BindingType bindingType>
+class PipelineState;
+using PipelineStateCpp = PipelineState<vkb::BindingType::Cpp>;
+using PipelineStateC   = PipelineState<vkb::BindingType::C>;
+}        // namespace rendering
 
 /**
  * @brief facade class around vkb::ResourceRecord, providing a vulkan.hpp-based interface
@@ -54,9 +59,9 @@ class HPPResourceRecord : private vkb::ResourceRecord
 		                                                       reinterpret_cast<vkb::rendering::PipelineStateC &>(pipeline_state));
 	}
 
-	size_t register_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
+	size_t register_pipeline_layout(const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules)
 	{
-		return vkb::ResourceRecord::register_pipeline_layout(reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules));
+		return vkb::ResourceRecord::register_pipeline_layout(reinterpret_cast<std::vector<vkb::core::ShaderModuleC *> const &>(shader_modules));
 	}
 
 	size_t register_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
@@ -68,15 +73,15 @@ class HPPResourceRecord : private vkb::ResourceRecord
 		                                                 reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses));
 	}
 
-	size_t register_shader_module(vk::ShaderStageFlagBits            stage,
-	                              const vkb::core::HPPShaderSource  &glsl_source,
-	                              const std::string                 &entry_point,
-	                              const vkb::core::HPPShaderVariant &shader_variant)
+	size_t register_shader_module(vk::ShaderStageFlagBits         stage,
+	                              const vkb::core::ShaderSource  &glsl_source,
+	                              const std::string              &entry_point,
+	                              const vkb::core::ShaderVariant &shader_variant)
 	{
 		return vkb::ResourceRecord::register_shader_module(static_cast<VkShaderStageFlagBits>(stage),
-		                                                   reinterpret_cast<vkb::ShaderSource const &>(glsl_source),
+		                                                   reinterpret_cast<vkb::core::ShaderSource const &>(glsl_source),
 		                                                   entry_point,
-		                                                   reinterpret_cast<vkb::ShaderVariant const &>(shader_variant));
+		                                                   reinterpret_cast<vkb::core::ShaderVariant const &>(shader_variant));
 	}
 
 	void set_graphics_pipeline(size_t index, const vkb::core::HPPGraphicsPipeline &graphics_pipeline)
@@ -94,9 +99,9 @@ class HPPResourceRecord : private vkb::ResourceRecord
 		vkb::ResourceRecord::set_render_pass(index, reinterpret_cast<vkb::RenderPass const &>(render_pass));
 	}
 
-	void set_shader_module(size_t index, const vkb::core::HPPShaderModule &shader_module)
+	void set_shader_module(size_t index, const vkb::core::ShaderModuleCpp &shader_module)
 	{
-		vkb::ResourceRecord::set_shader_module(index, reinterpret_cast<vkb::ShaderModule const &>(shader_module));
+		vkb::ResourceRecord::set_shader_module(index, reinterpret_cast<vkb::core::ShaderModuleC const &>(shader_module));
 	}
 };
 }        // namespace vkb

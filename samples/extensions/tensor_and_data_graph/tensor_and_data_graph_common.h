@@ -280,7 +280,7 @@ class DataGraphPipelineSession : public vkb::allocated::AllocatedC<VkDataGraphPi
 class ComputePipelineLayoutWithTensors : public vkb::core::VulkanResourceC<VkPipelineLayout>
 {
   public:
-	ComputePipelineLayoutWithTensors(vkb::core::DeviceC &device, vkb::ShaderModule &shader_module);
+	ComputePipelineLayoutWithTensors(vkb::core::DeviceC &device, vkb::core::ShaderModuleC &shader_module);
 	~ComputePipelineLayoutWithTensors();
 
 	const std::map<uint32_t, VkDescriptorSetLayout> &get_descriptor_set_layouts() const;
@@ -293,12 +293,12 @@ class ComputePipelineLayoutWithTensors : public vkb::core::VulkanResourceC<VkPip
  * @brief Helper class to create and manage the lifetime of a VkPipeline resource for a Compute Pipeline. Similar to vkb::ComputePipeline, but supports Tensor resources.
  * @detail The sample framework's vkb::ComputePipeline class (and its dependencies) don't understand Tensor resources, so can't be used for compute shaders that use tensors.
  *		   This class is a modified copy of vkb::ComputePipeline that does support tensors, albeit with less other features.
- *		   We can't use the vkb::rendering::PipelineStateC as that doesn't support tensors, so instead take the VkPipelineLayout and vkb::ShaderModule directly.
+ *		   We can't use the vkb::rendering::PipelineStateC as that doesn't support tensors, so instead take the VkPipelineLayout and vkb::core::ShaderModuleC directly.
  */
 class ComputePipelineWithTensors : public vkb::core::VulkanResourceC<VkPipeline>
 {
   public:
-	ComputePipelineWithTensors(vkb::core::DeviceC &device, VkPipelineLayout layout, vkb::ShaderModule &shader);
+	ComputePipelineWithTensors(vkb::core::DeviceC &device, VkPipelineLayout layout, vkb::core::ShaderModuleC &shader);
 	~ComputePipelineWithTensors();
 
   private:

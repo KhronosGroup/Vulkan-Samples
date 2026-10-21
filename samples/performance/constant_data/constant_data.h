@@ -106,8 +106,8 @@ class ConstantData : public vkb::VulkanSampleC
 	{
 	  public:
 		ConstantDataSubpass(vkb::rendering::RenderContextC &render_context,
-		                    vkb::ShaderSource             &&vertex_shader,
-		                    vkb::ShaderSource             &&fragment_shader,
+		                    vkb::core::ShaderSource       &&vertex_shader,
+		                    vkb::core::ShaderSource       &&fragment_shader,
 		                    vkb::scene_graph::SceneC       &scene,
 		                    vkb::sg::Camera                &camera) :
 		    vkb::rendering::subpasses::ForwardSubpassC(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
@@ -127,8 +127,8 @@ class ConstantData : public vkb::VulkanSampleC
 	{
 	  public:
 		PushConstantSubpass(vkb::rendering::RenderContextC &render_context,
-		                    vkb::ShaderSource             &&vertex_shader,
-		                    vkb::ShaderSource             &&fragment_shader,
+		                    vkb::core::ShaderSource       &&vertex_shader,
+		                    vkb::core::ShaderSource       &&fragment_shader,
 		                    vkb::scene_graph::SceneC       &scene,
 		                    vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
@@ -142,8 +142,8 @@ class ConstantData : public vkb::VulkanSampleC
 		/**
 		 * @brief Overridden to intentionally disable any dynamic shader module updates
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+		                                                     const std::vector<vkb::core::ShaderModuleC *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to push a custom data structure to the shader
@@ -164,8 +164,8 @@ class ConstantData : public vkb::VulkanSampleC
 	{
 	  public:
 		DescriptorSetSubpass(vkb::rendering::RenderContextC &render_context,
-		                     vkb::ShaderSource             &&vertex_shader,
-		                     vkb::ShaderSource             &&fragment_shader,
+		                     vkb::core::ShaderSource       &&vertex_shader,
+		                     vkb::core::ShaderSource       &&fragment_shader,
 		                     vkb::scene_graph::SceneC       &scene,
 		                     vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
@@ -179,8 +179,8 @@ class ConstantData : public vkb::VulkanSampleC
 		/**
 		 * @brief Dynamically retrieves the correct pipeline layout depending on the method of UBO
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+		                                                     const std::vector<vkb::core::ShaderModuleC *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any push constants
@@ -201,8 +201,8 @@ class ConstantData : public vkb::VulkanSampleC
 	{
 	  public:
 		BufferArraySubpass(vkb::rendering::RenderContextC &render_context,
-		                   vkb::ShaderSource             &&vertex_shader,
-		                   vkb::ShaderSource             &&fragment_shader,
+		                   vkb::core::ShaderSource       &&vertex_shader,
+		                   vkb::core::ShaderSource       &&fragment_shader,
 		                   vkb::scene_graph::SceneC       &scene,
 		                   vkb::sg::Camera                &camera) :
 		    ConstantDataSubpass(render_context, std::move(vertex_shader), std::move(fragment_shader), scene, camera)
@@ -218,8 +218,8 @@ class ConstantData : public vkb::VulkanSampleC
 		/**
 		 * @brief Returns a default pipeline layout
 		 */
-		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-		                                                     const std::vector<vkb::ShaderModule *> &shader_modules) override;
+		virtual vkb::PipelineLayout &prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+		                                                     const std::vector<vkb::core::ShaderModuleC *> &shader_modules) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any push constants
@@ -239,8 +239,8 @@ class ConstantData : public vkb::VulkanSampleC
 	{
 		static_assert(std::is_base_of<ConstantDataSubpass, T>::value, "T is an invalid type. Must be a derived class from ConstantDataSubpass");
 
-		vkb::ShaderSource vert_shader(vertex_shader);
-		vkb::ShaderSource frag_shader(fragment_shader);
+		vkb::core::ShaderSource vert_shader(vertex_shader);
+		vkb::core::ShaderSource frag_shader(fragment_shader);
 
 		auto subpass = std::make_unique<T>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 

@@ -485,10 +485,10 @@ inline Gui<bindingType>::Gui(
 	vkb::common::make_filters_valid(device.get_gpu().get_handle(), font_image->get_format(), &filter);
 
 	// Load shaders
-	vkb::core::HPPShaderSource vert_shader("imgui.vert.spv");
-	vkb::core::HPPShaderSource frag_shader("imgui.frag.spv");
+	vkb::core::ShaderSource vert_shader("imgui.vert.spv");
+	vkb::core::ShaderSource frag_shader("imgui.frag.spv");
 
-	std::vector<vkb::core::HPPShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModuleCpp *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, vert_shader, {}));
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, frag_shader, {}));
 
@@ -1415,7 +1415,7 @@ inline bool Gui<bindingType>::update_buffers()
 	}
 
 	bool updated = false;
-	if (!vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
+	if (!vertex_buffer || !vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
 	{
 		vertex_buffer.reset();
 		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size,
@@ -1425,7 +1425,7 @@ inline bool Gui<bindingType>::update_buffers()
 		updated = true;
 	}
 
-	if (!index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
+	if (!index_buffer || !index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
 	{
 		index_buffer.reset();
 		index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size,

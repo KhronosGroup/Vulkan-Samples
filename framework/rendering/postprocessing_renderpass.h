@@ -73,9 +73,9 @@ class PostProcessingSubpass : public vkb::rendering::SubpassC
   public:
 	PostProcessingSubpass(PostProcessingRenderPass       *parent,
 	                      vkb::rendering::RenderContextC &render_context,
-	                      ShaderSource                  &&triangle_vs,
-	                      ShaderSource                  &&fs,
-	                      ShaderVariant                 &&fs_variant = {});
+	                      vkb::core::ShaderSource       &&triangle_vs,
+	                      vkb::core::ShaderSource       &&fs,
+	                      vkb::core::ShaderVariant      &&fs_variant = {});
 
 	PostProcessingSubpass(const PostProcessingSubpass &to_copy)            = delete;
 	PostProcessingSubpass &operator=(const PostProcessingSubpass &to_copy) = delete;
@@ -117,7 +117,7 @@ class PostProcessingSubpass : public vkb::rendering::SubpassC
 	/**
 	 * @brief Returns the shader variant used for this postprocess' fragment shader.
 	 */
-	inline ShaderVariant &get_fs_variant()
+	inline vkb::core::ShaderVariant &get_fs_variant()
 	{
 		return fs_variant;
 	}
@@ -125,7 +125,7 @@ class PostProcessingSubpass : public vkb::rendering::SubpassC
 	/**
 	 * @brief Sets the shader variant that will be used for this postprocess' fragment shader.
 	 */
-	inline PostProcessingSubpass &set_fs_variant(ShaderVariant &&new_variant)
+	inline PostProcessingSubpass &set_fs_variant(vkb::core::ShaderVariant &&new_variant)
 	{
 		fs_variant = std::move(new_variant);
 
@@ -202,7 +202,7 @@ class PostProcessingSubpass : public vkb::rendering::SubpassC
   private:
 	PostProcessingRenderPass *parent;
 
-	ShaderVariant fs_variant{};
+	vkb::core::ShaderVariant fs_variant{};
 
 	AttachmentMap   input_attachments{};
 	SampledMap      sampled_images{};
@@ -251,9 +251,9 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	template <typename... ConstructorArgs>
 	PostProcessingSubpass &add_subpass(ConstructorArgs &&...args)
 	{
-		ShaderSource vs_copy         = get_triangle_vs();
-		auto         new_subpass     = std::make_unique<PostProcessingSubpass>(this, get_render_context(), std::move(vs_copy), std::forward<ConstructorArgs>(args)...);
-		auto        &new_subpass_ref = *new_subpass;
+		vkb::core::ShaderSource vs_copy         = get_triangle_vs();
+		auto                    new_subpass     = std::make_unique<PostProcessingSubpass>(this, get_render_context(), std::move(vs_copy), std::forward<ConstructorArgs>(args)...);
+		auto                   &new_subpass_ref = *new_subpass;
 
 		pipeline.add_subpass(std::move(new_subpass));
 

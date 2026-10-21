@@ -25,8 +25,10 @@ namespace vkb
 template <vkb::BindingType bindingType, typename AnchorStructType>
 class StructureChainBuilder
 {
+	static_assert((offsetof(AnchorStructType, sType) == 0) && (offsetof(AnchorStructType, pNext) == sizeof(void *)));
+
   public:
-	StructureChainBuilder();
+	StructureChainBuilder(AnchorStructType const &anchor_struct);
 
 	template <typename T>
 	T &add_chain_data(T const &data_to_add = {});        // Adds data to the structure chain builder that is not part of the structure chain itself, but is used by the
@@ -38,14 +40,11 @@ class StructureChainBuilder
 	template <typename StructType>
 	StructType const *get_struct(size_t skip = 0) const;
 
-	void set_anchor_struct(AnchorStructType const &anchor_struct);
-
   private:
 	template <typename StructType>
 	StructType &add_struct_impl(StructType const &struct_to_add);
 	template <typename StructType>
 	StructType const *get_struct_impl(size_t skip) const;
-	void              set_anchor_struct_impl(AnchorStructType const &anchor_struct);
 
   private:
 	std::vector<std::unique_ptr<std::any>> structure_chain;
@@ -59,18 +58,17 @@ template <typename AnchorStructType>
 using StructureChainBuilderCpp = StructureChainBuilder<vkb::BindingType::Cpp, AnchorStructType>;
 
 template <vkb::BindingType bindingType, typename AnchorStructType>
-template <typename T>
-T &StructureChainBuilder<bindingType, AnchorStructType>::add_chain_data(T const &data_to_add)
+inline StructureChainBuilder<bindingType, AnchorStructType>::StructureChainBuilder(AnchorStructType const &anchor_struct)
 {
-	chain_data.push_back(std::make_unique<std::any>(std::make_any<T>(data_to_add)));
-	return *std::any_cast<T>(chain_data.back().get());
+	structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>(anchor_struct)));
 }
 
 template <vkb::BindingType bindingType, typename AnchorStructType>
-inline StructureChainBuilder<bindingType, AnchorStructType>::StructureChainBuilder()
+template <typename T>
+inline T &StructureChainBuilder<bindingType, AnchorStructType>::add_chain_data(T const &data_to_add)
 {
-	static_assert((offsetof(AnchorStructType, sType) == 0) && (offsetof(AnchorStructType, pNext) == sizeof(void *)));
-	structure_chain.push_back(std::make_unique<std::any>(std::make_any<AnchorStructType>()));
+	chain_data.push_back(std::make_unique<std::any>(std::make_any<T>(data_to_add)));
+	return *std::any_cast<T>(chain_data.back().get());
 }
 
 template <vkb::BindingType bindingType, typename AnchorStructType>
@@ -115,7 +113,7 @@ inline StructType const *StructureChainBuilder<bindingType, AnchorStructType>::g
 	}
 	else
 	{
-		return reinterpret_cast<StructType const *>(get_struct_impl<vk::CppType<StructType>::Type>(skip));
+		return reinterpret_cast<StructType const *>(get_struct_impl<typename vk::CppType<StructType>::Type>(skip));
 	}
 }
 
@@ -135,28 +133,6 @@ inline StructType const *StructureChainBuilder<bindingType, AnchorStructType>::g
 		});
 	}
 	return (it != structure_chain.end()) ? std::any_cast<StructType>(it->get()) : nullptr;
-}
-
-template <vkb::BindingType bindingType, typename AnchorStructType>
-inline void StructureChainBuilder<bindingType, AnchorStructType>::set_anchor_struct(AnchorStructType const &anchor_struct)
-{
-	if constexpr (bindingType == vkb::BindingType::Cpp)
-	{
-		set_anchor_struct_impl(anchor_struct);
-	}
-	else
-	{
-		return reinterpret_cast<StructureChainBuilder<vkb::BindingType::Cpp, typename vk::CppType<AnchorStructType>::Type> *>(this)->add_anchor_struct(
-		    reinterpret_cast<typename vk::CppType<AnchorStructType>::Type const &>(anchor_struct));
-	}
-}
-
-template <vkb::BindingType bindingType, typename AnchorStructType>
-inline void StructureChainBuilder<bindingType, AnchorStructType>::set_anchor_struct_impl(AnchorStructType const &anchor_struct)
-{
-	void const *pNext                                                     = std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext;
-	*std::any_cast<AnchorStructType>(structure_chain.front().get())       = anchor_struct;
-	std::any_cast<AnchorStructType>(structure_chain.front().get())->pNext = pNext;
 }
 
 }        // namespace vkb
