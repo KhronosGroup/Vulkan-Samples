@@ -41,27 +41,36 @@ template <vkb::BindingType bindingType>
 class PhysicalDevice
 {
   public:
-	using Bool32Type              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Bool32, VkBool32>::type;
-	using FormatPropertiesType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::FormatProperties, VkFormatProperties>::type;
-	using FormatType              = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Format, VkFormat>::type;
-	using MemoryPropertyFlagsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::MemoryPropertyFlags, VkMemoryPropertyFlags>::type;
-	using PerformanceCounterDescriptionKHRType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PerformanceCounterDescriptionKHR, VkPerformanceCounterDescriptionKHR>::type;
-	using PerformanceCounterKHRType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PerformanceCounterKHR, VkPerformanceCounterKHR>::type;
-	using PhysicalDeviceFeaturesType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PhysicalDeviceFeatures, VkPhysicalDeviceFeatures>::type;
-	using PhysicalDeviceMemoryPropertiesType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PhysicalDeviceMemoryProperties, VkPhysicalDeviceMemoryProperties>::type;
-	using PhysicalDevicePropertiesType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PhysicalDeviceProperties, VkPhysicalDeviceProperties>::type;
-	using PhysicalDeviceType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
-	using QueueFamilyPropertiesType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFamilyProperties, VkQueueFamilyProperties>::type;
-	using QueryPoolPerformanceCreateInfoKHRType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::QueryPoolPerformanceCreateInfoKHR, VkQueryPoolPerformanceCreateInfoKHR>::type;
-	using StructureTypeType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::StructureType, VkStructureType>::type;
-	using SurfaceKHRType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
+	using Bool32Type = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Bool32, VkBool32>::type;
+	using FormatPropertiesType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::FormatProperties, VkFormatProperties>::type;
+	using FormatType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Format, VkFormat>::type;
+	using MemoryPropertyFlagsType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::MemoryPropertyFlags, VkMemoryPropertyFlags>::type;
+	using PerformanceCounterDescriptionKHRType = typename std::conditional<bindingType == vkb::BindingType::Cpp,
+	                                                                       vk::PerformanceCounterDescriptionKHR,
+	                                                                       VkPerformanceCounterDescriptionKHR>::type;
+	using PerformanceCounterKHRType            = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::PerformanceCounterKHR, VkPerformanceCounterKHR>::type;
+	using PhysicalDeviceFeaturesType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::PhysicalDeviceFeatures, VkPhysicalDeviceFeatures>::type;
+	using PhysicalDeviceMemoryPropertiesType = typename std::conditional<bindingType == vkb::BindingType::Cpp,
+	                                                                     vk::PhysicalDeviceMemoryProperties,
+	                                                                     VkPhysicalDeviceMemoryProperties>::type;
+	using PhysicalDevicePropertiesType       = typename std::conditional<bindingType == vkb::BindingType::Cpp,
+                                                                   vk::PhysicalDeviceProperties,
+                                                                   VkPhysicalDeviceProperties>::type;
+	using PhysicalDeviceType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::PhysicalDevice, VkPhysicalDevice>::type;
+	using QueueFamilyPropertiesType = typename std::
+	    conditional<bindingType == vkb::BindingType::Cpp, vk::QueueFamilyProperties, VkQueueFamilyProperties>::type;
+	using QueryPoolPerformanceCreateInfoKHRType = typename std::conditional<bindingType == vkb::BindingType::Cpp,
+	                                                                        vk::QueryPoolPerformanceCreateInfoKHR,
+	                                                                        VkQueryPoolPerformanceCreateInfoKHR>::type;
+	using StructureTypeType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::StructureType, VkStructureType>::type;
+	using SurfaceKHRType =
+	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SurfaceKHR, VkSurfaceKHR>::type;
 
   public:
 	PhysicalDevice(vkb::core::Instance<bindingType> &instance, PhysicalDeviceType physical_device);
@@ -108,15 +117,18 @@ class PhysicalDevice
 	template <typename T>
 	T get_extension_features();
 
-	PhysicalDeviceFeaturesType const             &get_features() const;
-	FormatPropertiesType                          get_format_properties(FormatType format) const;
-	PhysicalDeviceType                            get_handle() const;
-	vkb::core::Instance<bindingType>             &get_instance() const;
-	PhysicalDeviceMemoryPropertiesType const     &get_memory_properties() const;
-	uint32_t                                      get_memory_type(uint32_t bits, MemoryPropertyFlagsType properties, Bool32Type *memory_type_found = nullptr) const;
-	PhysicalDeviceFeaturesType                   &get_mutable_requested_features();
-	PhysicalDevicePropertiesType const           &get_properties() const;
-	uint32_t                                      get_queue_family_performance_query_passes(QueryPoolPerformanceCreateInfoKHRType const *perf_query_create_info) const;
+	PhysicalDeviceFeaturesType const         &get_features() const;
+	FormatPropertiesType                      get_format_properties(FormatType format) const;
+	PhysicalDeviceType                        get_handle() const;
+	vkb::core::Instance<bindingType>         &get_instance() const;
+	PhysicalDeviceMemoryPropertiesType const &get_memory_properties() const;
+	uint32_t                                  get_memory_type(uint32_t                bits,
+	                                                          MemoryPropertyFlagsType properties,
+	                                                          Bool32Type             *memory_type_found = nullptr) const;
+	PhysicalDeviceFeaturesType               &get_mutable_requested_features();
+	PhysicalDevicePropertiesType const       &get_properties() const;
+	uint32_t                                  get_queue_family_performance_query_passes(
+	                                     QueryPoolPerformanceCreateInfoKHRType const *perf_query_create_info) const;
 	std::vector<QueueFamilyPropertiesType> const &get_queue_family_properties() const;
 	PhysicalDeviceFeaturesType const             &get_requested_features() const;
 
@@ -138,7 +150,9 @@ class PhysicalDevice
 	 * @returns true if the requested feature is supported, otherwise false
 	 */
 	template <typename Feature>
-	Bool32Type request_optional_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName);
+	Bool32Type request_optional_feature(Bool32Type Feature::*flag,
+	                                    std::string const   &featureName,
+	                                    std::string const   &flagName);
 
 	/**
 	 * @brief Request a required features flag
@@ -147,7 +161,9 @@ class PhysicalDevice
 	 *        add_extension_features is called, otherwise a runtime_error is thrown.
 	 */
 	template <typename Feature>
-	void request_required_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName);
+	void request_required_feature(Bool32Type Feature::*flag,
+	                              std::string const   &featureName,
+	                              std::string const   &flagName);
 
 	/**
 	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
@@ -162,41 +178,50 @@ class PhysicalDevice
 	FeatureType &add_extension_features_impl();
 	template <typename FeatureType>
 	FeatureType get_extension_features_impl();
-	uint32_t    get_memory_type_impl(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found = nullptr) const;
+	uint32_t    get_memory_type_impl(uint32_t                bits,
+	                                 vk::MemoryPropertyFlags properties,
+	                                 vk::Bool32             *memory_type_found = nullptr) const;
 	void        init();
 	template <typename FeatureType>
-	void request_required_feature_impl(vk::Bool32 FeatureType::*flag, std::string const &featureName, std::string const &flagName);
+	void request_required_feature_impl(vk::Bool32 FeatureType::*flag,
+	                                   std::string const       &featureName,
+	                                   std::string const       &flagName);
 
   private:
 	std::vector<vk::ExtensionProperties> device_extensions;        // The extensions that this GPU supports
 	std::map<vk::StructureType, std::shared_ptr<void>>
-	                                       extension_features;        // Holds the extension feature structures, we use a map to retain an order of requested structures
-	vk::PhysicalDeviceFeatures             features;                  // The features that this GPU supports
-	vk::PhysicalDevice                     handle;                    // Handle to the Vulkan physical device
-	bool                                   high_priority_graphics_queue = {};
-	vkb::core::InstanceCpp                &instance;                                          // Handle to the Vulkan instance
-	void                                  *last_requested_extension_feature = nullptr;        // The extension feature pointer
-	vk::PhysicalDeviceMemoryProperties     memory_properties;                                 // The GPU memory properties
-	vk::PhysicalDeviceProperties           properties;                                        // The GPU properties
-	std::vector<vk::QueueFamilyProperties> queue_family_properties;                           // The GPU queue family properties
-	vk::PhysicalDeviceFeatures             requested_features;                                // The features that will be requested to be enabled in the logical device
+	    extension_features;        // Holds the extension feature structures, we use a map to retain an order of requested structures
+	vk::PhysicalDeviceFeatures features;        // The features that this GPU supports
+	vk::PhysicalDevice         handle;          // Handle to the Vulkan physical device
+	bool                       high_priority_graphics_queue = {};
+	vkb::core::InstanceCpp    &instance;                                          // Handle to the Vulkan instance
+	void                      *last_requested_extension_feature = nullptr;        // The extension feature pointer
+	vk::PhysicalDeviceMemoryProperties     memory_properties;                     // The GPU memory properties
+	vk::PhysicalDeviceProperties           properties;                            // The GPU properties
+	std::vector<vk::QueueFamilyProperties> queue_family_properties;               // The GPU queue family properties
+	vk::PhysicalDeviceFeatures
+	    requested_features;        // The features that will be requested to be enabled in the logical device
 };
 
 using PhysicalDeviceC   = PhysicalDevice<vkb::BindingType::C>;
 using PhysicalDeviceCpp = PhysicalDevice<vkb::BindingType::Cpp>;
 
-#define REQUEST_OPTIONAL_FEATURE(gpu, Feature, flag) gpu.request_optional_feature<Feature>(&Feature::flag, #Feature, #flag)
-#define REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
+#define REQUEST_OPTIONAL_FEATURE(gpu, Feature, flag) \
+	gpu.request_optional_feature<Feature>(&Feature::flag, #Feature, #flag)
+#define REQUEST_REQUIRED_FEATURE(gpu, Feature, flag) \
+	gpu.request_required_feature<Feature>(&Feature::flag, #Feature, #flag)
 
 template <>
-inline PhysicalDevice<vkb::BindingType::C>::PhysicalDevice(vkb::core::InstanceC &instance, VkPhysicalDevice physical_device) :
+inline PhysicalDevice<vkb::BindingType::C>::PhysicalDevice(vkb::core::InstanceC &instance,
+                                                           VkPhysicalDevice      physical_device) :
     instance{reinterpret_cast<vkb::core::InstanceCpp &>(instance)}, handle{physical_device}
 {
 	init();
 }
 
 template <>
-inline PhysicalDevice<vkb::BindingType::Cpp>::PhysicalDevice(vkb::core::InstanceCpp &instance, vk::PhysicalDevice physical_device) :
+inline PhysicalDevice<vkb::BindingType::Cpp>::PhysicalDevice(vkb::core::InstanceCpp &instance,
+                                                             vk::PhysicalDevice      physical_device) :
     instance{instance}, handle{physical_device}
 {
 	init();
@@ -245,7 +270,8 @@ inline FeatureType &PhysicalDevice<bindingType>::add_extension_features_impl()
 	// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 	if (!instance.is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
-		throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+		throw std::runtime_error("Couldn't request feature from device as " +
+		                         std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
 		                         " isn't enabled!");
 	}
 
@@ -336,7 +362,8 @@ inline FeatureType PhysicalDevice<bindingType>::get_extension_features_impl()
 	// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 	if (!instance.is_extension_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 	{
-		throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
+		throw std::runtime_error("Couldn't request feature from device as " +
+		                         std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) +
 		                         " isn't enabled!");
 	}
 
@@ -345,13 +372,15 @@ inline FeatureType PhysicalDevice<bindingType>::get_extension_features_impl()
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &PhysicalDevice<bindingType>::get_features() const
+inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &
+    PhysicalDevice<bindingType>::get_features() const
 {
 	return features;
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::FormatPropertiesType PhysicalDevice<bindingType>::get_format_properties(FormatType format) const
+inline typename PhysicalDevice<bindingType>::FormatPropertiesType
+    PhysicalDevice<bindingType>::get_format_properties(FormatType format) const
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -383,13 +412,16 @@ inline vkb::core::Instance<bindingType> &PhysicalDevice<bindingType>::get_instan
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::PhysicalDeviceMemoryPropertiesType const &PhysicalDevice<bindingType>::get_memory_properties() const
+inline typename PhysicalDevice<bindingType>::PhysicalDeviceMemoryPropertiesType const &
+    PhysicalDevice<bindingType>::get_memory_properties() const
 {
 	return memory_properties;
 }
 
 template <vkb::BindingType bindingType>
-inline uint32_t PhysicalDevice<bindingType>::get_memory_type(uint32_t bits, MemoryPropertyFlagsType properties, Bool32Type *memory_type_found) const
+inline uint32_t PhysicalDevice<bindingType>::get_memory_type(uint32_t                bits,
+                                                             MemoryPropertyFlagsType properties,
+                                                             Bool32Type             *memory_type_found) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -397,12 +429,15 @@ inline uint32_t PhysicalDevice<bindingType>::get_memory_type(uint32_t bits, Memo
 	}
 	else
 	{
-		return get_memory_type_impl(bits, static_cast<vk::MemoryPropertyFlags>(properties), reinterpret_cast<vk::Bool32 *>(memory_type_found));
+		return get_memory_type_impl(
+		    bits, static_cast<vk::MemoryPropertyFlags>(properties), reinterpret_cast<vk::Bool32 *>(memory_type_found));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline uint32_t PhysicalDevice<bindingType>::get_memory_type_impl(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found) const
+inline uint32_t PhysicalDevice<bindingType>::get_memory_type_impl(uint32_t                bits,
+                                                                  vk::MemoryPropertyFlags properties,
+                                                                  vk::Bool32             *memory_type_found) const
 {
 	for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
 	{
@@ -432,20 +467,22 @@ inline uint32_t PhysicalDevice<bindingType>::get_memory_type_impl(uint32_t bits,
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType &PhysicalDevice<bindingType>::get_mutable_requested_features()
+inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType &
+    PhysicalDevice<bindingType>::get_mutable_requested_features()
 {
 	return requested_features;
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::PhysicalDevicePropertiesType const &PhysicalDevice<bindingType>::get_properties() const
+inline typename PhysicalDevice<bindingType>::PhysicalDevicePropertiesType const &
+    PhysicalDevice<bindingType>::get_properties() const
 {
 	return properties;
 }
 
 template <vkb::BindingType bindingType>
-uint32_t
-    PhysicalDevice<bindingType>::get_queue_family_performance_query_passes(QueryPoolPerformanceCreateInfoKHRType const *perf_query_create_info) const
+uint32_t PhysicalDevice<bindingType>::get_queue_family_performance_query_passes(
+    QueryPoolPerformanceCreateInfoKHRType const *perf_query_create_info) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -453,12 +490,14 @@ uint32_t
 	}
 	else
 	{
-		return handle.getQueueFamilyPerformanceQueryPassesKHR(reinterpret_cast<vk::QueryPoolPerformanceCreateInfoKHR const &>(*perf_query_create_info));
+		return handle.getQueueFamilyPerformanceQueryPassesKHR(
+		    reinterpret_cast<vk::QueryPoolPerformanceCreateInfoKHR const &>(*perf_query_create_info));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline std::vector<typename PhysicalDevice<bindingType>::QueueFamilyPropertiesType> const &PhysicalDevice<bindingType>::get_queue_family_properties() const
+inline std::vector<typename PhysicalDevice<bindingType>::QueueFamilyPropertiesType> const &
+    PhysicalDevice<bindingType>::get_queue_family_properties() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -471,7 +510,8 @@ inline std::vector<typename PhysicalDevice<bindingType>::QueueFamilyPropertiesTy
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &PhysicalDevice<bindingType>::get_requested_features() const
+inline typename PhysicalDevice<bindingType>::PhysicalDeviceFeaturesType const &
+    PhysicalDevice<bindingType>::get_requested_features() const
 {
 	return requested_features;
 }
@@ -485,21 +525,22 @@ inline bool PhysicalDevice<bindingType>::has_high_priority_graphics_queue() cons
 template <vkb::BindingType bindingType>
 inline bool PhysicalDevice<bindingType>::is_extension_supported(const std::string &requested_extension) const
 {
-	return std::ranges::find_if(device_extensions,
-	                            [requested_extension](auto &device_extension) { return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0; }) != device_extensions.end();
+	return std::ranges::find_if(device_extensions, [requested_extension](auto &device_extension) {
+		       return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0;
+	       }) != device_extensions.end();
 }
 
 template <vkb::BindingType bindingType>
-inline typename PhysicalDevice<bindingType>::Bool32Type PhysicalDevice<bindingType>::is_present_supported(SurfaceKHRType surface,
-                                                                                                          uint32_t       queue_family_index) const
+inline typename PhysicalDevice<bindingType>::Bool32Type
+    PhysicalDevice<bindingType>::is_present_supported(SurfaceKHRType surface, uint32_t queue_family_index) const
 {
 	return surface ? handle.getSurfaceSupportKHR(queue_family_index, surface) : false;
 }
 
 template <vkb::BindingType bindingType>
 template <typename Feature>
-inline typename PhysicalDevice<bindingType>::Bool32Type
-    PhysicalDevice<bindingType>::request_optional_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName)
+inline typename PhysicalDevice<bindingType>::Bool32Type PhysicalDevice<bindingType>::request_optional_feature(
+    Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName)
 {
 	Bool32Type supported = get_extension_features<Feature>().*flag;
 	if (supported)
@@ -515,8 +556,9 @@ inline typename PhysicalDevice<bindingType>::Bool32Type
 
 template <vkb::BindingType bindingType>
 template <typename Feature>
-inline void
-    PhysicalDevice<bindingType>::request_required_feature(Bool32Type Feature::*flag, std::string const &featureName, std::string const &flagName)
+inline void PhysicalDevice<bindingType>::request_required_feature(Bool32Type Feature::*flag,
+                                                                  std::string const   &featureName,
+                                                                  std::string const   &flagName)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -531,8 +573,9 @@ inline void
 
 template <vkb::BindingType bindingType>
 template <typename Feature>
-inline void
-    PhysicalDevice<bindingType>::request_required_feature_impl(vk::Bool32 Feature::*flag, std::string const &featureName, std::string const &flagName)
+inline void PhysicalDevice<bindingType>::request_required_feature_impl(vk::Bool32 Feature::*flag,
+                                                                       std::string const   &featureName,
+                                                                       std::string const   &flagName)
 {
 	if (get_extension_features_impl<Feature>().*flag)
 	{
@@ -540,7 +583,8 @@ inline void
 	}
 	else
 	{
-		throw std::runtime_error(std::string("Requested required feature <") + featureName + "::" + flagName + "> is not supported");
+		throw std::runtime_error(std::string("Requested required feature <") + featureName + "::" + flagName +
+		                         "> is not supported");
 	}
 }
 
