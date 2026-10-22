@@ -283,7 +283,17 @@ inline void ShaderModule<bindingType>::init(vkb::core::ShaderSource const &shade
 	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_source.get_filename(), shader_variant.get_id(), entry_point);
 
 	// Shaders in binary SPIR-V format can be loaded directly
-	spirv = vkb::fs::read_shader_binary_u32(shader_source.get_filename());
+	if (!shader_source.get_filename().empty())
+	{
+		spirv = vkb::fs::read_shader_binary_u32(shader_source.get_filename());
+	}
+	else
+	{
+		assert(!shader_source.get_source().empty());
+		auto const &buffer = shader_source.get_source();
+		assert(buffer.size() % sizeof(uint32_t) == 0);
+		spirv = std::vector<uint32_t>(reinterpret_cast<const uint32_t *>(buffer.data()), reinterpret_cast<const uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+	}
 
 	// Reflection is used to dynamically create descriptor bindings
 
