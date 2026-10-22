@@ -89,6 +89,7 @@ inline StructType &StructureChainBuilder<bindingType, AnchorStructType>::add_str
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
+		static_assert(vk::StructExtends<StructType, AnchorStructType>::value, "StructType does not extend AnchorStructType");
 #if !defined(NDEBUG)
 		auto it = std::ranges::find_if(structure_chain, [](auto const &chain_element) {
 			return std::any_cast<StructType>(chain_element.get()) != nullptr;
