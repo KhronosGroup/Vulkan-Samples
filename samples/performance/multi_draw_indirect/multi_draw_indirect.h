@@ -27,6 +27,8 @@ class MultiDrawIndirect : public ApiVulkanSample
   public:
 	~MultiDrawIndirect() override;
 
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
+
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;

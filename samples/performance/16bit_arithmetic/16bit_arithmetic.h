@@ -30,10 +30,10 @@ class KHR16BitArithmeticSample : public vkb::VulkanSampleC
 
 	virtual ~KHR16BitArithmeticSample() = default;
 
+	virtual void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	virtual void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	virtual void draw_renderpass(vkb::core::CommandBufferC &cmd, vkb::rendering::RenderTargetC &render_target) override;
 

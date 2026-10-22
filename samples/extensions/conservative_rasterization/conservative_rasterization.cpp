@@ -74,8 +74,8 @@ void ConservativeRasterization::request_device_extensions(std::unordered_map<std
 
 void ConservativeRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	gpu.get_mutable_requested_features().fillModeNonSolid = gpu.get_features().fillModeNonSolid;
-	gpu.get_mutable_requested_features().wideLines        = gpu.get_features().wideLines;
+	gpu.get_mutable_requested_features().fillModeNonSolid = gpu.get_supported_features().fillModeNonSolid;
+	gpu.get_mutable_requested_features().wideLines        = gpu.get_supported_features().wideLines;
 }
 
 // Setup offscreen framebuffer, attachments and render passes for lower resolution rendering of the scene

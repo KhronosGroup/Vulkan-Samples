@@ -275,7 +275,7 @@ void HPPTextureCompressionComparison::load_assets()
 
 void HPPTextureCompressionComparison::prepare_gui()
 {
-	const auto device_features = get_device().get_gpu().get_features();
+	const auto device_features = get_device().get_gpu().get_supported_features();
 
 	for (auto &tc : texture_compression_data)
 	{

@@ -137,6 +137,7 @@ class VulkanSample : public vkb::Application
 	using Extent2DType                      = typename std::conditional<bindingType == BindingType::Cpp, vk::Extent2D, VkExtent2D>::type;
 	using DebugReportCallbackCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugReportCallbackCreateInfoEXT, VkDebugReportCallbackCreateInfoEXT>::type;
 	using DebugUtilsMessengerCreateInfoType = typename std::conditional<bindingType == BindingType::Cpp, vk::DebugUtilsMessengerCreateInfoEXT, VkDebugUtilsMessengerCreateInfoEXT>::type;
+	using DeviceCreateInfoType              = typename std::conditional<bindingType == BindingType::Cpp, vk::DeviceCreateInfo, VkDeviceCreateInfo>::type;
 	using InstanceCreateFlagsType           = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateFlags, VkInstanceCreateFlags>::type;
 	using InstanceCreateInfoType            = typename std::conditional<bindingType == BindingType::Cpp, vk::InstanceCreateInfo, VkInstanceCreateInfo>::type;
 	using LayerSettingType                  = typename std::conditional<bindingType == BindingType::Cpp, vk::LayerSettingEXT, VkLayerSettingEXT>::type;
@@ -197,6 +198,7 @@ class VulkanSample : public vkb::Application
 	 */
 	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
+	virtual void                    extend_device_create_info(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &scb);
 	virtual void                    extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &scb) const;
 	virtual uint32_t                get_api_version() const;
 	virtual InstanceCreateFlagsType get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
@@ -248,6 +250,8 @@ class VulkanSample : public vkb::Application
 	vkb::Gui<bindingType> const                       &get_gui() const;
 	vkb::core::Instance<bindingType>                  &get_instance();
 	vkb::core::Instance<bindingType> const            &get_instance() const;
+	vkb::core::PhysicalDevice<bindingType>            &get_physical_device();
+	vkb::core::PhysicalDevice<bindingType> const      &get_physical_device() const;
 	vkb::rendering::RenderPipeline<bindingType>       &get_render_pipeline();
 	vkb::rendering::RenderPipeline<bindingType> const &get_render_pipeline() const;
 	vkb::scene_graph::Scene<bindingType>              &get_scene();
@@ -324,6 +328,7 @@ class VulkanSample : public vkb::Application
 	size_t      determine_physical_device_score_impl(vk::PhysicalDevice const &gpu) const;
 	void        draw_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
 	void        draw_renderpass_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::rendering::RenderTargetCpp &render_target);
+	void        extend_device_create_info_impl(vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> &create_info) const;
 	void        extend_instance_create_info_impl(vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &create_info) const;
 	void        render_impl(vkb::core::CommandBufferCpp &command_buffer);
 	void        request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &scb) const;
@@ -451,15 +456,22 @@ inline std::unique_ptr<typename vkb::core::Device<bindingType>>
 	if constexpr (bindingType == BindingType::Cpp)
 	{
 		return std::make_unique<vkb::core::DeviceCpp>(
-		    gpu, surface, std::move(debug_utils), requested_extensions, [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
+		    gpu,
+		    surface,
+		    std::move(debug_utils),
+		    requested_extensions,
+		    [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); },
+		    [this](vkb::StructureChainBuilder<vkb::BindingType::Cpp, vk::DeviceCreateInfo> &scb) { extend_device_create_info(scb); });
 	}
 	else
 	{
-		return std::make_unique<vkb::core::DeviceC>(gpu,
-		                                            static_cast<VkSurfaceKHR>(surface),
-		                                            std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-		                                            requested_extensions,
-		                                            [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
+		return std::make_unique<vkb::core::DeviceC>(
+		    gpu,
+		    static_cast<VkSurfaceKHR>(surface),
+		    std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
+		    requested_extensions,
+		    [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); },
+		    [this](vkb::StructureChainBuilder<vkb::BindingType::C, VkDeviceCreateInfo> &scb) { extend_device_create_info(scb); });
 	}
 }
 
@@ -684,6 +696,19 @@ inline void VulkanSample<bindingType>::finish()
 }
 
 template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::extend_device_create_info(vkb::StructureChainBuilder<bindingType, DeviceCreateInfoType> &scb)
+{
+	if constexpr (bindingType == vkb::BindingType::Cpp)
+	{
+		extend_device_create_info_impl(scb);
+	}
+	else
+	{
+		extend_device_create_info_impl(reinterpret_cast<vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> &>(scb));
+	}
+}
+
+template <vkb::BindingType bindingType>
 inline void VulkanSample<bindingType>::extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &scb) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -750,6 +775,28 @@ inline bool enable_layer_setting(VkLayerSettingEXT const          &requested_lay
 {
 	return enable_layer_setting(
 	    reinterpret_cast<vk::LayerSettingEXT const &>(requested_layer_setting), enabled_layers_count, enabled_layers, enabled_layer_settings);
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::extend_device_create_info_impl(vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> &scb) const
+{
+	vk::DeviceCreateInfo const *create_info = scb.get_struct<vk::DeviceCreateInfo>();
+	assert(create_info);
+
+	// For performance queries, we also use host query reset since queryPool resets cannot live in the same command buffer as beginQuery
+	// Note: it is assumed, that the extensions and features have been tested before adding the extension names to the list of enabled extension names
+	if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME))
+	{
+		assert(physical_device->is_extension_supported(VK_KHR_PERFORMANCE_QUERY_EXTENSION_NAME) &&
+		       physical_device->get_extension_features<vk::PhysicalDevicePerformanceQueryFeaturesKHR>().performanceCounterQueryPools);
+		scb.add_struct<vk::PhysicalDevicePerformanceQueryFeaturesKHR>({.performanceCounterQueryPools = vk::True});
+	}
+	if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME))
+	{
+		assert(physical_device->is_extension_supported(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME) &&
+		       physical_device->get_extension_features<vk::PhysicalDeviceHostQueryResetFeatures>().hostQueryReset);
+		scb.add_struct<vk::PhysicalDeviceHostQueryResetFeatures>({.hostQueryReset = vk::True});
+	}
 }
 
 template <vkb::BindingType bindingType>
@@ -1012,6 +1059,32 @@ inline vkb::rendering::RenderPipeline<bindingType> const &VulkanSample<bindingTy
 }
 
 template <vkb::BindingType bindingType>
+inline vkb::core::PhysicalDevice<bindingType> &VulkanSample<bindingType>::get_physical_device()
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return *physical_device;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::core::PhysicalDeviceC &>(*physical_device);
+	}
+}
+
+template <vkb::BindingType bindingType>
+inline vkb::core::PhysicalDevice<bindingType> const &VulkanSample<bindingType>::get_physical_device() const
+{
+	if constexpr (bindingType == BindingType::Cpp)
+	{
+		return *physical_device;
+	}
+	else
+	{
+		return reinterpret_cast<vkb::core::PhysicalDeviceC const &>(*physical_device);
+	}
+}
+
+template <vkb::BindingType bindingType>
 inline vkb::rendering::RenderPipeline<bindingType> &VulkanSample<bindingType>::get_render_pipeline()
 {
 	assert(render_pipeline && "Render pipeline was not created");
@@ -1211,7 +1284,7 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	physical_device->set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
-	if (physical_device->get_features().textureCompressionASTC_LDR)
+	if (physical_device->get_supported_features().textureCompressionASTC_LDR)
 	{
 		physical_device->get_mutable_requested_features().textureCompressionASTC_LDR = true;
 	}
