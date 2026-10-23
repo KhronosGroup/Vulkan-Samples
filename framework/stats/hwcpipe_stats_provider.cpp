@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
- * Copyright (c) 2020-2025, Broadcom Inc.
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
  */
 
 #include "hwcpipe_stats_provider.h"
+#include "core/util/logging.hpp"
 
 namespace
 {

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "core/util/logging.hpp"
 #include "structure_chain_builder.h"
 #include <vulkan/vulkan.hpp>
 

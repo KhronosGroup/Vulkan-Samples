@@ -18,7 +18,6 @@
 
 #include "hpp_hello_triangle.h"
 
-#include <common/hpp_error.h>
 #include <common/hpp_vk_common.h>
 #include <core/util/logging.hpp>
 #include <filesystem/legacy.h>

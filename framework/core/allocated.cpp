@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024, Bradley Austin Davis. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026, Bradley Austin Davis. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
  */
 
 #include "allocated.h"
-#include "common/error.h"
 
 namespace vkb
 {
@@ -39,7 +38,7 @@ void init(const VmaAllocatorCreateInfo &create_info)
 		VkResult result = vmaCreateAllocator(&create_info, &allocator);
 		if (result != VK_SUCCESS)
 		{
-			throw VulkanException{result, "Cannot create allocator"};
+			throw vkb::common::VulkanExceptionC{result, "Cannot create allocator"};
 		}
 	}
 }

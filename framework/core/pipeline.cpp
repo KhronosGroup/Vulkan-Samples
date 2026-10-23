@@ -64,7 +64,7 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC             &device,
 
 	if (shader_module->get_stage() != VK_SHADER_STAGE_COMPUTE_BIT)
 	{
-		throw VulkanException{VK_ERROR_INVALID_SHADER_NV, "Shader module stage is not compute"};
+		throw vkb::common::VulkanExceptionC{VK_ERROR_INVALID_SHADER_NV, "Shader module stage is not compute"};
 	}
 
 	VkPipelineShaderStageCreateInfo stage{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
@@ -81,7 +81,7 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC             &device,
 	VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &stage.module);
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result};
+		throw vkb::common::VulkanExceptionC{result};
 	}
 
 	device.get_debug_utils().set_debug_name(device.get_handle(),
@@ -117,7 +117,7 @@ ComputePipeline::ComputePipeline(vkb::core::DeviceC             &device,
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create ComputePipelines"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create ComputePipelines"};
 	}
 
 	vkDestroyShaderModule(device.get_handle(), stage.module, nullptr);
@@ -166,7 +166,7 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC             &device,
 		VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &stage_create_info.module);
 		if (result != VK_SUCCESS)
 		{
-			throw VulkanException{result};
+			throw vkb::common::VulkanExceptionC{result};
 		}
 
 		device.get_debug_utils().set_debug_name(device.get_handle(),
@@ -294,7 +294,7 @@ GraphicsPipeline::GraphicsPipeline(vkb::core::DeviceC             &device,
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create GraphicsPipelines"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create GraphicsPipelines"};
 	}
 
 	for (auto shader_module : shader_modules)
