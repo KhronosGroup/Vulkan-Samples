@@ -50,7 +50,6 @@ void AsyncComputeSample::extend_device_create_info(vkb::StructureChainBuilderC<V
 	auto const &gpu = get_physical_device();
 
 	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_PORTABILITY_SUBSET_SPEC_VERSION));
 	ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 }
 #endif

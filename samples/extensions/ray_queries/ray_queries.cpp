@@ -85,9 +85,6 @@ void RayQueries::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceC
 	assert(create_info);
 
 	auto const &gpu = get_physical_device();
-	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan12Features, shaderInt8);
-	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan13Features, synchronization2);
-
 	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
 
 	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME));
