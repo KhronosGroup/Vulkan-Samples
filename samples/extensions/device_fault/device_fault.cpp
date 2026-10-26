@@ -587,10 +587,10 @@ void DeviceFault::extend_device_create_info(vkb::StructureChainBuilderC<VkDevice
 
 	// Enable the deviceFault feature for handling hardware faults.
 	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEVICE_FAULT_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceFaultFeaturesEXT, deviceFault);
 
-	// Enable binding report for getting more information on GPU virtual address spaces
-	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME));
-	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAddressBindingReportFeaturesEXT, reportAddressBinding);
+	// Optionally enable binding report for getting more information on GPU virtual address spaces
+	ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceAddressBindingReportFeaturesEXT, reportAddressBinding);
 }
 
 void DeviceFault::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const

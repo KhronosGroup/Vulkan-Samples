@@ -217,9 +217,7 @@ void KHR16BitArithmeticSample::extend_device_create_info(vkb::StructureChainBuil
 	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevice16BitStorageFeatures, uniformAndStorageBuffer16BitAccess);
 
 	// Optional features.
-	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME));
-	supported_extensions = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceFloat16Int8FeaturesKHR, shaderFloat16);
-
+	supported_extensions     = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceFloat16Int8FeaturesKHR, shaderFloat16);
 	supports_push_constant16 = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevice16BitStorageFeatures, storagePushConstant16);
 }
 
