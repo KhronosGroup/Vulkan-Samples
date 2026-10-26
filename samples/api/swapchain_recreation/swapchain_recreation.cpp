@@ -970,14 +970,13 @@ void SwapchainRecreation::extend_device_create_info(vkb::StructureChainBuilderC<
 {
 	vkb::VulkanSampleC::extend_device_create_info(scb);
 
-	if (allow_maintenance1)
+	auto const &gpu = get_physical_device();
+	if (allow_maintenance1 && (gpu.is_extension_supported(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME)))
 	{
 #if !defined(NDEBUG)
 		VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
 		assert(create_info);
 #endif
-
-		auto const &gpu = get_physical_device();
 
 		assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME));
 		ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT, swapchainMaintenance1);

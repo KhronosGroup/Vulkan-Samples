@@ -992,6 +992,7 @@ void FragmentDensityMap::extend_device_create_info(vkb::StructureChainBuilderC<V
 	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME));
 	assert(!scb.get_struct<VkPhysicalDeviceFragmentDensityMapFeaturesEXT>());
 	VkPhysicalDeviceFragmentDensityMapFeaturesEXT fragmentDensityMapFeatures{
+	    .sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT,
 	    .fragmentDensityMap        = available_options.supports_fdm,
 	    .fragmentDensityMapDynamic = available_options.supports_dynamic_fdm,
 	    // fragmentDensityMapNonSubsampledImages is not supported on all GPUs.
