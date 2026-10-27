@@ -18,6 +18,9 @@
 ////
 
 = Tensor and Data Graph
+// Set defaults for docs and source code links so that they work nicely on local clones and the GitHub viewer.
+// antora.yml overrides these so that they work nicely on the docs website.
+ifndef::doc-link-prefix[:doc-link-prefix: link:../../../]
 
 == Overview
 
@@ -30,11 +33,11 @@ To demonstrate their use, we’ve added data graph pipeline-based samples that w
 
 The samples in this folder are:
 
-* xref:./simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
-* xref:./graph_constants/README.adoc[Graph constants]
-* xref:./compute_shaders_with_tensors/README.adoc[Compute shaders with tensors]
-* xref:./tensor_image_aliasing/README.adoc[Tensor image aliasing]
-* xref:./postprocessing_with_vgf/README.adoc[Postprocessing with VGF]
+* {doc-link-prefix}samples/extensions/tensor_and_data_graph/simple_tensor_and_data_graph/README.adoc[Simple tensor and data graph]
+* {doc-link-prefix}samples/extensions/tensor_and_data_graph/graph_constants/README.adoc[Graph constants]
+* {doc-link-prefix}samples/extensions/tensor_and_data_graph/compute_shaders_with_tensors/README.adoc[Compute shaders with tensors]
+* {doc-link-prefix}samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[Tensor image aliasing]
+* {doc-link-prefix}samples/extensions/tensor_and_data_graph/postprocessing_with_vgf/README.adoc[Postprocessing with VGF]
 
 == Setup
 

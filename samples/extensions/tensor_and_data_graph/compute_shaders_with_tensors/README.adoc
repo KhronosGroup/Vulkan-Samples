@@ -17,6 +17,9 @@
 -
 ////
 = Compute Shaders with Tensors
+// Set defaults for docs and source code links so that they work nicely on local clones and the GitHub viewer.
+// antora.yml overrides these so that they work nicely on the docs website.
+ifndef::doc-link-prefix[:doc-link-prefix: link:../../../../]
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/compute_shaders_with_tensors[Khronos Vulkan samples github repository].
@@ -26,11 +29,11 @@ image::./images/sample.png[Sample]
 
 == Overview
 
-This is the third sample in a series, which follows on from the xref:samples/extensions/tensor_and_data_graph/graph_constants/README.adoc[`graph_constants`] sample. To best understand this sample, it would be helpful to have first looked at the xref:samples/extensions/tensor_and_data_graph/README.adoc[previous samples in the series]. This adds the use of compute shaders for generating the input to and processing the output of the data graph pipeline.
+This is the third sample in a series, which follows on from the {doc-link-prefix}samples/extensions/tensor_and_data_graph/graph_constants/README.adoc[`graph_constants`] sample. To best understand this sample, it would be helpful to have first looked at the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[previous samples in the series]. This adds the use of compute shaders for generating the input to and processing the output of the data graph pipeline.
 
 == Setup
 
-If you would like to build and run this sample, please make sure to first follow the setup steps on the xref:samples/extensions/tensor_and_data_graph/README.adoc[tensor and data graph] page.
+If you would like to build and run this sample, please make sure to first follow the setup steps on the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[tensor and data graph] page.
 
 == Introduction
 

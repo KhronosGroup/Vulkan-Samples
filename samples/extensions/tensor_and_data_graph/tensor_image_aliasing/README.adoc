@@ -17,6 +17,9 @@
 -
 ////
 = Tensor Image Aliasing
+// Set defaults for docs and source code links so that they work nicely on local clones and the GitHub viewer.
+// antora.yml overrides these so that they work nicely on the docs website.
+ifndef::doc-link-prefix[:doc-link-prefix: link:../../../../]
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/tensor_image_aliasing[Khronos Vulkan samples github repository].
@@ -26,12 +29,12 @@ image::./images/sample.png[Sample]
 
 == Overview
 
-This is the fourth sample in a series, which follows on from the previous xref:samples/extensions/tensor_and_data_graph/graph_constants/README.adoc[graph_constants sample]. To best understand this sample, it would be helpful to have first looked at the xref:samples/extensions/tensor_and_data_graph/README.adoc[previous samples in the series].
+This is the fourth sample in a series, which follows on from the previous {doc-link-prefix}samples/extensions/tensor_and_data_graph/compute_shaders_with_tensors/README.adoc[compute shaders with tensors sample]. To best understand this sample, it would be helpful to have first looked at the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[previous samples in the series].
 This sample shows how to use link:https://registry.khronos.org/vulkan/specs/latest/html/vkspec.html#resources-memory-aliasing[tensor/image aliasing] so that tensors and images use the same memory. This enables the mixing of traditional compute and graphics operations with ML operations without overhead from copying or format conversions. In this sample we show how to run a simple post-processing effect on a 3D scene using a convolutional neural network.
 
 == Setup
 
-If you would like to build and run this sample, please make sure to first follow the setup steps on the xref:samples/extensions/tensor_and_data_graph/README.adoc[tensor and data graph] page.
+If you would like to build and run this sample, please make sure to first follow the setup steps on the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[tensor and data graph] page.
 
 == Introduction
 
@@ -40,7 +43,7 @@ Neural networks are often used to process image data. In a Vulkan application, i
 This sample uses these features to run a simple edge-enhacement convolutional neural network (with a single convolution layer) as a post-processing effect on a 3D rendered scene. The scene is rendered (using the existing Vulkan Sample framework) to an offscreen render target (`scene_render_target`), whose colour attachment is aliased to the same memory as a tensor (`input_tensor`). This tensor is then used as the input
 to a data draph pipeline (`graph_pipeline`), which implements a simple sharpening filter using a convolution layer. The output of this data graph pipeline is written to another tensor (`output_tensor`), which is aliased to the same memory as another image (`output_image`), which is then used to blit the results to the swapchain:
 
-image::images/flow.svg[Sample]
+image::./images/flow.svg[Sample]
 
 == Resource creation
 
