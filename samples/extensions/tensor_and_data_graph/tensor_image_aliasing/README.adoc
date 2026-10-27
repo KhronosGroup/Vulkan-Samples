@@ -19,7 +19,7 @@
 = Tensor Image Aliasing
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/compute_shaders_with_tensors[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/tensor_image_aliasing[Khronos Vulkan samples github repository].
 endif::[]
 
 image::./images/sample.png[Sample]

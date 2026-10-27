@@ -19,7 +19,7 @@
 = Simple tensor and data graph
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/compute_shaders_with_tensors[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/simple_tensor_and_data_graph[Khronos Vulkan samples github repository].
 endif::[]
 
 == Overview
