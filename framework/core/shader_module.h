@@ -292,7 +292,8 @@ inline void ShaderModule<bindingType>::init(vkb::core::ShaderSource const &shade
 		assert(!shader_source.get_source().empty());
 		auto const &buffer = shader_source.get_source();
 		assert(buffer.size() % sizeof(uint32_t) == 0);
-		spirv = std::vector<uint32_t>(reinterpret_cast<const uint32_t *>(buffer.data()), reinterpret_cast<const uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
+		spirv.resize(buffer.size() / sizeof(uint32_t));
+		buffer.copy(reinterpret_cast<char *>(spirv.data()), spirv.size() * sizeof(uint32_t));
 	}
 
 	// Reflection is used to dynamically create descriptor bindings
