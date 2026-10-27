@@ -95,7 +95,7 @@ class FragmentDensityMap : public ApiVulkanSample
 
 	struct
 	{
-		bool supports_dynamic_fdm{true};
+		bool supports_dynamic_fdm{false};
 		bool supports_fdm{false};
 	} available_options{};
 
