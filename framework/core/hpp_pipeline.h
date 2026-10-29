@@ -40,7 +40,9 @@ class HPPPipeline : private vkb::Pipeline
 class HPPComputePipeline : private vkb::ComputePipeline
 {
   public:
-	HPPComputePipeline(vkb::core::DeviceCpp &device, vk::PipelineCache pipeline_cache, vkb::rendering::PipelineStateCpp &pipeline_state) :
+	HPPComputePipeline(vkb::core::DeviceCpp             &device,
+	                   vk::PipelineCache                 pipeline_cache,
+	                   vkb::rendering::PipelineStateCpp &pipeline_state) :
 	    vkb::ComputePipeline(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                         static_cast<VkPipelineCache>(pipeline_cache),
 	                         reinterpret_cast<vkb::rendering::PipelineStateC &>(pipeline_state))
@@ -55,7 +57,9 @@ class HPPComputePipeline : private vkb::ComputePipeline
 class HPPGraphicsPipeline : private vkb::GraphicsPipeline
 {
   public:
-	HPPGraphicsPipeline(vkb::core::DeviceCpp &device, vk::PipelineCache pipeline_cache, vkb::rendering::PipelineStateCpp &pipeline_state) :
+	HPPGraphicsPipeline(vkb::core::DeviceCpp             &device,
+	                    vk::PipelineCache                 pipeline_cache,
+	                    vkb::rendering::PipelineStateCpp &pipeline_state) :
 	    vkb::GraphicsPipeline(reinterpret_cast<vkb::core::DeviceC &>(device),
 	                          static_cast<VkPipelineCache>(pipeline_cache),
 	                          reinterpret_cast<vkb::rendering::PipelineStateC &>(pipeline_state))

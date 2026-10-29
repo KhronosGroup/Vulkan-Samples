@@ -70,9 +70,12 @@ inline VkDescriptorType find_descriptor_type(vkb::core::ShaderResourceType resou
 	}
 }
 
-inline bool validate_binding(const VkDescriptorSetLayoutBinding &binding, const std::vector<VkDescriptorType> &blacklist)
+inline bool validate_binding(const VkDescriptorSetLayoutBinding  &binding,
+                             const std::vector<VkDescriptorType> &blacklist)
 {
-	return !(std::ranges::find_if(blacklist, [binding](const VkDescriptorType &type) { return type == binding.descriptorType; }) != blacklist.end());
+	return !(std::ranges::find_if(blacklist, [binding](const VkDescriptorType &type) {
+		         return type == binding.descriptorType;
+	         }) != blacklist.end());
 }
 
 inline bool validate_flags(vkb::core::PhysicalDeviceC const                &gpu,
@@ -100,9 +103,7 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                     
                                          const uint32_t                                 set_index,
                                          const std::vector<vkb::core::ShaderModuleC *> &shader_modules,
                                          const std::vector<vkb::core::ShaderResourceC> &resource_set) :
-    device{device},
-    set_index{set_index},
-    shader_modules{shader_modules}
+    device{device}, set_index{set_index}, shader_modules{shader_modules}
 {
 	// NOTE: `shader_modules` is passed in mainly for hashing their handles in `request_resource`.
 	//        This way, different pipelines (with different shaders / shader variants) will get
@@ -120,7 +121,8 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                     
 		}
 
 		// Convert from ShaderResourceType to VkDescriptorType.
-		auto descriptor_type = find_descriptor_type(resource.type, resource.mode == vkb::core::ShaderResourceMode::Dynamic);
+		auto descriptor_type =
+		    find_descriptor_type(resource.type, resource.mode == vkb::core::ShaderResourceMode::Dynamic);
 
 		if (resource.mode == vkb::core::ShaderResourceMode::UpdateAfterBind)
 		{
@@ -158,15 +160,19 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                     
 	create_info.pBindings    = bindings.data();
 
 	// Handle update-after-bind extensions
-	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
-	if (std::ranges::find_if(resource_set,
-	                         [](const vkb::core::ShaderResourceC &shader_resource) { return shader_resource.mode == vkb::core::ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
+	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{
+	    VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
+	if (std::ranges::find_if(resource_set, [](const vkb::core::ShaderResourceC &shader_resource) {
+		    return shader_resource.mode == vkb::core::ShaderResourceMode::UpdateAfterBind;
+	    }) != resource_set.end())
 	{
 		// Spec states you can't have ANY dynamic resources if you have one of the bindings set to update-after-bind
-		if (std::ranges::find_if(resource_set,
-		                         [](const vkb::core::ShaderResourceC &shader_resource) { return shader_resource.mode == vkb::core::ShaderResourceMode::Dynamic; }) != resource_set.end())
+		if (std::ranges::find_if(resource_set, [](const vkb::core::ShaderResourceC &shader_resource) {
+			    return shader_resource.mode == vkb::core::ShaderResourceMode::Dynamic;
+		    }) != resource_set.end())
 		{
-			throw std::runtime_error("Cannot create descriptor set layout, dynamic resources are not allowed if at least one resource is update-after-bind.");
+			throw std::runtime_error("Cannot create descriptor set layout, dynamic resources are not allowed if at "
+			                         "least one resource is update-after-bind.");
 		}
 
 		if (!validate_flags(device.get_gpu(), bindings, binding_flags))
@@ -178,7 +184,10 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                     
 		binding_flags_create_info.pBindingFlags = binding_flags.data();
 
 		create_info.pNext = &binding_flags_create_info;
-		create_info.flags |= std::ranges::find(binding_flags, VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT) != binding_flags.end() ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT : 0;
+		create_info.flags |=
+		    std::ranges::find(binding_flags, VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT) != binding_flags.end() ?
+		        VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT :
+		        0;
 	}
 
 	// Create the Vulkan descriptor set layout handle
