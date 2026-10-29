@@ -420,6 +420,33 @@ void DynamicLineRasterization::build_command_buffers()
 	}
 }
 
+void DynamicLineRasterization::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_LINE_RASTERIZATION_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceLineRasterizationFeaturesEXT, smoothLines);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledSmoothLines);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceLineRasterizationFeaturesEXT, bresenhamLines);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledBresenhamLines);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceLineRasterizationFeaturesEXT, rectangularLines);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledRectangularLines);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3PolygonMode);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3LineRasterizationMode);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3LineStippleEnable);
+}
+
 void DynamicLineRasterization::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -431,24 +458,9 @@ void DynamicLineRasterization::request_device_extensions(std::unordered_map<std:
 
 void DynamicLineRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, smoothLines);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledSmoothLines);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, bresenhamLines);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledBresenhamLines);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, rectangularLines);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceLineRasterizationFeaturesEXT, stippledRectangularLines);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicStateFeaturesEXT, extendedDynamicState);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3PolygonMode);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3LineRasterizationMode);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3LineStippleEnable);
-
-	{
-		auto &features            = gpu.get_mutable_requested_features();
-		features.fillModeNonSolid = VK_TRUE;
-		features.wideLines        = VK_TRUE;
-	}
+	auto &features            = gpu.get_mutable_requested_features();
+	features.fillModeNonSolid = VK_TRUE;
+	features.wideLines        = VK_TRUE;
 }
 
 void DynamicLineRasterization::on_update_ui_overlay(vkb::Drawer &drawer)

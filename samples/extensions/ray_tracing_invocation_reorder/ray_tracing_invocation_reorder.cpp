@@ -98,6 +98,50 @@ RaytracingInvocationReorder::~RaytracingInvocationReorder()
 	}
 }
 
+void RaytracingInvocationReorder::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+
+	auto const &gpu = get_physical_device();
+
+	// Enable extension features required by this sample
+	// These are passed to device creation via a pNext structure chain
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
+
+	// Enable Shader Execution Reordering feature - try EXT first, fallback to NV
+	// Check which extension is available
+#ifdef VK_EXT_ray_tracing_invocation_reorder
+	if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
+	{
+		ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT, rayTracingInvocationReorder);
+		using_nv_extension = false;
+		LOGI("Using VK_EXT_ray_tracing_invocation_reorder");
+	}
+	else
+#endif
+	    if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
+	{
+		ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV, rayTracingInvocationReorder);
+		using_nv_extension = true;
+		LOGI("Using VK_NV_ray_tracing_invocation_reorder");
+	}
+	else
+	{
+		throw std::runtime_error("Ray tracing invocation reorder extension is not supported");
+	}
+}
+
 void RaytracingInvocationReorder::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -130,44 +174,12 @@ void RaytracingInvocationReorder::request_device_extensions(std::unordered_map<s
 
 void RaytracingInvocationReorder::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Enable extension features required by this sample
-	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeatures, bufferDeviceAddress);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingPipelineFeaturesKHR, rayTracingPipeline);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
-
 	// We read/write a storage image without specifying a format in the shader (untyped image)
 	// so we must enable these core device features.
 	gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat  = VK_TRUE;
 	gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
 
-	// Enable Shader Execution Reordering feature - try EXT first, fallback to NV
-	// Check which extension is available
-#ifdef VK_EXT_ray_tracing_invocation_reorder
-	if (gpu.is_extension_supported(VK_EXT_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
-	{
-		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeaturesEXT, rayTracingInvocationReorder);
-		using_nv_extension = false;
-		LOGI("Using VK_EXT_ray_tracing_invocation_reorder");
-	}
-	else
-#endif
-	    if (gpu.is_extension_supported(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME))
-	{
-		REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV, rayTracingInvocationReorder);
-		using_nv_extension = true;
-		LOGI("Using VK_NV_ray_tracing_invocation_reorder");
-	}
-	else
-	{
-		throw std::runtime_error("Ray tracing invocation reorder extension is not supported");
-	}
-
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}

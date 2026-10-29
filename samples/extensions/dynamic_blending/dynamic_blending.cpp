@@ -143,32 +143,40 @@ void DynamicBlending::prepare_scene()
 	                                          {1.0f, 1.0f, 1.0f, 0.5f}}};
 }
 
+void DynamicBlending::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// We must have this or the sample isn't useful
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
+
+	// Only request the features that we support, and record which ones are available
+	eds_feature_support.extendedDynamicState3ColorWriteMask =
+	    ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
+	eds_feature_support.extendedDynamicState3ColorBlendEnable =
+	    ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
+	eds_feature_support.extendedDynamicState3ColorBlendAdvanced =
+	    ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
+	eds_feature_support.extendedDynamicState3ColorBlendEquation =
+	    ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT, advancedBlendCoherentOperations);
+}
+
 void DynamicBlending::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
 
 	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME] = vkb::RequestMode::Required;
 	requested_extensions[VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void DynamicBlending::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// We must have this or the sample isn't useful
-	REQUEST_REQUIRED_FEATURE(gpu,
-	                         VkPhysicalDeviceExtendedDynamicState3FeaturesEXT,
-	                         extendedDynamicState3ColorBlendEnable);
-
-	// Only request the features that we support, and record which ones are available
-	eds_feature_support.extendedDynamicState3ColorWriteMask =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorWriteMask);
-	eds_feature_support.extendedDynamicState3ColorBlendEnable =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEnable);
-	eds_feature_support.extendedDynamicState3ColorBlendAdvanced =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendAdvanced);
-	eds_feature_support.extendedDynamicState3ColorBlendEquation =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceExtendedDynamicState3FeaturesEXT, extendedDynamicState3ColorBlendEquation);
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT, advancedBlendCoherentOperations);
 }
 
 void DynamicBlending::prepare_uniform_buffers()

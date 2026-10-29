@@ -129,7 +129,7 @@ void ConstantData::request_device_extensions(std::unordered_map<std::string, vkb
 
 void ConstantData::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	if (gpu.get_features().vertexPipelineStoresAndAtomics)
+	if (gpu.get_supported_features().vertexPipelineStoresAndAtomics)
 	{
 		gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
 	}

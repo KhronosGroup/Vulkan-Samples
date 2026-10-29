@@ -75,6 +75,21 @@ bool HPPOITLinkedLists::resize(const uint32_t width, const uint32_t height)
 	return HPPApiVulkanSample::resize(width, height);
 }
 
+void HPPOITLinkedLists::extend_device_create_info(vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleCpp::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	vk::DeviceCreateInfo const *create_info = scb.get_struct<vk::DeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	// Request both derivative group modes as OPTIONAL, prefer Quads if available at runtime.
+	// Some implementations only support computeDerivativeGroupLinear.
+	auto const &gpu = get_physical_device();
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, vk::PhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
+}
+
 void HPPOITLinkedLists::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleCpp::request_device_extensions(requested_extensions);
@@ -85,7 +100,7 @@ void HPPOITLinkedLists::request_device_extensions(std::unordered_map<std::string
 void HPPOITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	auto       &requested_features = gpu.get_mutable_requested_features();
-	auto const &features           = gpu.get_features();
+	auto const &features           = gpu.get_supported_features();
 
 	if (features.fragmentStoresAndAtomics)
 	{
@@ -101,8 +116,6 @@ void HPPOITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 	{
 		requested_features.samplerAnisotropy = true;
 	}
-
-	REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 }
 
 void HPPOITLinkedLists::build_command_buffers()
