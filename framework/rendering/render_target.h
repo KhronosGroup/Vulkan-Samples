@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "common/hpp_error.h"
 #include "common/hpp_vk_common.h"
 #include "core/device.h"
 #include "core/hpp_image.h"
@@ -244,14 +243,14 @@ inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImage> &&i
 	if (std::ranges::find_if(images,
 	                         [extent = this->extent, &get_image_extent](const vkb::core::HPPImage &image) { return get_image_extent(image) != extent; }) != images.end())
 	{
-		throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
+		throw vkb::common::VulkanExceptionCpp{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
 	}
 
 	for (auto &image : images)
 	{
 		if (image.get_type() != vk::ImageType::e2D)
 		{
-			throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Image type is not 2D"};
+			throw vkb::common::VulkanExceptionCpp{vk::Result::eErrorInitializationFailed, "Image type is not 2D"};
 		}
 
 		views.emplace_back(image, vk::ImageViewType::e2D);
@@ -295,7 +294,7 @@ inline void RenderTarget<bindingType>::init(std::vector<vkb::core::HPPImageView>
 	if (std::ranges::find_if(views,
 	                         [extent = this->extent, &get_view_extent](const vkb::core::HPPImageView &view) { return get_view_extent(view) != extent; }) != views.end())
 	{
-		throw vkb::common::HPPVulkanException{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
+		throw vkb::common::VulkanExceptionCpp{vk::Result::eErrorInitializationFailed, "Extent size is not unique"};
 	}
 
 	for (auto &view : views)

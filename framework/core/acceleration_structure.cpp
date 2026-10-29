@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -195,7 +195,7 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 
 		if (result != VK_SUCCESS)
 		{
-			throw VulkanException{result, "Could not create acceleration structure"};
+			throw vkb::common::VulkanExceptionC{result, "Could not create acceleration structure"};
 		}
 	}
 

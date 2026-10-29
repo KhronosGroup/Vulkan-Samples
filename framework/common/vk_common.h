@@ -26,7 +26,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/error.h"
 #include <vk_mem_alloc.h>
 #include <volk.h>
 

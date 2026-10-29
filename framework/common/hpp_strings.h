@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ namespace common
 /**
  * @brief facade helper functions around the functions in common/strings.h, providing a vulkan.hpp-based interface
  */
-std::string to_string(vk::Extent2D const &extent)
+inline std::string to_string(vk::Extent2D const &extent)
 {
 	return vkb::to_string(static_cast<VkExtent2D const &>(extent));
 }

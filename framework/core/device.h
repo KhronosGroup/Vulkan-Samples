@@ -719,7 +719,7 @@ inline void Device<bindingType>::init(std::unordered_map<std::string, vkb::Reque
 
 		if (error)
 		{
-			throw VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
+			throw vkb::common::VulkanExceptionCpp(vk::Result::eErrorExtensionNotPresent, "Extensions not present");
 		}
 	}
 
