@@ -17,6 +17,10 @@
 -
 ////
 = Simple tensor and data graph
+// Set defaults for docs and source code links so that they work nicely on local clones and the GitHub viewer.
+// antora.yml overrides these so that they work nicely on the docs website.
+ifndef::doc-link-prefix[:doc-link-prefix: link:../../../../]
+ifndef::source-root[:source-root: ../../../..]
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/simple_tensor_and_data_graph[Khronos Vulkan samples github repository].
@@ -26,13 +30,13 @@ endif::[]
 
 This sample demonstrates the usage of the `VK_ARM_tensors` and `VK_ARM_data_graph` extensions for machine learning inference. These extensions provide a way to define tensor data and construct computation graphs for neural network execution using hardware acceleration.
 
-This is the first in a series of samples which introduce the tensor and data graph extensions. Please see the parent xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph] page for the full list of samples.
+This is the first in a series of samples which introduce the tensor and data graph extensions. Please see the parent {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph] page for the full list of samples.
 
 NOTE: While the model used in this example is expressed using https://www.mlplatform.org/tosa/[TOSA operations], there is currently no defined way to query for TOSA operation support from the Vulkan API. Execution of this sample may fail on implementations of these extensions that do not include specific support for TOSA operations.
 
 == Setup
 
-If you would like to build and run this sample, please make sure to first follow the setup steps on the xref:samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph] page.
+If you would like to build and run this sample, please make sure to first follow the setup steps on the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[Tensor and Data Graph] page.
 
 == Introduction
 
@@ -483,14 +487,14 @@ That's all that's necessary to run a simple neural network using a data graph pi
 The tensor object which is written to by the data graph pipeline can be used in numerous ways. In this sample we are reading from it using a compute shader which produces the simple visualization of the tensor contents which is drawn on the window. There are also several other options for how to use the output tensor:
 
 * Read directly from other shaders by binding it as a Tensor resource, as we do in this sample.
-* Aliased as a regular `VkImage` and used as a texture to be sampled from in another shader. See the "Tensor image aliasing" sample xref:samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[README].
+* Aliased as a regular `VkImage` and used as a texture to be sampled from in another shader. See the "Tensor image aliasing" sample {doc-link-prefix}samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[README].
 * Aliased as a regular `VkBuffer` and read from in another shader
 * Mapped to host-accessible memory and read back for further processing on the CPU
 
 There is also the question of how to produce inputs for the neural network - in this example we simply uploaded some fixed data from the CPU but there are also many options here (equivalent to the above):
 
 * Write directly from other shaders by binding it as a Tensor resource.
-* Aliased as a regular `VkImage` and written to via a render target (or writable texture).  See the "Tensor image aliasing" sample xref:samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[README].
+* Aliased as a regular `VkImage` and written to via a render target (or writable texture).  See the "Tensor image aliasing" sample {doc-link-prefix}samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[README].
 * Aliased as a regular `VkBuffer` and written to from another shader.
 * Mapped to host-accessible memory and written to with data produced on the CPU, as we do in this sample.
 
@@ -498,14 +502,14 @@ Accesses to tensor resources must be synchronised correctly, just as for images 
 
 == Conclusion
 
-In this sample we've introduced the VK_ARM_tensors and VK_ARM_data_graph extensions and shown how to use them to run a simple neural network. We've shown the steps needed to run a neural network - creating a pipeline layout, data graph pipeline, data graph pipeline session, tensor objects, descriptor sets and finally recording binding and dispatch commands in a command buffer. The following samples in xref:samples/extensions/tensor_and_data_graph/README.adoc[this series] build upon these concepts.
+In this sample we've introduced the VK_ARM_tensors and VK_ARM_data_graph extensions and shown how to use them to run a simple neural network. We've shown the steps needed to run a neural network - creating a pipeline layout, data graph pipeline, data graph pipeline session, tensor objects, descriptor sets and finally recording binding and dispatch commands in a command buffer. The following samples in {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[this series] build upon these concepts.
 
 == Appendix A: SPIR-V programs for neural networks
 
-Neural networks can be described using SPIR-V modules, but unlike SPIR-V modules for graphics and compute shaders, there is no GLSL or HLSL syntax for expressing SPIR-V modules for data graph pipelines. There are tools available for generating the SPIR-V code from higher level representations of neural networks such as PyTorch or TensorFlow models (see: link:https://github.com/arm/ai-ml-sdk-model-converter[ML SDK Model Converter]), which are covered in the "Postprocessing with VGF" sample xref:samples/extensions/tensor_and_data_graph/postprocessing_with_vgf/README.adoc[README].
+Neural networks can be described using SPIR-V modules, but unlike SPIR-V modules for graphics and compute shaders, there is no GLSL or HLSL syntax for expressing SPIR-V modules for data graph pipelines. There are tools available for generating the SPIR-V code from higher level representations of neural networks such as PyTorch or TensorFlow models (see: link:https://github.com/arm/ai-ml-sdk-model-converter[ML SDK Model Converter]), which are covered in the "Postprocessing with VGF" sample {doc-link-prefix}samples/extensions/tensor_and_data_graph/postprocessing_with_vgf/README.adoc[README].
 However, for this sample we have written the SPIR-V code directly in low-level SPIR-V assembly language to avoid bringing in more dependencies and to give some idea of how the SPIR-V code looks. It is unlikely in practice that you would manually write SPIR-V assembly, however below is a quick overview of SPIR-V for context.
 
-The assembly code is in the link:../../../../shaders/tensor_and_data_graph/simple_tensor_and_data_graph/spirv/pooling.spvasm[pooling.spvasm] file and is assembled into SPIR-V binary code using `spirv-as` as part of the link:../../../../bldsys/cmake/sample_helper.cmake[build system]. Note this is exactly the same process that would be used to compile compute or graphics shaders from SPIR-V assembly, although typically these would be compiled from GLSL or HLSL instead.
+The assembly code is in the link:{source-root}/shaders/tensor_and_data_graph/simple_tensor_and_data_graph/spirv/pooling.spvasm[pooling.spvasm] file and is assembled into SPIR-V binary code using `spirv-as` as part of the link:{source-root}/bldsys/cmake/sample_helper.cmake[build system]. Note this is exactly the same process that would be used to compile compute or graphics shaders from SPIR-V assembly, although typically these would be compiled from GLSL or HLSL instead.
 
 === Boilerplate
 
