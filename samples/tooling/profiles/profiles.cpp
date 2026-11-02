@@ -22,7 +22,6 @@
 
 #include "profiles.h"
 
-#include "common/error.h"
 #include "common/vk_common.h"
 #include "core/command_pool.h"
 #include "core/queue.h"
@@ -122,7 +121,7 @@ std::unique_ptr<vkb::core::DeviceC> Profiles::create_device(vkb::core::PhysicalD
 
 	if (result != VK_SUCCESS)
 	{
-		throw vkb::VulkanException{result, "Could not create device with the selected profile. The device may not support all features required by this profile!"};
+		throw vkb::common::VulkanExceptionC{result, "Could not create device with the selected profile. The device may not support all features required by this profile!"};
 	}
 
 	// Post device setup required for the framework
@@ -143,7 +142,7 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 	VkResult result = volkInitialize();
 	if (result)
 	{
-		throw vkb::VulkanException(result, "Failed to initialize volk.");
+		throw vkb::common::VulkanExceptionC(result, "Failed to initialize volk.");
 	}
 
 	// Check if the profile is supported at instance level
@@ -200,7 +199,7 @@ std::unique_ptr<vkb::core::InstanceC> Profiles::create_instance()
 
 	if (result != VK_SUCCESS)
 	{
-		throw vkb::VulkanException{result, "Could not create instance with the selected profile. The instance may not support all features required by this profile!"};
+		throw vkb::common::VulkanExceptionC{result, "Could not create instance with the selected profile. The instance may not support all features required by this profile!"};
 	}
 
 	volkLoadInstance(vulkan_instance);

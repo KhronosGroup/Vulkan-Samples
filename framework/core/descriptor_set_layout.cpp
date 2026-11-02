@@ -186,7 +186,7 @@ DescriptorSetLayout::DescriptorSetLayout(vkb::core::DeviceC                     
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create DescriptorSetLayout"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create DescriptorSetLayout"};
 	}
 }
 

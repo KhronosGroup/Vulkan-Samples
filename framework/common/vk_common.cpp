@@ -17,6 +17,9 @@
  */
 
 #include "vk_common.h"
+#include "common/helpers.h"
+#include "common/macros.h"
+#include "core/util/logging.hpp"
 
 #include <fmt/format.h>
 

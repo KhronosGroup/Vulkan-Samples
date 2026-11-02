@@ -17,6 +17,7 @@
 
 #include "full_screen_exclusive.h"
 
+#include "common/macros.h"
 #include "filesystem/legacy.h"
 #include "platform/window.h"
 

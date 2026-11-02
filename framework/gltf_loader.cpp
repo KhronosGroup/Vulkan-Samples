@@ -23,8 +23,6 @@
 #include <limits>
 #include <queue>
 
-#include "common/error.h"
-
 #include "common/glm_common.h"
 #include <glm/gtc/type_ptr.hpp>
 

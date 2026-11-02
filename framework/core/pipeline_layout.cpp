@@ -118,7 +118,7 @@ PipelineLayout::PipelineLayout(vkb::core::DeviceC &device, const std::vector<vkb
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create PipelineLayout"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create PipelineLayout"};
 	}
 }
 

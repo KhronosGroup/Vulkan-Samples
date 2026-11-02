@@ -103,7 +103,7 @@ void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 	else
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics and/or vertexPipelineStoresAndAtomics");
+		throw vkb::common::VulkanExceptionC(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support features fragmentStoresAndAtomics and/or vertexPipelineStoresAndAtomics");
 	}
 
 	// Enable anisotropic filtering if supported

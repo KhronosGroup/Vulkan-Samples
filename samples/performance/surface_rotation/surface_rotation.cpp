@@ -17,8 +17,6 @@
 
 #include "surface_rotation.h"
 
-#include "common/error.h"
-
 #include "common/glm_common.h"
 #include <glm/gtc/matrix_transform.hpp>
 

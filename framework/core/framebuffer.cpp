@@ -56,7 +56,7 @@ Framebuffer::Framebuffer(vkb::core::DeviceC &device, const vkb::rendering::Rende
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create Framebuffer"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create Framebuffer"};
 	}
 }
 
