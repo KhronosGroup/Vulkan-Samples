@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,11 @@ using CommandBufferC = CommandBuffer<vkb::BindingType::C>;
 class Queue
 {
   public:
-	Queue(vkb::core::DeviceC &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index);
+	Queue(vkb::core::DeviceC     &device,
+	      uint32_t                family_index,
+	      VkQueueFamilyProperties properties,
+	      VkBool32                can_present,
+	      uint32_t                index);
 
 	Queue(const Queue &) = default;
 

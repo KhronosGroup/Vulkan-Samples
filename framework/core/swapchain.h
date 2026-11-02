@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -79,42 +79,51 @@ class Swapchain
 	 * @brief Constructor to create a swapchain by changing the compression settings
 	 *        only and preserving the configuration from the old swapchain.
 	 */
-	Swapchain(Swapchain &swapchain, const VkImageCompressionFlagsEXT requested_compression, const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate);
+	Swapchain(Swapchain                                &swapchain,
+	          const VkImageCompressionFlagsEXT          requested_compression,
+	          const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate);
 
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	Swapchain(vkb::core::DeviceC                       &device,
-	          VkSurfaceKHR                              surface,
-	          const VkPresentModeKHR                    present_mode,
-	          const std::vector<VkPresentModeKHR>      &present_mode_priority_list       = {VK_PRESENT_MODE_FIFO_KHR,
-	                                                                                        VK_PRESENT_MODE_MAILBOX_KHR},
-	          const std::vector<VkSurfaceFormatKHR>    &surface_format_priority_list     = {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                                                        {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}},
-	          const VkExtent2D                         &extent                           = {},
-	          const uint32_t                            image_count                      = 3,
-	          const VkSurfaceTransformFlagBitsKHR       transform                        = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	          const std::set<VkImageUsageFlagBits>     &image_usage_flags                = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT},
-	          const VkImageCompressionFlagsEXT          requested_compression            = VK_IMAGE_COMPRESSION_DEFAULT_EXT,
-	          const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate = VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT);
+	Swapchain(vkb::core::DeviceC                    &device,
+	          VkSurfaceKHR                           surface,
+	          const VkPresentModeKHR                 present_mode,
+	          const std::vector<VkPresentModeKHR>   &present_mode_priority_list = {VK_PRESENT_MODE_FIFO_KHR,
+	                                                                               VK_PRESENT_MODE_MAILBOX_KHR},
+	          const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list =
+	              {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	               {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}},
+	          const VkExtent2D                         &extent                = {},
+	          const uint32_t                            image_count           = 3,
+	          const VkSurfaceTransformFlagBitsKHR       transform             = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	          const std::set<VkImageUsageFlagBits>     &image_usage_flags     = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+	                                                                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT},
+	          const VkImageCompressionFlagsEXT          requested_compression = VK_IMAGE_COMPRESSION_DEFAULT_EXT,
+	          const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate =
+	              VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT);
 
 	/**
 	 * @brief Constructor to create a swapchain from the old swapchain
 	 *        by configuring all parameters.
 	 */
-	Swapchain(Swapchain                                &old_swapchain,
-	          vkb::core::DeviceC                       &device,
-	          VkSurfaceKHR                              surface,
-	          const VkPresentModeKHR                    present_mode,
-	          const std::vector<VkPresentModeKHR>      &present_mode_priority_list       = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR},
-	          const std::vector<VkSurfaceFormatKHR>    &surface_format_priority_list     = {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                                                        {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}},
-	          const VkExtent2D                         &extent                           = {},
-	          const uint32_t                            image_count                      = 3,
-	          const VkSurfaceTransformFlagBitsKHR       transform                        = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	          const std::set<VkImageUsageFlagBits>     &image_usage_flags                = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT},
-	          const VkImageCompressionFlagsEXT          requested_compression            = VK_IMAGE_COMPRESSION_DEFAULT_EXT,
-	          const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate = VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT);
+	Swapchain(Swapchain                             &old_swapchain,
+	          vkb::core::DeviceC                    &device,
+	          VkSurfaceKHR                           surface,
+	          const VkPresentModeKHR                 present_mode,
+	          const std::vector<VkPresentModeKHR>   &present_mode_priority_list = {VK_PRESENT_MODE_FIFO_KHR,
+	                                                                               VK_PRESENT_MODE_MAILBOX_KHR},
+	          const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list =
+	              {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	               {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}},
+	          const VkExtent2D                         &extent                = {},
+	          const uint32_t                            image_count           = 3,
+	          const VkSurfaceTransformFlagBitsKHR       transform             = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	          const std::set<VkImageUsageFlagBits>     &image_usage_flags     = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+	                                                                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT},
+	          const VkImageCompressionFlagsEXT          requested_compression = VK_IMAGE_COMPRESSION_DEFAULT_EXT,
+	          const VkImageCompressionFixedRateFlagsEXT requested_compression_fixed_rate =
+	              VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT);
 
 	Swapchain(const Swapchain &) = delete;
 
@@ -132,7 +141,9 @@ class Swapchain
 
 	VkSwapchainKHR get_handle() const;
 
-	VkResult acquire_next_image(uint32_t &image_index, VkSemaphore image_acquired_semaphore, VkFence fence = VK_NULL_HANDLE) const;
+	VkResult acquire_next_image(uint32_t   &image_index,
+	                            VkSemaphore image_acquired_semaphore,
+	                            VkFence     fence = VK_NULL_HANDLE) const;
 
 	const VkExtent2D &get_extent() const;
 
@@ -162,7 +173,8 @@ class Swapchain
 		VkImageCompressionPropertiesEXT compression_properties{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
 	};
 
-	static std::vector<SurfaceFormatCompression> query_supported_fixed_rate_compression(vkb::core::DeviceC &device, const VkSurfaceKHR &surface);
+	static std::vector<SurfaceFormatCompression> query_supported_fixed_rate_compression(vkb::core::DeviceC &device,
+	                                                                                    const VkSurfaceKHR &surface);
 
   private:
 	vkb::core::DeviceC &device;
@@ -176,9 +188,7 @@ class Swapchain
 	SwapchainProperties properties;
 
 	// A list of present modes in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<VkPresentModeKHR> present_mode_priority_list = {
-	    VK_PRESENT_MODE_FIFO_KHR,
-	    VK_PRESENT_MODE_MAILBOX_KHR};
+	std::vector<VkPresentModeKHR> present_mode_priority_list = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR};
 
 	// A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
 	std::vector<VkSurfaceFormatKHR> surface_format_priority_list = {
