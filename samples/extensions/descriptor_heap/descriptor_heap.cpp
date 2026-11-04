@@ -17,6 +17,7 @@
  */
 
 #include "descriptor_heap.h"
+#include "common/vk_initializers.h"
 
 DescriptorHeap::DescriptorHeap()
 {
@@ -378,7 +379,7 @@ void DescriptorHeap::create_pipeline()
 	    .colorAttachmentCount    = 1,
 	    .pColorAttachmentFormats = &color_rendering_format,
 	    .depthAttachmentFormat   = depth_format};
-	if (!vkb::is_depth_only_format(depth_format))
+	if (!vkb::common::is_depth_only_format(depth_format))
 	{
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
@@ -447,21 +448,21 @@ void DescriptorHeap::build_command_buffer()
 	VkImageSubresourceRange depth_range{range};
 	depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-	vkb::image_layout_transition(draw_cmd_buffer,
-	                             swapchain_buffers[current_buffer].image,
-	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-	                             0,
-	                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-	                             range);
+	vkb::common::image_layout_transition(draw_cmd_buffer,
+	                                     swapchain_buffers[current_buffer].image,
+	                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                                     0,
+	                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+	                                     VK_IMAGE_LAYOUT_UNDEFINED,
+	                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+	                                     range);
 
-	vkb::image_layout_transition(draw_cmd_buffer,
-	                             depth_stencil.image,
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-	                             depth_range);
+	vkb::common::image_layout_transition(draw_cmd_buffer,
+	                                     depth_stencil.image,
+	                                     VK_IMAGE_LAYOUT_UNDEFINED,
+	                                     VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+	                                     depth_range);
 
 	VkRenderingAttachmentInfoKHR color_attachment_info{
 	    .sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
@@ -485,7 +486,7 @@ void DescriptorHeap::build_command_buffer()
 	auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
 	render_info.layerCount       = 1;
 	render_info.pDepthAttachment = &depth_attachment_info;
-	if (!vkb::is_depth_only_format(depth_format))
+	if (!vkb::common::is_depth_only_format(depth_format))
 	{
 		render_info.pStencilAttachment = &depth_attachment_info;
 	}
@@ -548,11 +549,11 @@ void DescriptorHeap::build_command_buffer()
 
 	draw_ui(draw_cmd_buffer, current_buffer);
 
-	vkb::image_layout_transition(draw_cmd_buffer,
-	                             swapchain_buffers[current_buffer].image,
-	                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-	                             range);
+	vkb::common::image_layout_transition(draw_cmd_buffer,
+	                                     swapchain_buffers[current_buffer].image,
+	                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+	                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+	                                     range);
 
 	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 }

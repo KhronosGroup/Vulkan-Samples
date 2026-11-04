@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "platform/application.h"
 #include "vulkan_sample.h"
 

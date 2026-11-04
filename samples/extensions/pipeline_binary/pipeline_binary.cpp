@@ -17,7 +17,6 @@
 
 #include "pipeline_binary.h"
 
-#include "common/vk_common.h"
 #include "common/vk_initializers.h"
 #include "core/device.h"
 #include "core/util/logging.hpp"
@@ -492,7 +491,7 @@ void PipelineBinary::build_command_buffers()
 		subresource_range.levelCount     = 1;
 		subresource_range.baseArrayLayer = 0;
 		subresource_range.layerCount     = 1;
-		vkb::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range);
+		vkb::common::image_layout_transition(draw_cmd_buffers[i], swapchain_buffers[i].image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range);
 
 		vkEndCommandBuffer(draw_cmd_buffers[i]);
 	}

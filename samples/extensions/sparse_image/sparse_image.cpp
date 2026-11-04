@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Mobica Limited
+/* Copyright (c) 2023-2026, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,7 @@
  */
 
 #include "sparse_image.h"
+#include "common/vk_initializers.h"
 
 SparseImage::SparseImage()
 {
@@ -72,7 +73,7 @@ void SparseImage::create_sparse_bind_queue()
 
 	if (sparse_queue_family_index == 0xFF)
 	{
-		sparse_queue_family_index = vkb::get_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_SPARSE_BINDING_BIT);
+		sparse_queue_family_index = vkb::common::select_queue_family_index(get_device().get_gpu().get_queue_family_properties(), VK_QUEUE_SPARSE_BINDING_BIT);
 	}
 	vkGetDeviceQueue(get_device().get_handle(), sparse_queue_family_index, 0U, &sparse_queue);
 }
@@ -570,20 +571,20 @@ void SparseImage::update_and_generate()
 			if (current_mip_level != 0xFF)
 			{
 				subresource_range.baseMipLevel = current_mip_level;
-				vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+				vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 				if (current_mip_level != 0)
 				{
 					subresource_range.baseMipLevel = current_mip_level - 1U;
-					vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+					vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 				}
 			}
 
 			subresource_range.baseMipLevel = mip_level;
-			vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+			vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 			if (mip_level != 0)
 			{
 				subresource_range.baseMipLevel = mip_level - 1U;
-				vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
+				vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 			}
 
 			current_mip_level = mip_level;
@@ -666,11 +667,11 @@ void SparseImage::update_and_generate()
 	if (current_mip_level != 0xFF)
 	{
 		subresource_range.baseMipLevel = current_mip_level;
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+		vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		if (current_mip_level != 0)
 		{
 			subresource_range.baseMipLevel = current_mip_level - 1U;
-			vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+			vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		}
 	}
 
@@ -772,7 +773,7 @@ void SparseImage::free_unused_memory()
 		subresource_range.levelCount     = virtual_texture.mip_levels;
 		subresource_range.baseMipLevel   = virtual_texture.base_mip_level;
 
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
+		vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 		vkCmdCopyImageToBuffer(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reallocation_buffer->get_handle(), static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
 		get_device().flush_command_buffer(command_buffer, queue, true);
 
@@ -793,9 +794,9 @@ void SparseImage::free_unused_memory()
 
 		command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+		vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 		vkCmdCopyBufferToImage(command_buffer, reallocation_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
-		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+		vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		get_device().flush_command_buffer(command_buffer, queue, true);
 
 		for (auto &page_index : pages_to_reallocate)
@@ -1343,7 +1344,7 @@ void SparseImage::create_texture_sampler()
 {
 	// Calculate valid filter
 	VkFilter filter = VK_FILTER_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image_format, &filter);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), image_format, &filter);
 
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
 
@@ -1559,7 +1560,7 @@ void SparseImage::create_sparse_texture_image()
 	subresource_range.levelCount     = virtual_texture.mip_levels;
 	subresource_range.baseMipLevel   = virtual_texture.base_mip_level;
 
-	vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
+	vkb::common::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 	get_device().flush_command_buffer(command_buffer, queue, true);
 
 	//==================================================================================================

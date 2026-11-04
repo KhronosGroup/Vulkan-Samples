@@ -16,6 +16,7 @@
  */
 
 #include "mobile_nerf_rayquery.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"
@@ -665,7 +666,7 @@ void MobileNerfRayQuery::create_texture_helper(std::string const &texturePath, T
 
 	// Calculate valid filter
 	VkFilter filter = VK_FILTER_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
 
 	VkSamplerCreateInfo samplerCreateInfo     = {};
 	samplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

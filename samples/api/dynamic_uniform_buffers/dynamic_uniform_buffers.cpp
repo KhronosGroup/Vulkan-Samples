@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,15 +27,15 @@
  */
 
 #include "dynamic_uniform_buffers.h"
-
 #include "benchmark_mode/benchmark_mode.h"
+#include "common/vk_initializers.h"
 
 DynamicUniformBuffers::DynamicUniformBuffers()
 {
 	title = "Dynamic uniform buffers";
 }
 
-DynamicUniformBuffers ::~DynamicUniformBuffers()
+DynamicUniformBuffers::~DynamicUniformBuffers()
 {
 	if (has_device())
 	{

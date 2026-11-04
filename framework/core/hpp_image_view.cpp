@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,6 @@
  */
 
 #include "core/hpp_image_view.h"
-#include "common/hpp_vk_common.h"
 #include "core/device.h"
 #include "core/hpp_image.h"
 #include <vulkan/vulkan_format_traits.hpp>

@@ -114,7 +114,7 @@ class ResourceCache
 	                                      const BindingMap<VkDescriptorImageInfo>  &image_infos);
 
 	RenderPass &request_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments,
-	                                const std::vector<LoadStoreInfo>               &load_store_infos,
+	                                const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos,
 	                                const std::vector<SubpassInfo>                 &subpasses);
 
 	Framebuffer &request_framebuffer(const vkb::rendering::RenderTargetC &render_target,

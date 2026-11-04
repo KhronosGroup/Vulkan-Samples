@@ -16,10 +16,10 @@
  */
 
 #include "shader_object.h"
+#include "common/vk_initializers.h"
 #include <heightmap.h>
-#include <unordered_map>
-
 #include <json.hpp>
+#include <unordered_map>
 
 ShaderObject::ShaderObject()
 {
@@ -408,7 +408,7 @@ void ShaderObject::load_assets()
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), heightmap_texture.image->get_format(), &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), heightmap_texture.image->get_format(), &filter, &mipmap_mode);
 
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 
@@ -428,7 +428,7 @@ void ShaderObject::load_assets()
 
 	filter      = VK_FILTER_LINEAR;
 	mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), terrain_array_textures.image->get_format(), &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), terrain_array_textures.image->get_format(), &filter, &mipmap_mode);
 
 	// Setup a repeating sampler for the terrain texture layers
 	vkDestroySampler(get_device().get_handle(), terrain_array_textures.sampler, nullptr);
@@ -972,23 +972,23 @@ void ShaderObject::build_command_buffers()
 		depth_range.layerCount     = 1;
 
 		// Barriers for images that are rendered to
-		vkb::image_layout_transition(draw_cmd_buffer,
-		                             output_images[current_output_format].image,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		                             0,
-		                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+		vkb::common::image_layout_transition(draw_cmd_buffer,
+		                                     output_images[current_output_format].image,
+		                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                     0,
+		                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                     VK_IMAGE_LAYOUT_UNDEFINED,
+		                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
 
-		vkb::image_layout_transition(draw_cmd_buffer,
-		                             depth_images[current_depth_format].image,
-		                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		                             VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-		                             0,
-		                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, depth_range);
+		vkb::common::image_layout_transition(draw_cmd_buffer,
+		                                     depth_images[current_depth_format].image,
+		                                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                     VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                     0,
+		                                     VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                     VK_IMAGE_LAYOUT_UNDEFINED,
+		                                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, depth_range);
 
 		// Setup dynamic rendering attachment info and begin rendering
 		{
@@ -1032,7 +1032,7 @@ void ShaderObject::build_command_buffers()
 			render_info.pDepthAttachment = &depth_attachment_info;
 
 			// This is how to enable stencil if a stencil buffer is used
-			if (!vkb::is_depth_only_format(depth_format))
+			if (!vkb::common::is_depth_only_format(depth_format))
 			{
 				render_info.pStencilAttachment = &depth_attachment_info;
 			}
@@ -1254,15 +1254,15 @@ void ShaderObject::build_command_buffers()
 		blit.dstOffsets[1]                 = {static_cast<int>(width), static_cast<int>(height), 1};
 
 		// Add barrier for swapchain buffer image
-		vkb::image_layout_transition(draw_cmd_buffer,
-		                             swapchain_buffers[i].image,
-		                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-		                             0,
-		                             VK_ACCESS_TRANSFER_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                             range);
+		vkb::common::image_layout_transition(draw_cmd_buffer,
+		                                     swapchain_buffers[i].image,
+		                                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                     0,
+		                                     VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                     VK_IMAGE_LAYOUT_UNDEFINED,
+		                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                                     range);
 
 		if (post_processing == true)
 		{
@@ -1270,25 +1270,25 @@ void ShaderObject::build_command_buffers()
 			vkCmdSetPolygonModeEXT(draw_cmd_buffer, VK_POLYGON_MODE_FILL);
 
 			// Add barrier for the output image of the current output to be read from
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             output_images[current_output_format].image,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                             VK_ACCESS_SHADER_READ_BIT,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			                             range);
+			vkb::common::image_layout_transition(draw_cmd_buffer,
+			                                     output_images[current_output_format].image,
+			                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                                     VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+			                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                                     VK_ACCESS_SHADER_READ_BIT,
+			                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			                                     range);
 
 			// Add barrier for the post process image to be drawn to
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             post_process_image.image,
-			                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             0,
-			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                             VK_IMAGE_LAYOUT_UNDEFINED,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
+			vkb::common::image_layout_transition(draw_cmd_buffer,
+			                                     post_process_image.image,
+			                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+			                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                                     0,
+			                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                                     VK_IMAGE_LAYOUT_UNDEFINED,
+			                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, range);
 
 			{
 				// Setup rendering information for post processing pass
@@ -1327,15 +1327,15 @@ void ShaderObject::build_command_buffers()
 			vkCmdEndRenderingKHR(draw_cmd_buffer);
 
 			// Add barrier on the post processing image so drawing finishes
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             post_process_image.image,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                             VK_ACCESS_TRANSFER_READ_BIT,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			                             range);
+			vkb::common::image_layout_transition(draw_cmd_buffer,
+			                                     post_process_image.image,
+			                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+			                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                                     VK_ACCESS_TRANSFER_READ_BIT,
+			                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			                                     range);
 
 			// Copy the post processing image to the swapchain buffer
 			vkCmdBlitImage(draw_cmd_buffer,
@@ -1350,15 +1350,15 @@ void ShaderObject::build_command_buffers()
 		else
 		{
 			// Add barrier on the output image so drawing finishes
-			vkb::image_layout_transition(draw_cmd_buffer,
-			                             output_images[current_output_format].image,
-			                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-			                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                             VK_ACCESS_TRANSFER_READ_BIT,
-			                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			                             range);
+			vkb::common::image_layout_transition(draw_cmd_buffer,
+			                                     output_images[current_output_format].image,
+			                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+			                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                                     VK_ACCESS_TRANSFER_READ_BIT,
+			                                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			                                     range);
 
 			// Copy the output processing image to the swapchain buffer
 			vkCmdBlitImage(draw_cmd_buffer,

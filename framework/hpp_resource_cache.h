@@ -93,7 +93,7 @@ class HPPResourceCache
 	vkb::core::HPPGraphicsPipeline    &request_graphics_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state);
 	vkb::core::HPPPipelineLayout      &request_pipeline_layout(const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules);
 	vkb::core::HPPRenderPass          &request_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
-	                                                       const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
+	                                                       const std::vector<vkb::common::LoadStoreInfoCpp> &load_store_infos,
 	                                                       const std::vector<vkb::core::HPPSubpassInfo>     &subpasses);
 	vkb::core::ShaderModuleCpp        &request_shader_module(
 	           vk::ShaderStageFlagBits stage, const vkb::core::ShaderSource &glsl_source, const vkb::core::ShaderVariant &shader_variant = {});

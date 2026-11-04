@@ -17,6 +17,7 @@
 
 #include "layout_transitions.h"
 
+#include "common/g_buffer.h"
 #include "core/device.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
@@ -103,7 +104,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> LayoutTransitions::create_render_
 
 	vkb::core::Image depth_image{device,
 	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
+	                             vkb::common::select_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
@@ -159,13 +160,11 @@ void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::ren
 
 	{
 		// Image 0 is the swapchain
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = pick_old_layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .old_layout      = pick_old_layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR),
+		                                                .new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
 
@@ -178,13 +177,12 @@ void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::ren
 	}
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = pick_old_layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                                .dst_stage_mask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                                .dst_access_mask =
+		                                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                                .old_layout = pick_old_layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL),
+		                                                .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 		command_buffer.image_memory_barrier(views[1], memory_barrier);
 	}
@@ -211,7 +209,7 @@ void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::ren
 	{
 		auto &view = render_target.get_views()[i];
 
-		vkb::ImageMemoryBarrier barrier;
+		vkb::common::ImageMemoryBarrierC barrier;
 
 		if (i == 1)
 		{
@@ -246,12 +244,11 @@ void LayoutTransitions::draw(vkb::core::CommandBufferC &command_buffer, vkb::ren
 	command_buffer.end_render_pass();
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		                                                .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}

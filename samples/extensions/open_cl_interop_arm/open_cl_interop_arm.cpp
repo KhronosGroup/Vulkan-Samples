@@ -16,8 +16,7 @@
  */
 
 #include "open_cl_interop_arm.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "gui.h"
 
@@ -511,7 +510,7 @@ void OpenCLInteropArm::prepare_shared_resources()
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image_create_info.format, &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), image_create_info.format, &filter, &mipmap_mode);
 
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 	sampler_create_info.magFilter   = filter;

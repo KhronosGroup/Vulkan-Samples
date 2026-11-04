@@ -17,7 +17,6 @@
 
 #include "shader_relaxed_extended_instruction.h"
 
-#include "common/vk_common.h"
 #include "common/vk_initializers.h"
 #include <algorithm>
 #include <cstring>

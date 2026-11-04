@@ -17,6 +17,7 @@
 
 #include "fragment_density_map.h"
 #include "api_vulkan_sample.h"
+#include "common/vk_initializers.h"
 #include "scene_graph/components/mesh.h"
 #include <string>
 #include <vulkan/vulkan_core.h>
@@ -430,15 +431,15 @@ void FragmentDensityMap::build_command_buffers()
 			{
 				VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
-				vkb::image_layout_transition(cmd_buffer,
-				                             fdm.image.image,
-				                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
-				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
-				                             VK_ACCESS_SHADER_READ_BIT,
-				                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
-				                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				                             subresource_range);
+				vkb::common::image_layout_transition(cmd_buffer,
+				                                     fdm.image.image,
+				                                     VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
+				                                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				                                     VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
+				                                     VK_ACCESS_SHADER_READ_BIT,
+				                                     VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
+				                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				                                     subresource_range);
 			}
 			render_pass_begin_info.renderArea.extent = present_scissor.extent;
 			render_pass_begin_info.renderPass        = present.render_pass;
@@ -468,15 +469,15 @@ void FragmentDensityMap::build_command_buffers()
 			if (is_show_fdm_enabled() && !is_update_fdm_enabled())
 			{
 				VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-				vkb::image_layout_transition(cmd_buffer,
-				                             fdm.image.image,
-				                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
-				                             VK_ACCESS_SHADER_READ_BIT,
-				                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
-				                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-				                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
-				                             subresource_range);
+				vkb::common::image_layout_transition(cmd_buffer,
+				                                     fdm.image.image,
+				                                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				                                     VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
+				                                     VK_ACCESS_SHADER_READ_BIT,
+				                                     VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
+				                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				                                     VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
+				                                     subresource_range);
 			}
 			debug_utils.cmd_end_label(cmd_buffer);
 		}
@@ -1084,15 +1085,15 @@ void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
 		// Clear the density map buffer by transitioning it from UNDEFINED.
-		vkb::image_layout_transition(cmd_buffer,
-		                             fdm.image.image,
-		                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		                             {},
-		                             VK_ACCESS_SHADER_WRITE_BIT,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             subresource_range);
+		vkb::common::image_layout_transition(cmd_buffer,
+		                                     fdm.image.image,
+		                                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		                                     {},
+		                                     VK_ACCESS_SHADER_WRITE_BIT,
+		                                     VK_IMAGE_LAYOUT_UNDEFINED,
+		                                     VK_IMAGE_LAYOUT_GENERAL,
+		                                     subresource_range);
 
 		vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fdm.generate.pipeline.pipeline);
 		vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fdm.generate.pipeline.pipeline_layout, 0, 1, &fdm.generate.set, 0, nullptr);
@@ -1104,15 +1105,15 @@ void FragmentDensityMap::write_density_map(VkCommandBuffer cmd_buffer)
 
 		if (is_fdm_enabled())
 		{
-			vkb::image_layout_transition(cmd_buffer,
-			                             fdm.image.image,
-			                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			                             VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
-			                             VK_ACCESS_SHADER_WRITE_BIT,
-			                             VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
-			                             VK_IMAGE_LAYOUT_GENERAL,
-			                             VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
-			                             subresource_range);
+			vkb::common::image_layout_transition(cmd_buffer,
+			                                     fdm.image.image,
+			                                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			                                     VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT,
+			                                     VK_ACCESS_SHADER_WRITE_BIT,
+			                                     VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT,
+			                                     VK_IMAGE_LAYOUT_GENERAL,
+			                                     VK_IMAGE_LAYOUT_FRAGMENT_DENSITY_MAP_OPTIMAL_EXT,
+			                                     subresource_range);
 		}
 		debug_utils.cmd_end_label(cmd_buffer);
 	}

@@ -18,7 +18,6 @@
 #include "hello_triangle_1_3.h"
 
 #include "common/macros.h"
-#include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "platform/window.h"
@@ -545,7 +544,7 @@ void HelloTriangleV13::init_swapchain()
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	VkSurfaceFormatKHR format = vkb::select_surface_format(context.gpu, context.surface);
+	VkSurfaceFormatKHR format = vkb::common::select_surface_format(context.gpu, context.surface);
 
 	VkExtent2D swapchain_size;
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)

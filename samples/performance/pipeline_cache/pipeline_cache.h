@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/utils.h"
-#include "common/vk_common.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 #include "vulkan_sample.h"

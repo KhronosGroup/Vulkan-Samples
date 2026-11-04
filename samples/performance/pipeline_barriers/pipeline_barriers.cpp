@@ -17,6 +17,7 @@
 
 #include "pipeline_barriers.h"
 
+#include "common/g_buffer.h"
 #include "core/device.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
@@ -138,7 +139,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> PipelineBarriers::create_render_t
 
 	vkb::core::Image depth_image{device,
 	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
+	                             vkb::common::select_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
@@ -187,10 +188,7 @@ void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rend
 
 	{
 		// Image 0 is the swapchain
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
 		switch (dependency_type)
 		{
@@ -223,11 +221,7 @@ void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rend
 	}
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		memory_barrier.src_access_mask = 0;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 		switch (dependency_type)
 		{
@@ -270,7 +264,7 @@ void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rend
 	{
 		auto &view = render_target.get_views()[i];
 
-		vkb::ImageMemoryBarrier barrier;
+		vkb::common::ImageMemoryBarrierC barrier;
 
 		if (i == 1)
 		{
@@ -321,12 +315,10 @@ void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rend
 	command_buffer.end_render_pass();
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}

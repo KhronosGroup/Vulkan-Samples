@@ -17,6 +17,7 @@
  */
 
 #include "dynamic_rendering_local_read.h"
+#include "common/vk_initializers.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -686,7 +687,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_rendering_create_info.colorAttachmentCount    = 4;
 	pipeline_rendering_create_info.pColorAttachmentFormats = color_attachment_formats;
 	pipeline_rendering_create_info.depthAttachmentFormat   = depth_format;
-	if (!vkb::is_depth_only_format(depth_format))
+	if (!vkb::common::is_depth_only_format(depth_format))
 	{
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
@@ -726,7 +727,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	// For dynamic rendering, additional information must be set at pipeline creation
 	pipeline_rendering_create_info.pColorAttachmentFormats = color_attachment_formats;
 	pipeline_rendering_create_info.depthAttachmentFormat   = depth_format;
-	if (!vkb::is_depth_only_format(depth_format))
+	if (!vkb::common::is_depth_only_format(depth_format))
 	{
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
@@ -748,7 +749,7 @@ void DynamicRenderingLocalRead::prepare_pipelines()
 	pipeline_rendering_create_info.colorAttachmentCount    = 4;
 	pipeline_rendering_create_info.pColorAttachmentFormats = color_attachment_formats;
 	pipeline_rendering_create_info.depthAttachmentFormat   = depth_format;
-	if (!vkb::is_depth_only_format(depth_format))
+	if (!vkb::common::is_depth_only_format(depth_format))
 	{
 		pipeline_rendering_create_info.stencilAttachmentFormat = depth_format;
 	}
@@ -863,8 +864,8 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		subresource_range_depth.levelCount = VK_REMAINING_MIP_LEVELS;
 		subresource_range_depth.layerCount = VK_REMAINING_ARRAY_LAYERS;
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresource_range_color);
-		vkb::image_layout_transition(cmd, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, subresource_range_depth);
+		vkb::common::image_layout_transition(cmd, swapchain_buffers[i].image, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresource_range_color);
+		vkb::common::image_layout_transition(cmd, depth_stencil.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, subresource_range_depth);
 
 		VkRenderingAttachmentInfoKHR color_attachment_info[4]{};
 		for (auto j = 0; j < 4; j++)
@@ -898,7 +899,7 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		render_info.pColorAttachments    = &color_attachment_info[0];
 
 		render_info.pDepthAttachment = &depth_attachment_info;
-		if (!vkb::is_depth_only_format(depth_format))
+		if (!vkb::common::is_depth_only_format(depth_format))
 		{
 			render_info.pStencilAttachment = &depth_attachment_info;
 		}
@@ -970,7 +971,7 @@ void DynamicRenderingLocalRead::build_command_buffers()
 		    Dynamic rendering end
 		*/
 
-		vkb::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
+		vkb::common::image_layout_transition(cmd, swapchain_buffers[i].image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, subresource_range_color);
 #else
 		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass = render_pass;
