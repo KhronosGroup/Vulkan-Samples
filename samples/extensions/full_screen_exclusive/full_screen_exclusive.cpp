@@ -338,7 +338,7 @@ void FullScreenExclusive::init_swapchain()
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	VkSurfaceFormatKHR format = vkb::select_surface_format(context.gpu, context.surface);
+	VkSurfaceFormatKHR format = vkb::common::select_surface_format(context.gpu, context.surface);
 
 	VkExtent2D swapchain_size;
 	if (is_full_screen_exclusive)

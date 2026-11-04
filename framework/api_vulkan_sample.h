@@ -32,8 +32,6 @@
 #include <sys/stat.h>
 
 #include "camera.h"
-#include "common/vk_common.h"
-#include "common/vk_initializers.h"
 #include "core/buffer.h"
 #include "core/swapchain.h"
 #include "gui.h"

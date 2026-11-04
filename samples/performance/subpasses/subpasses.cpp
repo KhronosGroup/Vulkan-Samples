@@ -17,7 +17,7 @@
 
 #include "subpasses.h"
 
-#include "common/vk_common.h"
+#include "common/g_buffer.h"
 
 #include "gui.h"
 #include "rendering/pipeline_state.h"
@@ -65,7 +65,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> Subpasses::create_render_target(v
 
 	vkb::core::Image depth_image{device,
 	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
+	                             vkb::common::select_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
@@ -419,9 +419,9 @@ void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb
 	{
 		auto &view = render_target.get_views()[i];
 
-		vkb::ImageMemoryBarrier barrier;
+		vkb::common::ImageMemoryBarrierC barrier;
 
-		if (vkb::is_depth_format(view.get_format()))
+		if (vkb::common::is_depth_format(view.get_format()))
 		{
 			barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			barrier.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;

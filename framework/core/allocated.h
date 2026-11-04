@@ -23,6 +23,7 @@
 #include "common/vulkan_exception.h"
 #include "core/physical_device.h"
 #include "core/vulkan_resource.h"
+#include <vk_mem_alloc.h>
 
 namespace vkb
 {

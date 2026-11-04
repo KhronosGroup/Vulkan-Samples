@@ -16,6 +16,7 @@
  */
 
 #include "fragment_shading_rate_dynamic.h"
+#include "common/vk_initializers.h"
 
 FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
     pipeline_layout(VK_NULL_HANDLE), pipelines(), descriptor_set_layout(), subpass_extent()
@@ -152,7 +153,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 
 		auto cmd = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-		vkb::image_layout_transition(cmd, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		vkb::common::image_layout_transition(cmd, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkBufferImageCopy buffer_copy_region           = {};
 		buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -161,7 +162,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		vkCmdCopyBufferToImage(cmd, staging_buffer.get_handle(), shading_rate_image->get_handle(),
 		                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
-		vkb::image_layout_transition(
+		vkb::common::image_layout_transition(
 		    cmd, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
 		VK_CHECK(vkEndCommandBuffer(cmd));
@@ -193,7 +194,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		{
 			auto _cmd = get_device().get_command_pool().request_command_buffer();
 			_cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-			auto _memory_barrier            = vkb::ImageMemoryBarrier();
+			auto _memory_barrier            = vkb::common::ImageMemoryBarrierC();
 			_memory_barrier.dst_access_mask = 0;
 			_memory_barrier.src_access_mask = 0;
 			_memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -854,35 +855,35 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		image_copy.extent         = shading_rate_image->get_extent();
 		image_copy.srcOffset      = {0, 0, 0};
 
-		vkb::image_layout_transition(
+		vkb::common::image_layout_transition(
 		    command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		vkb::image_layout_transition(command_buffer,
-		                             shading_rate_image_compute->get_handle(),
-		                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-		                             VK_ACCESS_SHADER_WRITE_BIT,
-		                             VK_ACCESS_TRANSFER_READ_BIT,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                             subresource_range);
+		vkb::common::image_layout_transition(command_buffer,
+		                                     shading_rate_image_compute->get_handle(),
+		                                     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                     VK_ACCESS_SHADER_WRITE_BIT,
+		                                     VK_ACCESS_TRANSFER_READ_BIT,
+		                                     VK_IMAGE_LAYOUT_GENERAL,
+		                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                                     subresource_range);
 
 		vkCmdCopyImage(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		               shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
 
-		vkb::image_layout_transition(
+		vkb::common::image_layout_transition(
 		    command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
-		vkb::image_layout_transition(command_buffer,
-		                             shading_rate_image_compute->get_handle(),
-		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		                             {},
-		                             {},
-		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             subresource_range);
+		vkb::common::image_layout_transition(command_buffer,
+		                                     shading_rate_image_compute->get_handle(),
+		                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                                     {},
+		                                     {},
+		                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                                     VK_IMAGE_LAYOUT_GENERAL,
+		                                     subresource_range);
 
 		VK_CHECK(vkEndCommandBuffer(compute_buffer.command_buffer));
 

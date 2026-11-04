@@ -1,5 +1,5 @@
-/* Copyright (c) 2020, Arm Limited
- * Copyright (c) 2020, Bradley Austin Davis
+/* Copyright (c) 2020-2026, Arm Limited
+ * Copyright (c) 2020-2026, Bradley Austin Davis
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,11 +17,10 @@
  */
 #pragma once
 
-#include <memory>
-
 #include <glad/glad.h>
-
-#include "common/vk_common.h"
+#include <memory>
+#include <string>
+#include <vulkan/vulkan.h>
 
 constexpr uint32_t SHARED_TEXTURE_DIMENSION = 512;
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -422,7 +422,7 @@ HPPSwapchain::HPPSwapchain(HPPSwapchain                               &old_swapc
 	    vk::ImageCompressionFlagBitsEXT::eFixedRateDefault == requested_compression)
 	{
 		// Check if fixed-rate compression was applied
-		const auto applied_compression_fixed_rate = vkb::common::query_applied_compression(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
+		const auto applied_compression_fixed_rate = vkb::common::query_image_subresource_layout_extension<vk::ImageCompressionPropertiesEXT>(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
 
 		if (applied_compression_fixed_rate != requested_compression_fixed_rate)
 		{

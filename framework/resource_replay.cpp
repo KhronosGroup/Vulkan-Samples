@@ -16,7 +16,6 @@
  */
 
 #include "resource_replay.h"
-#include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
@@ -123,7 +122,7 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 void ResourceReplay::create_render_pass(ResourceCache &resource_cache, std::istringstream &stream)
 {
 	std::vector<vkb::rendering::AttachmentC> attachments;
-	std::vector<LoadStoreInfo>               load_store_infos;
+	std::vector<vkb::common::LoadStoreInfoC> load_store_infos;
 	std::vector<SubpassInfo>                 subpasses;
 
 	read(stream,

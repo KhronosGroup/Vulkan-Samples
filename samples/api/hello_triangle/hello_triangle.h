@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "core/instance.h"
 #include "platform/application.h"
+#include <vk_mem_alloc.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates

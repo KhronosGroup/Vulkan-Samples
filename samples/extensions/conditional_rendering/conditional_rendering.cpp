@@ -20,7 +20,7 @@
  */
 
 #include "conditional_rendering.h"
-
+#include "common/vk_initializers.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"

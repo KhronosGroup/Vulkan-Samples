@@ -16,6 +16,7 @@
  */
 
 #include "gshader_to_mshader.h"
+#include "common/vk_initializers.h"
 
 GshaderToMshader::GshaderToMshader()
 {

@@ -20,6 +20,7 @@
  */
 
 #include "texture_mipmap_generation.h"
+#include "common/vk_initializers.h"
 
 TextureMipMapGeneration::TextureMipMapGeneration()
 {
@@ -146,7 +147,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	VkCommandBuffer copy_command = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	// Optimal image will be used as destination for the copy, so we must transfer from our initial undefined image layout to the transfer destination layout
-	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vkb::common::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	// Copy the first mip of the chain, remaining mips will be generated
 	VkBufferImageCopy buffer_copy_region               = {};
@@ -160,7 +161,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	vkCmdCopyBufferToImage(copy_command, staging_buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 	// Transition first mip level to transfer source so we can blit(read) from it
-	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	vkb::common::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
 	get_device().flush_command_buffer(copy_command, queue, true);
 
@@ -196,11 +197,11 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 		image_blit.dstOffsets[1].z           = 1;
 
 		// Prepare current mip level as image blit destination
-		vkb::image_layout_transition(blit_command,
-		                             texture.image,
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                             {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
+		vkb::common::image_layout_transition(blit_command,
+		                                     texture.image,
+		                                     VK_IMAGE_LAYOUT_UNDEFINED,
+		                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                                     {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
 
 		// Blit from previous level
 		vkCmdBlitImage(
@@ -214,19 +215,19 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 		    VK_FILTER_LINEAR);
 
 		// Prepare current mip level as image blit source for next level
-		vkb::image_layout_transition(blit_command,
-		                             texture.image,
-		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		                             {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
+		vkb::common::image_layout_transition(blit_command,
+		                                     texture.image,
+		                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                                     {VK_IMAGE_ASPECT_COLOR_BIT, i, 1, 0, 1});
 	}
 
 	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
-	vkb::image_layout_transition(blit_command,
-	                             texture.image,
-	                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.mip_levels, 0, 1});
+	vkb::common::image_layout_transition(blit_command,
+	                                     texture.image,
+	                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                                     {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.mip_levels, 0, 1});
 
 	get_device().flush_command_buffer(blit_command, queue, true);
 	// ---------------------------------------------------------------
@@ -234,7 +235,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
 
 	// Create samplers for different mip map demonstration cases
 	samplers.resize(3);

@@ -109,7 +109,7 @@ inline VkResult create_vk_renderpass(VkDevice device, VkRenderPassCreateInfo2KHR
 }        // namespace
 
 template <typename T>
-std::vector<T> get_attachment_descriptions(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos)
+std::vector<T> get_attachment_descriptions(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos)
 {
 	std::vector<T> attachment_descriptions;
 
@@ -122,7 +122,7 @@ std::vector<T> get_attachment_descriptions(const std::vector<vkb::rendering::Att
 		attachment.samples       = attachments[i].samples;
 		attachment.initialLayout = attachments[i].initial_layout;
 		attachment.finalLayout =
-		    vkb::is_depth_format(attachment.format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		    vkb::common::is_depth_format(attachment.format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		if (i < load_store_infos.size())
 		{
@@ -215,7 +215,7 @@ void set_attachment_layouts(std::vector<T_SubpassDescription> &subpass_descripti
 			attachment_descriptions[reference.attachment].finalLayout = reference.layout;
 
 			// Do not use depth attachment if used as input
-			if (vkb::is_depth_format(attachment_descriptions[reference.attachment].format))
+			if (vkb::common::is_depth_format(attachment_descriptions[reference.attachment].format))
 			{
 				subpass.pDepthStencilAttachment = nullptr;
 			}
@@ -267,7 +267,7 @@ bool is_depth_a_dependency(std::vector<T_SubpassDescription> &subpass_descriptio
 		    return std::ranges::any_of(
 		        std::span{subpass.pInputAttachments, subpass.inputAttachmentCount},
 		        [&attachment_descriptions](auto const &reference) {
-			        return vkb::is_depth_format(attachment_descriptions[reference.attachment].format);
+			        return vkb::common::is_depth_format(attachment_descriptions[reference.attachment].format);
 		        });
 	    });
 
@@ -324,7 +324,7 @@ T get_attachment_reference(const uint32_t attachment, const VkImageLayout layout
 }
 
 template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
-void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
 	if (attachments.size() != load_store_infos.size())
 	{
@@ -361,7 +361,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 		{
 			auto  initial_layout = attachments[o_attachment].initial_layout == VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : attachments[o_attachment].initial_layout;
 			auto &description    = attachment_descriptions[o_attachment];
-			if (!is_depth_format(description.format))
+			if (!vkb::common::is_depth_format(description.format))
 			{
 				color_attachments[i].push_back(get_attachment_reference<T_AttachmentReference>(o_attachment, initial_layout));
 			}
@@ -370,7 +370,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 		// Fill input attachments references
 		for (auto i_attachment : subpass.input_attachments)
 		{
-			auto initial_layout = vkb::is_depth_format(attachments[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			auto initial_layout = vkb::common::is_depth_format(attachments[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			input_attachments[i].push_back(get_attachment_reference<T_AttachmentReference>(i_attachment, initial_layout));
 		}
 
@@ -383,7 +383,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 		if (!subpass.disable_depth_stencil_attachment)
 		{
 			// Assumption: depth stencil attachment appears in the list before any depth stencil resolve attachment
-			auto it = find_if(attachments.begin(), attachments.end(), [](const vkb::rendering::AttachmentC attachment) { return is_depth_format(attachment.format); });
+			auto it = find_if(attachments.begin(), attachments.end(), [](const vkb::rendering::AttachmentC attachment) { return vkb::common::is_depth_format(attachment.format); });
 			if (it != attachments.end())
 			{
 				auto i_depth_stencil = vkb::to_u32(std::distance(attachments.begin(), it));
@@ -454,7 +454,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 
 		for (uint32_t k = 0U; k < to_u32(attachment_descriptions.size()); ++k)
 		{
-			if (vkb::is_depth_format(attachments[k].format))
+			if (vkb::common::is_depth_format(attachments[k].format))
 			{
 				if (default_depth_stencil_attachment == VK_ATTACHMENT_UNUSED)
 				{
@@ -512,7 +512,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 
 RenderPass::RenderPass(vkb::core::DeviceC                             &device,
                        const std::vector<vkb::rendering::AttachmentC> &attachments,
-                       const std::vector<LoadStoreInfo>               &load_store_infos,
+                       const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos,
                        const std::vector<SubpassInfo>                 &subpasses) :
     VulkanResource{VK_NULL_HANDLE, &device}, subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
     color_output_count{}

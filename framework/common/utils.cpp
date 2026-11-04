@@ -72,22 +72,19 @@ void screenshot(vkb::rendering::RenderContextC &render_context, const std::strin
 
 	// Enable destination buffer to be written to
 	{
-		BufferMemoryBarrier memory_barrier{};
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		vkb::common::BufferMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                 .dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                 .dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT};
 
 		cmd_buf->buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Enable framebuffer image view to be read from
 	{
-		ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .old_layout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		                                                .new_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL};
 
 		cmd_buf->image_memory_barrier(src_image_view, memory_barrier);
 	}
@@ -111,22 +108,20 @@ void screenshot(vkb::rendering::RenderContextC &render_context, const std::strin
 
 	// Enable destination buffer to map memory
 	{
-		BufferMemoryBarrier memory_barrier{};
-		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_HOST_READ_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
+		vkb::common::BufferMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                 .dst_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT,
+		                                                 .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                                 .dst_access_mask = VK_ACCESS_HOST_READ_BIT};
 
 		cmd_buf->buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Revert back the framebuffer image view from transfer to present
 	{
-		ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .old_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                                                .new_layout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
 
 		cmd_buf->image_memory_barrier(src_image_view, memory_barrier);
 	}

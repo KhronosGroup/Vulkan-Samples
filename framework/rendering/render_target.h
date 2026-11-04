@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "common/hpp_vk_common.h"
 #include "core/device.h"
 #include "core/hpp_image.h"
 #include "core/hpp_image_view.h"
@@ -199,7 +198,7 @@ inline typename RenderTarget<bindingType>::CreateFunc const RenderTarget<binding
 template <vkb::BindingType bindingType>
 inline std::unique_ptr<RenderTargetCpp> RenderTarget<bindingType>::default_create_func_impl(vkb::core::HPPImage &&swapchain_image)
 {
-	vk::Format depth_format = vkb::common::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());
+	vk::Format depth_format = vkb::common::select_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());
 
 	vkb::core::HPPImage depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
 	                                depth_format,

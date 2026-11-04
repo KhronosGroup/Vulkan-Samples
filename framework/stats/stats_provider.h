@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2026, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include "common/vk_common.h"
 #include "stats_common.h"
+#include <unordered_map>
 
 namespace vkb
 {

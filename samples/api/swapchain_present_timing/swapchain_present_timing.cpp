@@ -17,7 +17,6 @@
 
 #include "swapchain_present_timing.h"
 
-#include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 
@@ -45,7 +44,7 @@ void SwapchainPresentTiming::get_queue()
  */
 void SwapchainPresentTiming::select_surface_format()
 {
-	surface_format = vkb::select_surface_format(get_gpu_handle(), get_surface());
+	surface_format = vkb::common::select_surface_format(get_gpu_handle(), get_surface());
 }
 
 /**
@@ -301,8 +300,8 @@ void SwapchainPresentTiming::query_past_presentation_timing()
  */
 void SwapchainPresentTiming::create_pipeline()
 {
-	auto vert_module = vkb::load_shader("swapchain_present_timing/" + get_shader_folder() + "/fullscreen_triangle.vert.spv", get_device_handle(), VK_SHADER_STAGE_VERTEX_BIT);
-	auto frag_module = vkb::load_shader("swapchain_present_timing/" + get_shader_folder() + "/circle.frag.spv", get_device_handle(), VK_SHADER_STAGE_FRAGMENT_BIT);
+	auto vert_module = vkb::common::load_shader("swapchain_present_timing/" + get_shader_folder() + "/fullscreen_triangle.vert.spv", get_device_handle(), VK_SHADER_STAGE_VERTEX_BIT);
+	auto frag_module = vkb::common::load_shader("swapchain_present_timing/" + get_shader_folder() + "/circle.frag.spv", get_device_handle(), VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkPushConstantRange push_constant_range{};
 	push_constant_range.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;

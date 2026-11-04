@@ -336,7 +336,7 @@ void GraphConstants::prepare_data_graph_pipeline()
 	data_graph_pipeline_constants.push_back(&weights_constant_tensor->pipeline_constant);
 	data_graph_pipeline_constants.push_back(&bias_constant_tensor->pipeline_constant);
 
-	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/spirv/conv2d.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
+	VkShaderModule shader_module = vkb::common::load_shader("tensor_and_data_graph/spirv/conv2d.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
 
 	data_graph_pipeline = std::make_unique<DataGraphPipeline>(get_device(),
 	                                                          data_graph_pipeline_layout->get_handle(),
@@ -465,13 +465,11 @@ void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, 
 
 	// Transition `output_image` to layout for being written to by the visualization compute shader.
 	// We don't care about the old contents so can use VK_IMAGE_LAYOUT_UNDEFINED as the old layout.
-	vkb::ImageMemoryBarrier output_image_barrier;
-	output_image_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-	output_image_barrier.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
-	output_image_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	output_image_barrier.src_access_mask = VK_ACCESS_SHADER_READ_BIT;
-	output_image_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	output_image_barrier.dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
+	vkb::common::ImageMemoryBarrierC output_image_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	                                                      .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                                                      .src_access_mask = VK_ACCESS_SHADER_READ_BIT,
+	                                                      .dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
+	                                                      .new_layout      = VK_IMAGE_LAYOUT_GENERAL};
 	command_buffer.image_memory_barrier(*output_image_view, output_image_barrier);
 
 	// Bind and run visualization compute pipeline
@@ -487,13 +485,11 @@ void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, 
 	vkCmdDispatch(command_buffer.get_handle(), group_count_x, group_count_y, 1);
 
 	// Barrier for `output_image` (written by the visualization compute shader above, read by the BlitSubpass below)
-	vkb::ImageMemoryBarrier output_image_barrier2;
-	output_image_barrier2.old_layout      = VK_IMAGE_LAYOUT_GENERAL;
-	output_image_barrier2.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	output_image_barrier2.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	output_image_barrier2.src_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
-	output_image_barrier2.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	output_image_barrier2.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
+	vkb::common::ImageMemoryBarrierC output_image_barrier2{.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                                                       .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	                                                       .src_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
+	                                                       .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+	                                                       .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 	command_buffer.image_memory_barrier(*output_image_view, output_image_barrier2);
 
 	// Call the inherited draw_renderpass function to run our blitting pass to display output_image on the screen, and also draw the GUI.

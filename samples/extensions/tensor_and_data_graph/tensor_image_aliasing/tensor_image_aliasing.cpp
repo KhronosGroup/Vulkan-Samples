@@ -17,7 +17,6 @@
 
 #include "tensor_image_aliasing.h"
 
-#include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
 #include "rendering/subpasses/forward_subpass.h"
@@ -166,7 +165,7 @@ void TensorImageAliasing::prepare_scene_render_target(uint32_t width, uint32_t h
 	                                    .build(get_device().get_device());
 
 	vkb::core::Image depth_image = vkb::core::ImageBuilder(width, height)
-	                                   .with_format(vkb::get_suitable_depth_format(get_device().get_gpu().get_handle()))
+	                                   .with_format(vkb::common::select_suitable_depth_format(get_device().get_gpu().get_handle()))
 	                                   .with_usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	                                   .with_debug_name("SceneRenderDepth")
 	                                   .build(get_device().get_device());
@@ -354,7 +353,7 @@ void TensorImageAliasing::prepare_data_graph_pipeline()
 	std::vector<VkDataGraphPipelineConstantARM *> data_graph_pipeline_constants;
 	data_graph_pipeline_constants.push_back(&weights_constant_tensor->pipeline_constant);
 
-	VkShaderModule shader_module = vkb::load_shader("tensor_and_data_graph/tensor_image_aliasing/spirv/conv2d_int8.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
+	VkShaderModule shader_module = vkb::common::load_shader("tensor_and_data_graph/tensor_image_aliasing/spirv/conv2d_int8.spvasm.spv", get_device().get_handle(), VK_SHADER_STAGE_ALL);
 
 	data_graph_pipeline =
 	    std::make_unique<DataGraphPipeline>(get_device(),
