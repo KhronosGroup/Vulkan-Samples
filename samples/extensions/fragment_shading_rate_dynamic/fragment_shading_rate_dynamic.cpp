@@ -16,6 +16,7 @@
  */
 
 #include "fragment_shading_rate_dynamic.h"
+#include "common/vk_initializers.h"
 
 FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
     pipeline_layout(VK_NULL_HANDLE), pipelines(), descriptor_set_layout(), subpass_extent()
@@ -193,7 +194,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		{
 			auto _cmd = get_device().get_command_pool().request_command_buffer();
 			_cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-			auto _memory_barrier            = vkb::ImageMemoryBarrier();
+			auto _memory_barrier            = vkb::common::ImageMemoryBarrierC();
 			_memory_barrier.dst_access_mask = 0;
 			_memory_barrier.src_access_mask = 0;
 			_memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;

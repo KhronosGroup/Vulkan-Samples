@@ -18,6 +18,7 @@
 
 #include "api_vulkan_sample.h"
 
+#include "common/vk_initializers.h"
 #include "core/device.h"
 #include "core/swapchain.h"
 #include "gltf_loader.h"

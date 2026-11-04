@@ -17,7 +17,7 @@
  */
 
 #include "shader_debugprintf.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 #define validation_layer_name "VK_LAYER_KHRONOS_validation"

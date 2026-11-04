@@ -21,8 +21,7 @@
  */
 
 #include "profiles.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "core/command_pool.h"
 #include "core/queue.h"
 #include "fence_pool.h"

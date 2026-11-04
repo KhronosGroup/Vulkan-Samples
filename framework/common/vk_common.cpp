@@ -20,10 +20,9 @@
 #include "common/helpers.h"
 #include "common/macros.h"
 #include "core/util/logging.hpp"
-
-#include <fmt/format.h>
-
 #include "filesystem/legacy.h"
+#include <fmt/format.h>
+#include <volk.h>
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -615,93 +614,6 @@ VkSurfaceFormatKHR
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
 }
-
-namespace gbuffer
-{
-std::vector<LoadStoreInfo> get_load_all_store_swapchain()
-{
-	// Load every attachment and store only swapchain
-	std::vector<LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	return load_store;
-}
-
-std::vector<LoadStoreInfo> get_clear_all_store_swapchain()
-{
-	// Clear every attachment and store only swapchain
-	std::vector<LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	return load_store;
-}
-
-std::vector<LoadStoreInfo> get_clear_store_all()
-{
-	// Clear and store every attachment
-	std::vector<LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	return load_store;
-}
-
-std::vector<VkClearValue> get_clear_value()
-{
-	// Clear values
-	std::vector<VkClearValue> clear_value{4};
-	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[1].depthStencil = {0.0f, ~0U};
-	clear_value[2].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[3].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-
-	return clear_value;
-}
-}        // namespace gbuffer
 
 uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queue_family_properties,
                                 VkQueueFlagBits                             queue_flag)

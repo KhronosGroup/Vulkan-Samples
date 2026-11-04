@@ -17,7 +17,6 @@
 
 #include "swapchain_recreation.h"
 
-#include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 

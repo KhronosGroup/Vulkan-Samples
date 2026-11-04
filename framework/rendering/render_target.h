@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "common/hpp_vk_common.h"
 #include "core/device.h"
 #include "core/hpp_image.h"
 #include "core/hpp_image_view.h"

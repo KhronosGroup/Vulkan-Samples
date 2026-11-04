@@ -21,6 +21,7 @@
  */
 
 #include "fragment_shading_rate.h"
+#include "common/vk_initializers.h"
 
 FragmentShadingRate::FragmentShadingRate()
 {

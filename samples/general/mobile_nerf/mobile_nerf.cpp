@@ -16,6 +16,7 @@
  */
 
 #include "mobile_nerf.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"

@@ -17,7 +17,6 @@
 
 #include "render_passes.h"
 
-#include "common/vk_common.h"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
@@ -130,7 +129,7 @@ bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 
 void RenderPassesSample::draw_renderpass(vkb::core::CommandBufferC &command_buffer, vkb::rendering::RenderTargetC &render_target)
 {
-	std::vector<vkb::LoadStoreInfo> load_store{2};
+	std::vector<vkb::common::LoadStoreInfoC> load_store{2};
 
 	// The load operation for the color attachment is selected by the user at run-time
 	auto loadop            = static_cast<VkAttachmentLoadOp>(load.value);

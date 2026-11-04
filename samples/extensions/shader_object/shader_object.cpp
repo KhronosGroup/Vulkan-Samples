@@ -16,10 +16,10 @@
  */
 
 #include "shader_object.h"
+#include "common/vk_initializers.h"
 #include <heightmap.h>
-#include <unordered_map>
-
 #include <json.hpp>
+#include <unordered_map>
 
 ShaderObject::ShaderObject()
 {

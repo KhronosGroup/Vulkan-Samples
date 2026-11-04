@@ -20,6 +20,7 @@
  */
 
 #include "ray_tracing_extended.h"
+#include "common/vk_initializers.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/material.h"
@@ -313,11 +314,10 @@ void RaytracingExtended::create_static_object_buffers()
 			auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
-			vkb::BufferMemoryBarrier barrier;
-			barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+			vkb::common::BufferMemoryBarrierC barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+			                                          .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			                                          .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+			                                          .dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT};
 			cmd->buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
 			return output_buffer;
 		};

@@ -17,6 +17,7 @@
  */
 
 #include "dynamic_rendering_local_read.h"
+#include "common/vk_initializers.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"

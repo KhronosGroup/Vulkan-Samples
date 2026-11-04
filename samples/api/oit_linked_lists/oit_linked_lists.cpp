@@ -16,6 +16,7 @@
  */
 
 #include "oit_linked_lists.h"
+#include "common/vk_initializers.h"
 #include <algorithm>
 
 OITLinkedLists::OITLinkedLists()

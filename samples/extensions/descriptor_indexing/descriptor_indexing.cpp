@@ -16,6 +16,7 @@
  */
 
 #include "descriptor_indexing.h"
+#include "common/vk_initializers.h"
 
 static constexpr uint32_t NumDescriptorsStreaming  = 2048;
 static constexpr uint32_t NumDescriptorsNonUniform = 64;

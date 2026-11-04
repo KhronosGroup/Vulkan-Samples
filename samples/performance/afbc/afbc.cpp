@@ -17,7 +17,6 @@
 
 #include "afbc.h"
 
-#include "common/vk_common.h"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"

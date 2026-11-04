@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@
  */
 
 #include "separate_image_sampler.h"
+#include "common/vk_initializers.h"
 
 SeparateImageSampler::SeparateImageSampler()
 {

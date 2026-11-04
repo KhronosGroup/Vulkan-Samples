@@ -17,6 +17,7 @@
 
 #include "fragment_density_map.h"
 #include "api_vulkan_sample.h"
+#include "common/vk_initializers.h"
 #include "scene_graph/components/mesh.h"
 #include <string>
 #include <vulkan/vulkan_core.h>

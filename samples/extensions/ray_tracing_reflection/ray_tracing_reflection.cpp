@@ -21,6 +21,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include "ray_tracing_reflection.h"
+#include "common/vk_initializers.h"
 #include <glm/gtc/type_ptr.hpp>
 
 struct ObjPlane : ObjModelCpu

@@ -360,13 +360,12 @@ void PostProcessingRenderPass::transition_attachments(const AttachmentSet       
 		ensure_src_access(prev_pass_barrier_info.image_write_access, prev_pass_barrier_info.pipeline_stage,
 		                  prev_layout);
 
-		vkb::ImageMemoryBarrier barrier;
-		barrier.old_layout      = render_target.get_layout(input);
-		barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		barrier.src_access_mask = prev_pass_barrier_info.image_write_access;
-		barrier.dst_access_mask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
-		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		vkb::common::ImageMemoryBarrierC barrier{.src_stage_mask  = prev_pass_barrier_info.pipeline_stage,
+		                                         .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                         .src_access_mask = prev_pass_barrier_info.image_write_access,
+		                                         .dst_access_mask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+		                                         .old_layout      = render_target.get_layout(input),
+		                                         .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
 		assert(input < views.size());
 		command_buffer.image_memory_barrier(views[input], barrier);
@@ -409,13 +408,14 @@ void PostProcessingRenderPass::transition_attachments(const AttachmentSet       
 			                  prev_layout);
 		}
 
-		vkb::ImageMemoryBarrier barrier;
-		barrier.old_layout      = prev_layout;
-		barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		barrier.src_access_mask = prev_pass_barrier_info.image_read_access;
-		barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
-		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
-		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		vkb::common::ImageMemoryBarrierC barrier{.src_stage_mask  = prev_pass_barrier_info.pipeline_stage,
+		                                         .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                         .src_access_mask = prev_pass_barrier_info.image_read_access,
+		                                         .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+		                                         .old_layout      = prev_layout,
+		                                         .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+
+		barrier.dst_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
 		assert(attachment < sampled_rt->get_views().size());
 		command_buffer.image_memory_barrier(sampled_rt->get_views()[attachment], barrier);
@@ -434,10 +434,8 @@ void PostProcessingRenderPass::transition_attachments(const AttachmentSet       
 			continue;
 		}
 
-		vkb::ImageMemoryBarrier barrier;
-		barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;        // = don't care about previous contents
-		barrier.new_layout      = output_layout;
-		barrier.src_access_mask = 0;
+		vkb::common::ImageMemoryBarrierC barrier{.old_layout = VK_IMAGE_LAYOUT_UNDEFINED,
+		                                         .new_layout = output_layout};
 		if (is_depth_stencil)
 		{
 			barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;

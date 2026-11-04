@@ -19,7 +19,6 @@
 
 #include <cstdio>
 
-#include "common/vk_common.h"
 #include "common/vk_initializers.h"
 #include "core/util/logging.hpp"
 

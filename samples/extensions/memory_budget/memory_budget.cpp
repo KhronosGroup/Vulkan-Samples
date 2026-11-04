@@ -23,6 +23,7 @@
 
 #include "memory_budget.h"
 #include "benchmark_mode/benchmark_mode.h"
+#include "common/vk_initializers.h"
 
 MemoryBudget::MemoryBudget()
 {

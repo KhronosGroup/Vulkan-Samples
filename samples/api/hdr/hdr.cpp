@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,7 @@
  */
 
 #include "hdr.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 HDR::HDR()

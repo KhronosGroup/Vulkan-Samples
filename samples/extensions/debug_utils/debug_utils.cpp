@@ -21,7 +21,7 @@
  */
 
 #include "debug_utils.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 DebugUtils::DebugUtils()

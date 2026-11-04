@@ -17,6 +17,7 @@
  */
 
 #include "descriptor_heap.h"
+#include "common/vk_initializers.h"
 
 DescriptorHeap::DescriptorHeap()
 {

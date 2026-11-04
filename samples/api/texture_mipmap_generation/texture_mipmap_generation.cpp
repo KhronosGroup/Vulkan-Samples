@@ -20,6 +20,7 @@
  */
 
 #include "texture_mipmap_generation.h"
+#include "common/vk_initializers.h"
 
 TextureMipMapGeneration::TextureMipMapGeneration()
 {

@@ -109,7 +109,7 @@ inline VkResult create_vk_renderpass(VkDevice device, VkRenderPassCreateInfo2KHR
 }        // namespace
 
 template <typename T>
-std::vector<T> get_attachment_descriptions(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos)
+std::vector<T> get_attachment_descriptions(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos)
 {
 	std::vector<T> attachment_descriptions;
 
@@ -324,7 +324,7 @@ T get_attachment_reference(const uint32_t attachment, const VkImageLayout layout
 }
 
 template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
-void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
 	if (attachments.size() != load_store_infos.size())
 	{
@@ -512,7 +512,7 @@ void RenderPass::create_renderpass(const std::vector<vkb::rendering::AttachmentC
 
 RenderPass::RenderPass(vkb::core::DeviceC                             &device,
                        const std::vector<vkb::rendering::AttachmentC> &attachments,
-                       const std::vector<LoadStoreInfo>               &load_store_infos,
+                       const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos,
                        const std::vector<SubpassInfo>                 &subpasses) :
     VulkanResource{VK_NULL_HANDLE, &device}, subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
     color_output_count{}

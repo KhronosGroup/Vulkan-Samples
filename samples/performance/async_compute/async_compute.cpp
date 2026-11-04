@@ -16,13 +16,11 @@
  */
 
 #include "async_compute.h"
-
 #include "api_vulkan_sample.h"
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-
 #include "scene_graph/components/orthographic_camera.h"
 #include "stats/stats.h"
 
@@ -331,13 +329,11 @@ void AsyncComputeSample::render_shadow_pass()
 	assert(!views.empty());
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                                .dst_stage_mask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                                .dst_access_mask =
+		                                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                                .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
@@ -347,13 +343,12 @@ void AsyncComputeSample::render_shadow_pass()
 	command_buffer->end_render_pass();
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                                .src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                                .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
 		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
@@ -387,25 +382,21 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		// We do not need to acquire color_targets[0] from present_graphics to early_graphics
 		// A queue transfer barrier is not necessary for the resource first access.
 		// Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer barrier.
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
 		command_buffer->image_memory_barrier(views[0], memory_barrier);
 	}
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                                .src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                                .dst_access_mask =
+		                                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                                .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 		command_buffer->image_memory_barrier(views[1], memory_barrier);
 	}
@@ -422,7 +413,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		//     This release barrier is replicated by the corresponding acquire_barrier_0 in the post_compute queue
 		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
-		vkb::ImageMemoryBarrier memory_barrier{
+		vkb::common::ImageMemoryBarrierC memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		    .dst_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,        // Ignored for the release barrier.
 		                                                                   // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
@@ -472,7 +463,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 		//     This acquire barrier is replicated by the corresponding release_barrier_1 in the post_compute queue
 		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
-		vkb::ImageMemoryBarrier memory_barrier{
+		vkb::common::ImageMemoryBarrierC memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,        // Ignored for the acquire barrier.
 		                                                                    // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
 		    .dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -490,7 +481,7 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 		//     This acquire barrier is replicated by the corresponding release_barrier_2 in the post_compute queue
 		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
-		vkb::ImageMemoryBarrier memory_barrier_2{
+		vkb::common::ImageMemoryBarrierC memory_barrier_2{
 		    .src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,        // Ignored for the acquire barrier.
 		                                                                    // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
 		    .dst_stage_mask   = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -571,7 +562,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		//     This acquire barrier is replicated by the corresponding release_barrier_0 in the early_graphics queue
 		//     The application must ensure the acquire operation happens after the release operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
-		vkb::ImageMemoryBarrier memory_barrier{
+		vkb::common::ImageMemoryBarrierC memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,        // Ignored for the acquire barrier.
 		                                                                   // Acquire barriers ignore src_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
 		    .dst_stage_mask   = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -593,14 +584,10 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		// We do not need to acquire blur_chain_views[1] from present_graphics to post_compute
 		// A queue transfer barrier is not necessary for the resource first access.
 		// Moreover, in our sample we do not care about the content at this point so we can skip the queue transfer barrier.
-		vkb::ImageMemoryBarrier memory_barrier{};
-
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		                                                .dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_GENERAL};
 
 		command_buffer->image_memory_barrier(view, memory_barrier);
 	};
@@ -612,7 +599,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		//     This release barrier is replicated by the corresponding acquire_barrier_2 in the present_graphics queue
 		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
-		vkb::ImageMemoryBarrier memory_barrier{
+		vkb::common::ImageMemoryBarrierC memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    .dst_stage_mask = is_final ? VkPipelineStageFlags(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT) : VkPipelineStageFlags(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT),        // Ignored for the release barrier.
 		                                                                                                                                                                 // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR
@@ -682,7 +669,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		//     This release barrier is replicated by the corresponding acquire_barrier_1 in the present_graphics queue
 		//     The application must ensure the release operation happens before the acquire operation. This sample uses semaphores for that.
 		//     The transfer ownership barriers are submitted twice (release and acquire) but they are only executed once.
-		vkb::ImageMemoryBarrier memory_barrier{
+		vkb::common::ImageMemoryBarrierC memory_barrier{
 		    .src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    .dst_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,        // Ignored for the release barrier.
 		                                                                   // Release barriers ignore dst_access_mask unless using VK_DEPENDENCY_QUEUE_FAMILY_OWNERSHIP_TRANSFER_USE_ALL_STAGES_BIT_KHR

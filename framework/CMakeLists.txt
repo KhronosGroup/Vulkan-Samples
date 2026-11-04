@@ -69,6 +69,10 @@ set(FRAMEWORK_FILES
 
 set(COMMON_FILES
     # Header Files
+    common/buffer_memory_barrier.h
+    common/g_buffer.h
+    common/image_memory_barrier.h
+    common/load_store_info.h
     common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
@@ -85,6 +89,7 @@ set(COMMON_FILES
     common/macros.h
     common/vulkan_exception.h
     # Source Files
+    common/g_buffer.cpp
     common/ktx_common.cpp
     common/vk_common.cpp
     common/utils.cpp

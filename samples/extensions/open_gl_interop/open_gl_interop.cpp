@@ -17,15 +17,12 @@
  */
 
 #include "open_gl_interop.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-
-#include "rendering/subpasses/forward_subpass.h"
-
 #include "offscreen_context.h"
+#include "rendering/subpasses/forward_subpass.h"
 
 constexpr const char *OPENGL_VERTEX_SHADER =
     R"SHADER(

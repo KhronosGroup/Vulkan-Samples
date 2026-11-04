@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "common/hpp_vk_common.h"
+#include "common/buffer_memory_barrier.h"
+#include "common/image_memory_barrier.h"
 #include "core/device.h"
 #include "core/hpp_descriptor_set_layout.h"
 #include "core/hpp_framebuffer.h"
@@ -72,14 +73,9 @@ class CommandBuffer
 	using SubpassContentsType   = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SubpassContents, VkSubpassContents>::type;
 	using ViewportType          = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::Viewport, VkViewport>::type;
 
-	using BufferMemoryBarrierType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPBufferMemoryBarrier, vkb::BufferMemoryBarrier>::type;
-	using FramebufferType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPFramebuffer, vkb::Framebuffer>::type;
-	using ImageMemoryBarrierType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPImageMemoryBarrier, vkb::ImageMemoryBarrier>::type;
+	using FramebufferType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPFramebuffer, vkb::Framebuffer>::type;
 	using ImageType          = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPImage, vkb::core::Image>::type;
 	using ImageViewType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPImageView, vkb::core::ImageView>::type;
-	using LoadStoreInfoType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPLoadStoreInfo, vkb::LoadStoreInfo>::type;
 	using PipelineLayoutType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
 	using QueryPoolType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueryPool, vkb::QueryPool>::type;
 	using RenderPassType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPRenderPass, vkb::RenderPass>::type;
@@ -115,7 +111,7 @@ class CommandBuffer
 
 	void                   begin_query(QueryPoolType const &query_pool, uint32_t query, QueryControlFlagsType flags);
 	void                   begin_render_pass(vkb::rendering::RenderTarget<bindingType> const                          &render_target,
-	                                         std::vector<LoadStoreInfoType> const                                     &load_store_infos,
+	                                         std::vector<vkb::common::LoadStoreInfo<bindingType>> const               &load_store_infos,
 	                                         std::vector<ClearValueType> const                                        &clear_values,
 	                                         std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses,
 	                                         SubpassContentsType                                                       contents = VK_SUBPASS_CONTENTS_INLINE);
@@ -135,7 +131,10 @@ class CommandBuffer
 	                                           std::vector<std::reference_wrapper<const vkb::core::Buffer<bindingType>>> const &buffers,
 	                                           std::vector<DeviceSizeType> const                                               &offsets);
 	void                   blit_image(ImageType const &src_img, ImageType const &dst_img, std::vector<ImageBlitType> const &regions);
-	void                   buffer_memory_barrier(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, DeviceSizeType size, BufferMemoryBarrierType const &memory_barrier);
+	void                   buffer_memory_barrier(vkb::core::Buffer<bindingType> const                &buffer,
+	                                             DeviceSizeType                                       offset,
+	                                             DeviceSizeType                                       size,
+	                                             vkb::common::BufferMemoryBarrier<bindingType> const &memory_barrier);
 	void                   clear(ClearAttachmentType const &info, ClearRectType const &rect);
 	void                   copy_buffer(vkb::core::Buffer<bindingType> const &src_buffer, vkb::core::Buffer<bindingType> const &dst_buffer, DeviceSizeType size);
 	void                   copy_buffer_to_image(vkb::core::Buffer<bindingType> const &buffer, ImageType const &image, std::vector<BufferImageCopyType> const &regions);
@@ -156,10 +155,10 @@ class CommandBuffer
 	void                   execute_commands(std::vector<std::shared_ptr<vkb::core::CommandBuffer<bindingType>>> &secondary_command_buffers);
 	CommandBufferLevelType get_level() const;
 	RenderPassType        &get_render_pass(vkb::rendering::RenderTarget<bindingType> const                          &render_target,
-	                                       std::vector<LoadStoreInfoType> const                                     &load_store_infos,
+	                                       std::vector<vkb::common::LoadStoreInfo<bindingType>> const               &load_store_infos,
 	                                       std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses);
-	void                   image_memory_barrier(ImageViewType const &image_view, ImageMemoryBarrierType const &memory_barrier) const;
-	void                   image_memory_barrier(vkb::rendering::RenderTarget<bindingType> &render_target, uint32_t view_index, ImageMemoryBarrierType const &memory_barrier) const;
+	void                   image_memory_barrier(ImageViewType const &image_view, vkb::common::ImageMemoryBarrier<bindingType> const &memory_barrier) const;
+	void                   image_memory_barrier(vkb::rendering::RenderTarget<bindingType> &render_target, uint32_t view_index, vkb::common::ImageMemoryBarrier<bindingType> const &memory_barrier) const;
 	void                   next_subpass();
 
 	/**
@@ -233,7 +232,7 @@ class CommandBuffer
 	void                      buffer_memory_barrier_impl(vkb::core::BufferCpp const                &buffer,
 	                                                     vk::DeviceSize                             offset,
 	                                                     vk::DeviceSize                             size,
-	                                                     vkb::common::HPPBufferMemoryBarrier const &memory_barrier);
+	                                                     vkb::common::BufferMemoryBarrierCpp const &memory_barrier);
 	void                      copy_buffer_impl(vkb::core::BufferCpp const &src_buffer, vkb::core::BufferCpp const &dst_buffer, vk::DeviceSize size);
 	void                      execute_commands_impl(std::vector<std::shared_ptr<vkb::core::CommandBuffer<vkb::BindingType::Cpp>>> &secondary_command_buffers);
 	void                      flush_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
@@ -241,9 +240,9 @@ class CommandBuffer
 	void                      flush_pipeline_state_impl(vkb::core::DeviceCpp &device, vk::PipelineBindPoint pipeline_bind_point);
 	vkb::core::HPPRenderPass &get_render_pass_impl(vkb::core::DeviceCpp                                           &device,
 	                                               vkb::rendering::RenderTargetCpp const                          &render_target,
-	                                               std::vector<vkb::common::HPPLoadStoreInfo> const               &load_store_infos,
+	                                               std::vector<vkb::common::LoadStoreInfoCpp> const               &load_store_infos,
 	                                               std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &subpasses);
-	void                      image_memory_barrier_impl(vkb::core::HPPImageView const &image_view, vkb::common::HPPImageMemoryBarrier const &memory_barrier) const;
+	void                      image_memory_barrier_impl(vkb::core::HPPImageView const &image_view, vkb::common::ImageMemoryBarrierCpp const &memory_barrier) const;
 	vk::Result                reset_impl(vkb::CommandBufferResetMode reset_mode);
 
   private:
@@ -392,7 +391,7 @@ inline void CommandBuffer<bindingType>::begin_query(QueryPoolType const &query_p
 
 template <vkb::BindingType bindingType>
 inline void CommandBuffer<bindingType>::begin_render_pass(vkb::rendering::RenderTarget<bindingType> const                          &render_target,
-                                                          std::vector<LoadStoreInfoType> const                                     &load_store_infos,
+                                                          std::vector<vkb::common::LoadStoreInfo<bindingType>> const               &load_store_infos,
                                                           std::vector<ClearValueType> const                                        &clear_values,
                                                           std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses,
                                                           SubpassContentsType                                                       contents)
@@ -615,10 +614,10 @@ inline void CommandBuffer<bindingType>::blit_image(ImageType const &src_img, Ima
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::buffer_memory_barrier(vkb::core::Buffer<bindingType> const &buffer,
-                                                              DeviceSizeType                        offset,
-                                                              DeviceSizeType                        size,
-                                                              BufferMemoryBarrierType const        &memory_barrier)
+inline void CommandBuffer<bindingType>::buffer_memory_barrier(vkb::core::Buffer<bindingType> const                &buffer,
+                                                              DeviceSizeType                                       offset,
+                                                              DeviceSizeType                                       size,
+                                                              vkb::common::BufferMemoryBarrier<bindingType> const &memory_barrier)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -629,7 +628,7 @@ inline void CommandBuffer<bindingType>::buffer_memory_barrier(vkb::core::Buffer<
 		buffer_memory_barrier_impl(reinterpret_cast<vkb::core::BufferCpp const &>(buffer),
 		                           static_cast<vk::DeviceSize>(offset),
 		                           static_cast<vk::DeviceSize>(size),
-		                           reinterpret_cast<vkb::common::HPPBufferMemoryBarrier const &>(memory_barrier));
+		                           reinterpret_cast<vkb::common::BufferMemoryBarrierCpp const &>(memory_barrier));
 	}
 }
 
@@ -637,7 +636,7 @@ template <vkb::BindingType bindingType>
 inline void CommandBuffer<bindingType>::buffer_memory_barrier_impl(vkb::core::BufferCpp const                &buffer,
                                                                    vk::DeviceSize                             offset,
                                                                    vk::DeviceSize                             size,
-                                                                   vkb::common::HPPBufferMemoryBarrier const &memory_barrier)
+                                                                   vkb::common::BufferMemoryBarrierCpp const &memory_barrier)
 {
 	vk::BufferMemoryBarrier buffer_memory_barrier{.srcAccessMask = memory_barrier.src_access_mask,
 	                                              .dstAccessMask = memory_barrier.dst_access_mask,
@@ -861,7 +860,7 @@ inline void CommandBuffer<bindingType>::execute_commands_impl(std::vector<std::s
 template <vkb::BindingType bindingType>
 inline typename vkb::core::CommandBuffer<bindingType>::RenderPassType &
     CommandBuffer<bindingType>::get_render_pass(vkb::rendering::RenderTarget<bindingType> const                          &render_target,
-                                                std::vector<LoadStoreInfoType> const                                     &load_store_infos,
+                                                std::vector<vkb::common::LoadStoreInfo<bindingType>> const               &load_store_infos,
                                                 std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> const &subpasses)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
@@ -873,17 +872,17 @@ inline typename vkb::core::CommandBuffer<bindingType>::RenderPassType &
 		return reinterpret_cast<vkb::RenderPass &>(
 		    get_render_pass_impl(reinterpret_cast<vkb::core::DeviceCpp &>(this->get_device()),
 		                         reinterpret_cast<vkb::rendering::RenderTargetCpp const &>(render_target),
-		                         reinterpret_cast<std::vector<vkb::common::HPPLoadStoreInfo> const &>(load_store_infos),
+		                         reinterpret_cast<std::vector<vkb::common::LoadStoreInfo<vkb::BindingType::Cpp>> const &>(load_store_infos),
 		                         reinterpret_cast<std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &>(subpasses)));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline vkb::core::HPPRenderPass &
-    CommandBuffer<bindingType>::get_render_pass_impl(vkb::core::DeviceCpp                                           &device,
-                                                     vkb::rendering::RenderTargetCpp const                          &render_target,
-                                                     std::vector<vkb::common::HPPLoadStoreInfo> const               &load_store_infos,
-                                                     std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const &subpasses)
+    CommandBuffer<bindingType>::get_render_pass_impl(vkb::core::DeviceCpp                                                 &device,
+                                                     vkb::rendering::RenderTargetCpp const                                &render_target,
+                                                     std::vector<vkb::common::LoadStoreInfo<vkb::BindingType::Cpp>> const &load_store_infos,
+                                                     std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> const       &subpasses)
 {
 	// Create render pass
 	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
@@ -907,7 +906,9 @@ inline vkb::core::HPPRenderPass &
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::image_memory_barrier(vkb::rendering::RenderTarget<bindingType> &render_target, uint32_t view_index, ImageMemoryBarrierType const &memory_barrier) const
+inline void CommandBuffer<bindingType>::image_memory_barrier(vkb::rendering::RenderTarget<bindingType>          &render_target,
+                                                             uint32_t                                            view_index,
+                                                             vkb::common::ImageMemoryBarrier<bindingType> const &memory_barrier) const
 {
 	auto const &image_view = render_target.get_views()[view_index];
 
@@ -918,14 +919,14 @@ inline void CommandBuffer<bindingType>::image_memory_barrier(vkb::rendering::Ren
 	else
 	{
 		image_memory_barrier_impl(reinterpret_cast<vkb::core::HPPImageView const &>(image_view),
-		                          reinterpret_cast<vkb::common::HPPImageMemoryBarrier const &>(memory_barrier));
+		                          reinterpret_cast<vkb::common::ImageMemoryBarrierCpp const &>(memory_barrier));
 	}
 
 	render_target.set_layout(view_index, memory_barrier.new_layout);
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::image_memory_barrier(ImageViewType const &image_view, ImageMemoryBarrierType const &memory_barrier) const
+inline void CommandBuffer<bindingType>::image_memory_barrier(ImageViewType const &image_view, vkb::common::ImageMemoryBarrier<bindingType> const &memory_barrier) const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -934,13 +935,13 @@ inline void CommandBuffer<bindingType>::image_memory_barrier(ImageViewType const
 	else
 	{
 		image_memory_barrier_impl(reinterpret_cast<vkb::core::HPPImageView const &>(image_view),
-		                          reinterpret_cast<vkb::common::HPPImageMemoryBarrier const &>(memory_barrier));
+		                          reinterpret_cast<vkb::common::ImageMemoryBarrierCpp const &>(memory_barrier));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline void CommandBuffer<bindingType>::image_memory_barrier_impl(vkb::core::HPPImageView const            &image_view,
-                                                                  vkb::common::HPPImageMemoryBarrier const &memory_barrier) const
+                                                                  vkb::common::ImageMemoryBarrierCpp const &memory_barrier) const
 {
 	// Adjust barrier's subresource range for depth images
 	auto subresource_range = image_view.get_subresource_range();

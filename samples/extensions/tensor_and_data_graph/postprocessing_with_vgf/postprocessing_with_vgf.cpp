@@ -17,7 +17,6 @@
 
 #include "postprocessing_with_vgf.h"
 
-#include "common/vk_common.h"
 #include "filesystem/filesystem.hpp"
 #include "gltf_loader.h"
 #include "gui.h"

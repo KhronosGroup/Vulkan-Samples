@@ -21,7 +21,7 @@
  */
 
 #include "portability.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 Portability::Portability() :

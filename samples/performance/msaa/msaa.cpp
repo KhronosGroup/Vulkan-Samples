@@ -17,7 +17,6 @@
 
 #include "msaa.h"
 
-#include "common/vk_common.h"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
@@ -388,7 +387,7 @@ void MSAASample::update_for_scene_and_postprocessing(bool msaa_enabled)
 }
 
 void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                        std::vector<vkb::LoadStoreInfo>           &load_store,
+                                        std::vector<vkb::common::LoadStoreInfoC>  &load_store,
                                         uint32_t                                   resolve_attachment)
 {
 	// Render to multisampled color attachment
@@ -423,7 +422,7 @@ void MSAASample::use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC
 }
 
 void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                         std::vector<vkb::LoadStoreInfo>           &load_store,
+                                         std::vector<vkb::common::LoadStoreInfoC>  &load_store,
                                          uint32_t                                   output_attachment)
 {
 	// Render to a single-sampled attachment
@@ -438,7 +437,7 @@ void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::rendering::Subpass
 }
 
 void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                          std::vector<vkb::LoadStoreInfo>           &load_store)
+                                          std::vector<vkb::common::LoadStoreInfoC>  &load_store)
 {
 	if (depth_writeback_resolve_supported && resolve_depth_on_writeback)
 	{
@@ -468,7 +467,7 @@ void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::rendering::Subpas
 }
 
 void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-                                                 std::vector<vkb::LoadStoreInfo>           &load_store)
+                                                 std::vector<vkb::common::LoadStoreInfoC>  &load_store)
 {
 	// Auxiliary single-sampled depth attachment is not used
 	load_store[i_depth_resolve].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -484,13 +483,10 @@ void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering:
 
 	auto swapchain_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = swapchain_layout;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .new_layout      = swapchain_layout};
 
 		for (auto &i_color : color_atts)
 		{
@@ -501,13 +497,11 @@ void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering:
 	}
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                                .dst_stage_mask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+		                                                .dst_access_mask =
+		                                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+		                                                .new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 		if (run_postprocessing)
 		{
@@ -573,12 +567,11 @@ void MSAASample::draw(vkb::core::CommandBufferC &command_buffer, vkb::rendering:
 
 	{
 		// Prepare swapchain for presentation
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = swapchain_layout;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		                                                .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .old_layout      = swapchain_layout,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
 
 		assert(i_swapchain < views.size());
 		command_buffer.image_memory_barrier(views[i_swapchain], memory_barrier);
@@ -632,13 +625,12 @@ void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC          
 {
 	{
 		// The multisampled color is the source of the resolve operation
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_READ_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .dst_access_mask = VK_ACCESS_TRANSFER_READ_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL};
 
 		assert(i_color_ms < views.size());
 		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
@@ -657,13 +649,12 @@ void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC          
 		// Prepare destination image for transfer operation
 		auto color_new_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = color_layout;
-		memory_barrier.new_layout      = color_new_layout;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		                                                .dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                                .old_layout      = color_layout,
+		                                                .new_layout      = color_new_layout};
 
 		color_layout = color_new_layout;
 
@@ -678,13 +669,12 @@ void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC          
 	{
 		auto color_new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = color_layout;
-		memory_barrier.new_layout      = color_new_layout;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                                .dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+		                                                .old_layout      = color_layout,
+		                                                .new_layout      = color_new_layout};
 
 		color_layout = color_new_layout;
 
@@ -692,13 +682,12 @@ void MSAASample::resolve_color_separate_pass(vkb::core::CommandBufferC          
 	}
 
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_READ_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .src_access_mask = VK_ACCESS_TRANSFER_READ_BIT,
+		                                                .dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
 		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
 	}

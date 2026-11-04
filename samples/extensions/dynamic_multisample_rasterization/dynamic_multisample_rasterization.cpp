@@ -16,7 +16,7 @@
  */
 
 #include "dynamic_multisample_rasterization.h"
-
+#include "common/vk_initializers.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"

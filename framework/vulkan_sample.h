@@ -575,13 +575,10 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp    
 
 	{
 		// Image 0 is the swapchain
-		vkb::common::HPPImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = vk::ImageLayout::eUndefined;
-		memory_barrier.new_layout      = vk::ImageLayout::eColorAttachmentOptimal;
-		memory_barrier.src_access_mask = {};
-		memory_barrier.dst_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
-		memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		vkb::common::ImageMemoryBarrierCpp memory_barrier{.src_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		                                                  .dst_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		                                                  .dst_access_mask = vk::AccessFlagBits::eColorAttachmentWrite,
+		                                                  .new_layout      = vk::ImageLayout::eColorAttachmentOptimal};
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
 		render_target.set_layout(0, memory_barrier.new_layout);
@@ -595,13 +592,12 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp    
 	}
 
 	{
-		vkb::common::HPPImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = vk::ImageLayout::eUndefined;
-		memory_barrier.new_layout      = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-		memory_barrier.src_access_mask = {};
-		memory_barrier.dst_access_mask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-		memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eTopOfPipe;
-		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+		vkb::common::ImageMemoryBarrierCpp memory_barrier{.src_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe,
+		                                                  .dst_stage_mask =
+		                                                      vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
+		                                                  .dst_access_mask =
+		                                                      vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+		                                                  .new_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal};
 
 		command_buffer.image_memory_barrier(views[1], memory_barrier);
 		render_target.set_layout(1, memory_barrier.new_layout);
@@ -618,12 +614,11 @@ inline void VulkanSample<bindingType>::draw_impl(vkb::core::CommandBufferCpp    
 	}
 
 	{
-		vkb::common::HPPImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = vk::ImageLayout::eColorAttachmentOptimal;
-		memory_barrier.new_layout      = vk::ImageLayout::ePresentSrcKHR;
-		memory_barrier.src_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
-		memory_barrier.src_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		memory_barrier.dst_stage_mask  = vk::PipelineStageFlagBits::eBottomOfPipe;
+		vkb::common::ImageMemoryBarrierCpp memory_barrier{.src_stage_mask  = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		                                                  .dst_stage_mask  = vk::PipelineStageFlagBits::eBottomOfPipe,
+		                                                  .src_access_mask = vk::AccessFlagBits::eColorAttachmentWrite,
+		                                                  .old_layout      = vk::ImageLayout::eColorAttachmentOptimal,
+		                                                  .new_layout      = vk::ImageLayout::ePresentSrcKHR};
 
 		command_buffer.image_memory_barrier(views[0], memory_barrier);
 		render_target.set_layout(0, memory_barrier.new_layout);
