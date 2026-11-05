@@ -35,9 +35,9 @@ class PipelineBinary : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   protected:
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:
 	// Resources for a minimal compute pipeline used for demonstrating pipeline binaries

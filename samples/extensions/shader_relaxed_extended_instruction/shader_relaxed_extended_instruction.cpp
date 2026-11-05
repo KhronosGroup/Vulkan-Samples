@@ -97,6 +97,21 @@ void ShaderRelaxedExtendedInstruction::build_command_buffers()
 	}
 }
 
+void ShaderRelaxedExtendedInstruction::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Require the feature for this sample
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SHADER_RELAXED_EXTENDED_INSTRUCTION_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR, shaderRelaxedExtendedInstruction);
+}
+
 void ShaderRelaxedExtendedInstruction::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -106,12 +121,6 @@ void ShaderRelaxedExtendedInstruction::request_device_extensions(std::unordered_
 
 	// Non-semantic info is the SPIR-V mechanism for non-semantic extended instruction sets
 	requested_extensions[VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void ShaderRelaxedExtendedInstruction::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// Require the feature for this sample
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceShaderRelaxedExtendedInstructionFeaturesKHR, shaderRelaxedExtendedInstruction);
 }
 
 std::unique_ptr<vkb::core::InstanceC> ShaderRelaxedExtendedInstruction::create_instance()

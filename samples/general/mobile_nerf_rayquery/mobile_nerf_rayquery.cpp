@@ -167,6 +167,36 @@ bool MobileNerfRayQuery::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+void MobileNerfRayQuery::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_RAY_QUERY_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderUniformBufferArrayNonUniformIndexing);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderStorageBufferArrayNonUniformIndexing);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceScalarBlockLayoutFeaturesEXT, scalarBlockLayout);
+}
+
 void MobileNerfRayQuery::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -186,19 +216,6 @@ void MobileNerfRayQuery::request_device_extensions(std::unordered_map<std::strin
 
 	// Use this extension for better storage buffers layout
 	requested_extensions[VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void MobileNerfRayQuery::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceAccelerationStructureFeaturesKHR, accelerationStructure);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceRayQueryFeaturesKHR, rayQuery);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderUniformBufferArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderStorageBufferArrayNonUniformIndexing);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceScalarBlockLayoutFeaturesEXT, scalarBlockLayout);
 }
 
 void MobileNerfRayQuery::render(float delta_time)

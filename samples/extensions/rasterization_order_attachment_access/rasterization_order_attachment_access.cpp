@@ -30,6 +30,30 @@ RasterizationOrderAttachmentAccess::RasterizationOrderAttachmentAccess()
 	render_pass = VK_NULL_HANDLE;
 }
 
+void RasterizationOrderAttachmentAccess::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+
+	auto const &gpu = get_physical_device();
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR, dynamicRenderingLocalRead);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
+
+	// ROAA is optional. Only the barrier fallback path runs on devices that don't support it
+	if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_EXTENSION_NAME))
+	{
+		roaa_supported = ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT, rasterizationOrderColorAttachmentAccess);
+		roaa_enabled   = roaa_supported;
+	}
+}
+
 void RasterizationOrderAttachmentAccess::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -38,21 +62,6 @@ void RasterizationOrderAttachmentAccess::request_device_extensions(std::unordere
 	requested_extensions[VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME]          = vkb::RequestMode::Required;
 	requested_extensions[VK_EXT_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME]                     = vkb::RequestMode::Required;
-}
-
-// Enables specific features within the requested extensions
-void RasterizationOrderAttachmentAccess::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingFeaturesKHR, dynamicRendering);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDynamicRenderingLocalReadFeaturesKHR, dynamicRenderingLocalRead);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
-
-	// ROAA is optional. Only the barrier fallback path runs on devices that don't support it
-	if (gpu.is_extension_supported(VK_EXT_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_EXTENSION_NAME))
-	{
-		roaa_supported = REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT, rasterizationOrderColorAttachmentAccess);
-		roaa_enabled   = roaa_supported;
-	}
 }
 
 // Initializes camera, loads assets, creates Vulkan resources, and records command buffers

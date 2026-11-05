@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,20 +47,20 @@ void Instancing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	auto &requested_features = gpu.get_mutable_requested_features();
 
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		requested_features.samplerAnisotropy = VK_TRUE;
 	}
 	// Enable texture compression
-	if (gpu.get_features().textureCompressionBC)
+	if (gpu.get_supported_features().textureCompressionBC)
 	{
 		requested_features.textureCompressionBC = VK_TRUE;
 	}
-	else if (gpu.get_features().textureCompressionASTC_LDR)
+	else if (gpu.get_supported_features().textureCompressionASTC_LDR)
 	{
 		requested_features.textureCompressionASTC_LDR = VK_TRUE;
 	}
-	else if (gpu.get_features().textureCompressionETC2)
+	else if (gpu.get_supported_features().textureCompressionETC2)
 	{
 		requested_features.textureCompressionETC2 = VK_TRUE;
 	}

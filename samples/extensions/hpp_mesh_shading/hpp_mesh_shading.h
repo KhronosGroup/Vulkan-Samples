@@ -35,8 +35,8 @@ class HPPMeshShading : public HPPApiVulkanSample
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from vkb::VulkanSample
+	void extend_device_create_info(vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> &scb) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
-	void request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu) override;
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;

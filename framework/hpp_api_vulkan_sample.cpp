@@ -827,7 +827,7 @@ vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode ad
 	    format,
 	    vk::Filter::eLinear,
 	    address_mode,
-	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    get_device().get_gpu().get_supported_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
 	    static_cast<float>(mipmaps_count));
 }
 

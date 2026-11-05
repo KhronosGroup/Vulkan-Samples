@@ -92,7 +92,7 @@ uint32_t ShaderDebugPrintf::get_api_version() const
 
 void ShaderDebugPrintf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	auto const &supportedFeatures = gpu.get_features();
+	auto const &supportedFeatures = gpu.get_supported_features();
 	auto       &requestedFeatures = gpu.get_mutable_requested_features();
 
 	// debugPrintfEXT requires fragmentStoresAndAtomics and vertexPipelineStoresAndAtomics
