@@ -1051,7 +1051,7 @@ void FragmentDensityMap::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		else
 		{
 			available_options.supports_fdm = true;
-			available_options.supports_dynamic_fdm &= static_cast<bool>(supported_extension_features.fragmentDensityMapDynamic);
+			available_options.supports_dynamic_fdm = static_cast<bool>(supported_extension_features.fragmentDensityMapDynamic);
 			if (!available_options.supports_dynamic_fdm)
 			{
 				LOGW("Dynamic FDM is not supported. The FDM cannot be updated.");
