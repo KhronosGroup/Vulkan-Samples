@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "vulkan_type_mapping.h"
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb

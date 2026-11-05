@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "platform/window.h"
 
 struct GLFWwindow;

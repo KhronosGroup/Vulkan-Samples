@@ -20,7 +20,7 @@
  */
 
 #include "terrain_tessellation.h"
-
+#include "common/vk_initializers.h"
 #include "heightmap.h"
 
 TerrainTessellation::TerrainTessellation()

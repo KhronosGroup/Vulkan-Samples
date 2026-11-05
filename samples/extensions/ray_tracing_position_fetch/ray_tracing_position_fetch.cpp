@@ -16,6 +16,7 @@
  */
 
 #include "ray_tracing_position_fetch.h"
+#include "common/vk_initializers.h"
 #include "scene_graph/components/mesh.h"
 
 RayTracingPositionFetch::RayTracingPositionFetch()

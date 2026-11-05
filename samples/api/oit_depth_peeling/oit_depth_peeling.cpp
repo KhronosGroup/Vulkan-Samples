@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Google
+/* Copyright (c) 2024-2026, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,7 @@
  */
 
 #include "oit_depth_peeling.h"
+#include "common/vk_initializers.h"
 #include <algorithm>
 
 OITDepthPeeling::OITDepthPeeling()

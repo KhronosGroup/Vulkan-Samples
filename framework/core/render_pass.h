@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/load_store_info.h"
 #include "core/vulkan_resource.h"
 
 namespace vkb
@@ -57,7 +58,7 @@ class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
   public:
 	RenderPass(vkb::core::DeviceC                             &device,
 	           const std::vector<vkb::rendering::AttachmentC> &attachments,
-	           const std::vector<LoadStoreInfo>               &load_store_infos,
+	           const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos,
 	           const std::vector<SubpassInfo>                 &subpasses);
 
 	RenderPass(const RenderPass &) = delete;
@@ -78,7 +79,7 @@ class RenderPass : public vkb::core::VulkanResourceC<VkRenderPass>
 	size_t subpass_count;
 
 	template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
-	void create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
+	void create_renderpass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
 
 	std::vector<uint32_t> color_output_count;
 };

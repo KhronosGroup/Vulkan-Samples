@@ -20,6 +20,7 @@
  */
 
 #include "texture_loading.h"
+#include "common/vk_initializers.h"
 
 TextureLoading::TextureLoading()
 {

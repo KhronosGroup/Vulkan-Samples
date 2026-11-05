@@ -20,8 +20,8 @@
  */
 
 #include "compute_nbody.h"
-
 #include "benchmark_mode/benchmark_mode.h"
+#include "common/vk_initializers.h"
 
 ComputeNBody::ComputeNBody()
 {

@@ -98,11 +98,10 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 	cmd->copy_buffer(staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
 
-	vkb::BufferMemoryBarrier barrier;
-	barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+	vkb::common::BufferMemoryBarrierC barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                                          .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                                          .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+	                                          .dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT};
 	cmd->buffer_memory_barrier(*blob_buffer, 0, VK_WHOLE_SIZE, barrier);
 	cmd->end();
 
@@ -255,13 +254,10 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &comman
 	command_buffer.bind_image(*image_view, 0, 1, 0);
 
 	// Wait for fragment shader is done reading before we can write in compute.
-	vkb::ImageMemoryBarrier write_after_read_hazard;
-	write_after_read_hazard.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	write_after_read_hazard.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	write_after_read_hazard.src_access_mask = 0;
-	write_after_read_hazard.dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
-	write_after_read_hazard.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-	write_after_read_hazard.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
+	vkb::common::ImageMemoryBarrierC write_after_read_hazard{.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	                                                         .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                                                         .dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
+	                                                         .new_layout      = VK_IMAGE_LAYOUT_GENERAL};
 	command_buffer.image_memory_barrier(*image_view, write_after_read_hazard);
 
 	// 16-bit push constants are supported by VK_KHR_16bit_storage, which is handy for conserving space without
@@ -307,13 +303,12 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::core::CommandBufferC &comman
 	// Workgroup size is (8, 8)
 	command_buffer.dispatch(Width / 8, Height / 8, 1);
 
-	vkb::ImageMemoryBarrier to_fragment_barrier;
-	to_fragment_barrier.old_layout      = VK_IMAGE_LAYOUT_GENERAL;
-	to_fragment_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	to_fragment_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	to_fragment_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	to_fragment_barrier.src_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
-	to_fragment_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
+	vkb::common::ImageMemoryBarrierC to_fragment_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+	                                                     .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	                                                     .src_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
+	                                                     .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+	                                                     .old_layout      = VK_IMAGE_LAYOUT_GENERAL,
+	                                                     .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 	command_buffer.image_memory_barrier(*image_view, to_fragment_barrier);
 
 	// Blit result to screen and render UI.

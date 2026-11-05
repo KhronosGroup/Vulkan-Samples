@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
+#include "logic_op_dynamic_state.h"
+#include "common/vk_initializers.h"
+#include "gltf_loader.h"
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "logic_op_dynamic_state.h"
-
-#include "gltf_loader.h"
 
 /* Initialize the static variable containing a vector of logic operations' labels for GUI */
 std::vector<std::string> LogicOpDynamicState::GUI_settings::logic_op_names =

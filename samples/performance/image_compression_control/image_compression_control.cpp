@@ -17,7 +17,6 @@
 
 #include "image_compression_control.h"
 
-#include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/platform.h"

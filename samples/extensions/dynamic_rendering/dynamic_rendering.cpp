@@ -18,6 +18,7 @@
  */
 
 #include "dynamic_rendering.h"
+#include "common/vk_initializers.h"
 
 DynamicRendering::DynamicRendering() :
     enable_dynamic(true)

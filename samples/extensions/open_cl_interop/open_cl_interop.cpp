@@ -16,8 +16,7 @@
  */
 
 #include "open_cl_interop.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "gui.h"
 
 #include <sstream>

@@ -16,6 +16,7 @@
  */
 
 #include "calibrated_timestamps.h"
+#include "common/vk_initializers.h"
 
 std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 {

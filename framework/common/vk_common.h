@@ -19,22 +19,14 @@
 
 #pragma once
 
-#include <cstdio>
 #include <map>
-#include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-#include <vk_mem_alloc.h>
-#include <volk.h>
+#include <vulkan/vulkan.h>
 
 #define VK_FLAGS_NONE 0        // Custom define for better code readability
 
 #define DEFAULT_FENCE_TIMEOUT 100000000000        // Default fence timeout in nanoseconds
-
-template <class T>
-using ShaderStageMap = std::map<VkShaderStageFlagBits, T>;
 
 template <class T>
 using BindingMap = std::map<uint32_t, std::map<uint32_t, T>>;
@@ -173,44 +165,6 @@ VkSurfaceFormatKHR
                               VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32});
 
 /**
- * @brief Image memory barrier structure used to define
- *        memory access for an image view during command recording.
- */
-struct ImageMemoryBarrier
-{
-	VkPipelineStageFlags src_stage_mask{VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT};
-
-	VkPipelineStageFlags dst_stage_mask{VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-
-	VkAccessFlags src_access_mask{0};
-
-	VkAccessFlags dst_access_mask{0};
-
-	VkImageLayout old_layout{VK_IMAGE_LAYOUT_UNDEFINED};
-
-	VkImageLayout new_layout{VK_IMAGE_LAYOUT_UNDEFINED};
-
-	uint32_t src_queue_family{VK_QUEUE_FAMILY_IGNORED};
-
-	uint32_t dst_queue_family{VK_QUEUE_FAMILY_IGNORED};
-};
-
-/**
- * @brief Buffer memory barrier structure used to define
- *        memory access for a buffer during command recording.
- */
-struct BufferMemoryBarrier
-{
-	VkPipelineStageFlags src_stage_mask{VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT};
-
-	VkPipelineStageFlags dst_stage_mask{VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
-
-	VkAccessFlags src_access_mask{0};
-
-	VkAccessFlags dst_access_mask{0};
-};
-
-/**
  * @brief Put an image memory barrier for a layout transition of an image, using explicitly give transition parameters.
  * @param command_buffer The VkCommandBuffer to record the barrier.
  * @param image The VkImage to transition.
@@ -289,39 +243,6 @@ VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysica
                                                                        const VkImageCreateInfo &create_info);
 
 VkImageCompressionPropertiesEXT query_applied_compression(VkDevice device, VkImage image);
-
-/**
- * @brief Load and store info for a render pass attachment.
- */
-struct LoadStoreInfo
-{
-	VkAttachmentLoadOp load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
-
-	VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
-};
-
-namespace gbuffer
-{
-/**
- * @return Load store info to load all and store only the swapchain
- */
-std::vector<LoadStoreInfo> get_load_all_store_swapchain();
-
-/**
- * @return Load store info to clear all and store only the swapchain
- */
-std::vector<LoadStoreInfo> get_clear_all_store_swapchain();
-
-/**
- * @return Load store info to clear and store all images
- */
-std::vector<LoadStoreInfo> get_clear_store_all();
-
-/**
- * @return Default clear values for the G-buffer
- */
-std::vector<VkClearValue> get_clear_value();
-}        // namespace gbuffer
 
 uint32_t get_queue_family_index(std::vector<VkQueueFamilyProperties> const &queue_family_properties,
                                 VkQueueFlagBits                             queue_flag);

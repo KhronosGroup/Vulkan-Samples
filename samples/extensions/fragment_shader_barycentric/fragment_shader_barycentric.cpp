@@ -16,6 +16,7 @@
  */
 
 #include "fragment_shader_barycentric.h"
+#include "common/vk_initializers.h"
 
 FragmentShaderBarycentric::FragmentShaderBarycentric()
 {

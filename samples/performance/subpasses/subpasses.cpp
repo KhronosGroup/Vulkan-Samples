@@ -17,7 +17,7 @@
 
 #include "subpasses.h"
 
-#include "common/vk_common.h"
+#include "common/g_buffer.h"
 
 #include "gui.h"
 #include "rendering/pipeline_state.h"
@@ -419,7 +419,7 @@ void Subpasses::draw_renderpasses(vkb::core::CommandBufferC &command_buffer, vkb
 	{
 		auto &view = render_target.get_views()[i];
 
-		vkb::ImageMemoryBarrier barrier;
+		vkb::common::ImageMemoryBarrierC barrier;
 
 		if (vkb::is_depth_format(view.get_format()))
 		{

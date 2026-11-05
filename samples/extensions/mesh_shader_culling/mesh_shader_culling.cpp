@@ -19,6 +19,7 @@
  */
 
 #include "mesh_shader_culling.h"
+#include "common/vk_initializers.h"
 
 MeshShaderCulling::MeshShaderCulling()
 {

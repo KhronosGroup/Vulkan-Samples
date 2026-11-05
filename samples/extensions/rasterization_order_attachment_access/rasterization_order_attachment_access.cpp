@@ -16,6 +16,7 @@
  */
 
 #include "rasterization_order_attachment_access.h"
+#include "common/vk_initializers.h"
 
 // ============================================================================
 // Initialization

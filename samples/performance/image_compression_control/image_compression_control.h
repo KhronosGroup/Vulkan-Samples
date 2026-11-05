@@ -83,7 +83,7 @@ class ImageCompressionControlSample : public vkb::VulkanSampleC
 	 * @brief Load/store operations of the forward rendering pass attachments
 	 * Used to specify that the color output must be stored to main memory.
 	 */
-	std::vector<vkb::LoadStoreInfo> scene_load_store{};
+	std::vector<vkb::common::LoadStoreInfoC> scene_load_store{};
 
 	/**
 	 * @brief Color image parameters

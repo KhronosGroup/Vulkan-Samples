@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "extended_dynamic_state2.h"
-
+#include "common/vk_initializers.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/sub_mesh.h"
+#include <memory>
+#include <string>
+#include <vector>
 
 ExtendedDynamicState2::ExtendedDynamicState2()
 {

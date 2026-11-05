@@ -17,6 +17,7 @@
  */
 
 #include "color_write_enable.h"
+#include "common/vk_initializers.h"
 
 ColorWriteEnable::~ColorWriteEnable()
 {

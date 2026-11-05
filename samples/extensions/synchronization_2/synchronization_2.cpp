@@ -21,6 +21,7 @@
  */
 
 #include "synchronization_2.h"
+#include "common/vk_initializers.h"
 
 Synchronization2::Synchronization2()
 {

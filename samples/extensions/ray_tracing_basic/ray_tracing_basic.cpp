@@ -20,6 +20,7 @@
  */
 
 #include "ray_tracing_basic.h"
+#include "common/vk_initializers.h"
 
 RaytracingBasic::RaytracingBasic()
 {

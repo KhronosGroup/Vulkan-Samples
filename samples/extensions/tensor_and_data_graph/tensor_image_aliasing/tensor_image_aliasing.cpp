@@ -17,7 +17,6 @@
 
 #include "tensor_image_aliasing.h"
 
-#include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
 #include "rendering/subpasses/forward_subpass.h"

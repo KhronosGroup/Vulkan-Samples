@@ -18,7 +18,6 @@
 #include "hello_triangle_1_3.h"
 
 #include "common/macros.h"
-#include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "platform/window.h"

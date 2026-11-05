@@ -17,7 +17,6 @@
 
 #include "pipeline_binary.h"
 
-#include "common/vk_common.h"
 #include "common/vk_initializers.h"
 #include "core/device.h"
 #include "core/util/logging.hpp"

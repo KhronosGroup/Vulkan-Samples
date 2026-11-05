@@ -141,9 +141,9 @@ struct hash<vkb::rendering::AttachmentC>
 };
 
 template <>
-struct hash<vkb::LoadStoreInfo>
+struct hash<vkb::common::LoadStoreInfoC>
 {
-	std::size_t operator()(const vkb::LoadStoreInfo &load_store_info) const
+	std::size_t operator()(const vkb::common::LoadStoreInfoC &load_store_info) const
 	{
 		std::size_t result = 0;
 
@@ -599,7 +599,8 @@ inline void hash_param<std::vector<vkb::rendering::AttachmentC>>(size_t         
 }
 
 template <>
-inline void hash_param<std::vector<LoadStoreInfo>>(size_t &seed, const std::vector<LoadStoreInfo> &value)
+inline void hash_param<std::vector<vkb::common::LoadStoreInfoC>>(size_t                                         &seed,
+                                                                 const std::vector<vkb::common::LoadStoreInfoC> &value)
 {
 	for (auto &load_store_info : value)
 	{

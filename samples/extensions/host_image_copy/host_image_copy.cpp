@@ -16,6 +16,7 @@
  */
 
 #include "host_image_copy.h"
+#include "common/vk_initializers.h"
 
 HostImageCopy::HostImageCopy()
 {

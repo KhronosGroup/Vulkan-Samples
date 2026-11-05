@@ -16,8 +16,7 @@
  */
 
 #include "open_cl_interop_arm.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "gui.h"
 

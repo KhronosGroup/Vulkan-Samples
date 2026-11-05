@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/vk_common.h"
-
 #include "core/util/logging.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_format_traits.hpp"
@@ -28,34 +27,8 @@ namespace vkb
 namespace common
 {
 /**
- * @brief facade helper functions and structs around the functions and structs in common/vk_common, providing a vulkan.hpp-based interface
+ * @brief facade helper functions around the functions in common/vk_common, providing a vulkan.hpp-based interface
  */
-
-struct HPPBufferMemoryBarrier
-{
-	vk::PipelineStageFlags src_stage_mask  = vk::PipelineStageFlagBits::eBottomOfPipe;
-	vk::PipelineStageFlags dst_stage_mask  = vk::PipelineStageFlagBits::eTopOfPipe;
-	vk::AccessFlags        src_access_mask = {};
-	vk::AccessFlags        dst_access_mask = {};
-};
-
-struct HPPImageMemoryBarrier
-{
-	vk::PipelineStageFlags src_stage_mask = vk::PipelineStageFlagBits::eBottomOfPipe;
-	vk::PipelineStageFlags dst_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe;
-	vk::AccessFlags        src_access_mask;
-	vk::AccessFlags        dst_access_mask;
-	vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
-	vk::ImageLayout        new_layout       = vk::ImageLayout::eUndefined;
-	uint32_t               src_queue_family = VK_QUEUE_FAMILY_IGNORED;
-	uint32_t               dst_queue_family = VK_QUEUE_FAMILY_IGNORED;
-};
-
-struct HPPLoadStoreInfo
-{
-	vk::AttachmentLoadOp  load_op  = vk::AttachmentLoadOp::eClear;
-	vk::AttachmentStoreOp store_op = vk::AttachmentStoreOp::eStore;
-};
 
 inline int32_t get_bits_per_pixel(vk::Format format)
 {
