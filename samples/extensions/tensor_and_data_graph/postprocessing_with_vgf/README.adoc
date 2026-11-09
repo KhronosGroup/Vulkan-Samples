@@ -55,8 +55,8 @@ In this sample the VGF file has been generated offline, but there are a number o
 The link:https://github.com/arm/ai-ml-sdk-model-converter[ai-ml-sdk-model-converter] tool from the link:https://github.com/arm/ai-ml-sdk-for-vulkan[ai-ml-sdk-for-vulkan] can be used to create VGF files.
 
 This tool currently supports several different link:https://www.mlplatform.org/tosa/[TOSA] encodings as inputs such as TOSA FlatBuffers, TOSA MLIR bytecode and TOSA MLIR textual format.
-The link:https://review.mlplatform.org/plugins/gitiles/tosa/tosa_mlir_translator[tosa_mlir_translator] can be used to translate TOSA MLIR dialect into TOSA Flatbuffers.
-The link:https://review.mlplatform.org/plugins/gitiles/tosa/serialization_lib[TOSA Serialization Library] also provides an API for creating TOSA FlatBuffers.
+The link:https://gitlab.arm.com/tosa/tosa-tools/-/tree/main/mlir_translator[TOSA MLIR Translator] can be used to translate TOSA MLIR dialect into TOSA Flatbuffers.
+The link:https://gitlab.arm.com/tosa/tosa-tools/-/tree/main/serialization[TOSA Serialization Library] also provides an API for creating TOSA FlatBuffers.
 
 === ai-ml-sdk-vgf-library Encoder
 
