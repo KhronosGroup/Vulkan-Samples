@@ -47,15 +47,15 @@ To detect this, check for queue families with only the  `vk::QueueFlagBits::eTra
 
 Without mip mapping:
 
-image::samples/api/texture_mipmap_generation/images/mip_mapping_off.jpg[Off,512px]
+image::samples/api/texture_mipmap_generation/images/mip_mapping_off.jpg[Without mip mapping,512px]
 
 Using mip mapping with a bilinear filter:
 
-image::samples/api/texture_mipmap_generation/images/mip_mapping_bilinear.jpg[Bilinear,512px]
+image::samples/api/texture_mipmap_generation/images/mip_mapping_bilinear.jpg[Using mip mapping with a bilinear filter,512px]
 
 Using mip mapping with an anisotropic filter:
 
-image::samples/api/texture_mipmap_generation/images/mip_mapping_anisotropic.jpg[Anisotropic,512px]
+image::samples/api/texture_mipmap_generation/images/mip_mapping_anisotropic.jpg[Using mip mapping with an anisotropic filter,512px]
 
 == Requirements
 

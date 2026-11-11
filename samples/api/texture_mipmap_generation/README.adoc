@@ -43,15 +43,15 @@ To detect this, check for queue families with only the  `VK_QUEUE_TRANSFER_BIT` 
 
 Without mip mapping:
 
-image::./images/mip_mapping_off.jpg[Off,512px]
+image::./images/mip_mapping_off.jpg[Without mip mapping,512px]
 
 Using mip mapping with a bilinear filter:
 
-image:./images/mip_mapping_bilinear.jpg[Bilinear,512px]
+image:./images/mip_mapping_bilinear.jpg[Using mip mapping with a bilinear filter,512px]
 
 Using mip mapping with an anisotropic filter:
 
-image:./images/mip_mapping_anisotropic.jpg[Anisotropic,512px]
+image:./images/mip_mapping_anisotropic.jpg[Using mip mapping with an anisotropic filter,512px]
 
 == Requirements
 
