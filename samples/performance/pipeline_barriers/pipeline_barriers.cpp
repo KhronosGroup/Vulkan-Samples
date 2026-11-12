@@ -221,7 +221,8 @@ void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rend
 	}
 
 	{
-		vkb::common::ImageMemoryBarrierC memory_barrier{.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                                .new_layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
 		switch (dependency_type)
 		{
@@ -316,6 +317,7 @@ void PipelineBarriers::draw(vkb::core::CommandBufferC &command_buffer, vkb::rend
 
 	{
 		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 		                                                .src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		                                                .old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		                                                .new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};

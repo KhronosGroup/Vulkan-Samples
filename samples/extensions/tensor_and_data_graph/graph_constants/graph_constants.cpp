@@ -489,6 +489,7 @@ void GraphConstants::draw_renderpass(vkb::core::CommandBufferC &command_buffer, 
 	                                                       .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 	                                                       .src_access_mask = VK_ACCESS_SHADER_WRITE_BIT,
 	                                                       .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+	                                                       .old_layout      = VK_IMAGE_LAYOUT_GENERAL,
 	                                                       .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 	command_buffer.image_memory_barrier(*output_image_view, output_image_barrier2);
 
