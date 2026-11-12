@@ -113,7 +113,7 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	return true;
 }
 
-constexpr std::vector<VkImageCompressionFixedRateFlagBitsEXT> vectorize_flags(VkImageCompressionFixedRateFlagsEXT flags)
+std::vector<VkImageCompressionFixedRateFlagBitsEXT> vectorize_flags(VkImageCompressionFixedRateFlagsEXT flags)
 {
 	auto flag_bits = vkb::common::vectorize_flags(static_cast<vk::ImageCompressionFixedRateFlagsEXT>(flags));
 	return *reinterpret_cast<std::vector<VkImageCompressionFixedRateFlagBitsEXT> *>(&flag_bits);
