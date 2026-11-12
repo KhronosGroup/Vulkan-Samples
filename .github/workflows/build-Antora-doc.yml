@@ -44,7 +44,8 @@ jobs:
       - name: "setup npm"
         uses: actions/setup-node@v3
         with:
-          node-version: 'latest'
+          # Pin Node.js with bundled npm 11; npm 12 blocks the Git dependencies used here.
+          node-version: '26.13.0'
           cache: 'npm'
           cache-dependency-path: ./Vulkan-Site/docs-site/package-lock.json
 
