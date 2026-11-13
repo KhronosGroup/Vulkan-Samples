@@ -163,6 +163,22 @@ void ComputeShaderDerivatives::create_output_buffer_and_descriptors()
 	VK_CHECK(vkCreateDescriptorPool(device, &pool_ci, nullptr, &compute_descriptor_pool));
 }
 
+void ComputeShaderDerivatives::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	// Request both derivative group modes as OPTIONAL, prefer Quads if available at runtime.
+	// Some implementations only support computeDerivativeGroupLinear.
+	auto const &gpu = get_physical_device();
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME));
+	ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupQuads);
+	ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupLinear);
+}
+
 void ComputeShaderDerivatives::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -180,13 +196,8 @@ void ComputeShaderDerivatives::request_device_extensions(std::unordered_map<std:
 
 void ComputeShaderDerivatives::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	// Request both derivative group modes as OPTIONAL, prefer Quads if available at runtime.
-	// Some implementations only support computeDerivativeGroupLinear.
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupQuads);
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR, computeDerivativeGroupLinear);
-
 	// Storage image read/write without format (required for storage images without explicit format qualifiers)
-	if (gpu.get_features().shaderStorageImageReadWithoutFormat)
+	if (gpu.get_supported_features().shaderStorageImageReadWithoutFormat)
 	{
 		gpu.get_mutable_requested_features().shaderStorageImageReadWithoutFormat = VK_TRUE;
 	}
@@ -194,7 +205,7 @@ void ComputeShaderDerivatives::request_gpu_features(vkb::core::PhysicalDeviceC &
 	{
 		throw std::runtime_error("GPU does not support shaderStorageImageReadWithoutFormat feature, which is required for this sample.");
 	}
-	if (gpu.get_features().shaderStorageImageWriteWithoutFormat)
+	if (gpu.get_supported_features().shaderStorageImageWriteWithoutFormat)
 	{
 		gpu.get_mutable_requested_features().shaderStorageImageWriteWithoutFormat = VK_TRUE;
 	}

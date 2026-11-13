@@ -1,5 +1,5 @@
-/* Copyright (c) 2024-2025, Google
- * Copyright (c) 2024-2025, NVIDIA
+/* Copyright (c) 2024-2026, Google
+ * Copyright (c) 2024-2026, NVIDIA
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,7 +78,7 @@ bool HPPOITDepthPeeling::resize(const uint32_t width, const uint32_t height)
 
 void HPPOITDepthPeeling::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}

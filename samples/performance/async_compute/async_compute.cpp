@@ -38,13 +38,21 @@ AsyncComputeSample::AsyncComputeSample()
 	config.insert<vkb::BoolSetting>(1, double_buffer_hdr_frames, true);
 }
 
-void AsyncComputeSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
 #ifdef VKB_ENABLE_PORTABILITY
+void AsyncComputeSample::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#	if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#	endif
+
+	auto const &gpu = get_physical_device();
+
 	// Since sampler_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
-#endif
+	ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 }
+#endif
 
 void AsyncComputeSample::draw_gui()
 {

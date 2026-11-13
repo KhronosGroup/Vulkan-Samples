@@ -54,6 +54,7 @@ class ComputeShadersWithTensors : public vkb::VulkanSampleC
 	ComputeShadersWithTensors();
 	~ComputeShadersWithTensors();
 
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
 	bool prepare(const vkb::ApplicationOptions &options) override;

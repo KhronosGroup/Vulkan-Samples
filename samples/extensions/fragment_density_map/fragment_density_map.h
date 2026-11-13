@@ -43,6 +43,7 @@ class FragmentDensityMap : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   protected:
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
@@ -94,7 +95,7 @@ class FragmentDensityMap : public ApiVulkanSample
 
 	struct
 	{
-		bool supports_dynamic_fdm{true};
+		bool supports_dynamic_fdm{false};
 		bool supports_fdm{false};
 	} available_options{};
 

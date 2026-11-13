@@ -380,9 +380,23 @@ void FragmentShaderBarycentric::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
+void FragmentShaderBarycentric::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR, fragmentShaderBarycentric);
+}
+
 void FragmentShaderBarycentric::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
-	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+	ApiVulkanSample::request_device_extensions(requested_extensions);
 
 	requested_extensions[VK_KHR_FRAGMENT_SHADER_BARYCENTRIC_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
@@ -393,9 +407,7 @@ void FragmentShaderBarycentric::request_device_extensions(std::unordered_map<std
  */
 void FragmentShaderBarycentric::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR, fragmentShaderBarycentric);
-
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;
 	}

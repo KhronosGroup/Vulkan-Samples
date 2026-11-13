@@ -66,6 +66,22 @@ bool HPPMeshShading::prepare(const vkb::ApplicationOptions &options)
 	return prepared;
 }
 
+void HPPMeshShading::extend_device_create_info(vkb::StructureChainBuilderCpp<vk::DeviceCreateInfo> &scb)
+{
+	HPPApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	vk::DeviceCreateInfo const *create_info = scb.get_struct<vk::DeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Enable extension features required by this sample
+	// These are passed to device creation via a pNext structure chain
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, vk::EXTMeshShaderExtensionName));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, vk::PhysicalDeviceMeshShaderFeaturesEXT, meshShader);
+}
+
 void HPPMeshShading::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleCpp::request_device_extensions(requested_extensions);
@@ -74,13 +90,6 @@ void HPPMeshShading::request_device_extensions(std::unordered_map<std::string, v
 	requested_extensions[VK_EXT_MESH_SHADER_EXTENSION_NAME]           = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME]             = vkb::RequestMode::Required;
-}
-
-void HPPMeshShading::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
-{
-	// Enable extension features required by this sample
-	// These are passed to device creation via a pNext structure chain
-	REQUEST_REQUIRED_FEATURE(gpu, vk::PhysicalDeviceMeshShaderFeaturesEXT, meshShader);
 }
 
 /*

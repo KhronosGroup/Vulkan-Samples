@@ -45,6 +45,30 @@ TensorImageAliasing::~TensorImageAliasing()
 	set_render_pipeline(nullptr);
 }
 
+void TensorImageAliasing::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan12Features, shaderInt8);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan13Features, synchronization2);
+
+	// Enable the features for tensors and data graphs which we intend to use.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_ARM_TENSORS_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceTensorFeaturesARM, tensors);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceTensorFeaturesARM, shaderTensorAccess);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDataGraphFeaturesARM, dataGraphShaderModule);
+
+	// Update-after-bind is required for the emulation layer
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
+}
+
 void TensorImageAliasing::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -63,20 +87,8 @@ void TensorImageAliasing::request_device_extensions(std::unordered_map<std::stri
  */
 void TensorImageAliasing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, shaderInt8);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan13Features, synchronization2);
-
-	// Enable the features for tensors and data graphs which we intend to use.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, tensors);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, shaderTensorAccess);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraphShaderModule);
-
-	// Update-after-bind is required for the emulation layer
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
-
 	// Enable Int16 and Int64, if available.
-	if (gpu.get_features().shaderInt16)
+	if (gpu.get_supported_features().shaderInt16)
 	{
 		gpu.get_mutable_requested_features().shaderInt16 = VK_TRUE;
 	}
@@ -85,7 +97,7 @@ void TensorImageAliasing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 		throw std::runtime_error("Required feature VkPhysicalDeviceFeatures::shaderInt16 is not supported.");
 	}
 
-	if (gpu.get_features().shaderInt64)
+	if (gpu.get_supported_features().shaderInt64)
 	{
 		gpu.get_mutable_requested_features().shaderInt64 = VK_TRUE;
 	}

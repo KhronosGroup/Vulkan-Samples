@@ -41,17 +41,26 @@ ConditionalRendering::~ConditionalRendering()
 	}
 }
 
+void ConditionalRendering::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// We need to enable conditional rendering using a new feature struct
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceConditionalRenderingFeaturesEXT, conditionalRendering);
+}
+
 void ConditionalRendering::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
 
 	requested_extensions[VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void ConditionalRendering::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// We need to enable conditional rendering using a new feature struct
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceConditionalRenderingFeaturesEXT, conditionalRendering);
 }
 
 void ConditionalRendering::build_command_buffers()

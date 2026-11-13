@@ -417,6 +417,21 @@ void BufferDeviceAddress::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
+void BufferDeviceAddress::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Need to enable the bufferDeviceAddress feature.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
+}
+
 void BufferDeviceAddress::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -426,12 +441,6 @@ void BufferDeviceAddress::request_device_extensions(std::unordered_map<std::stri
 
 	// Provides support for VkAllocateMemoryFlagsInfo. Otherwise, core in Vulkan 1.1.
 	requested_extensions[VK_KHR_DEVICE_GROUP_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void BufferDeviceAddress::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// Need to enable the bufferDeviceAddress feature.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceBufferDeviceAddressFeaturesKHR, bufferDeviceAddress);
 }
 
 void BufferDeviceAddress::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const

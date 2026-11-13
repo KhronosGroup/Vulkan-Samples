@@ -29,6 +29,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
   public:
 	FragmentShadingRateDynamic();
 	~FragmentShadingRateDynamic() override;
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(uint32_t new_width, uint32_t new_height) override;
 	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
