@@ -27,7 +27,6 @@
 class ColorWriteEnable : public ApiVulkanSample
 {
   public:
-	ColorWriteEnable();
 	virtual ~ColorWriteEnable();
 
 	// Create pipeline
@@ -38,6 +37,7 @@ class ColorWriteEnable : public ApiVulkanSample
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void setup_render_pass() override;
 	void setup_framebuffer() override;

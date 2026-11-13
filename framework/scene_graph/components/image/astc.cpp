@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
 #include <filesystem>
 #include <mutex>
 
-#include "common/error.h"
 #include "core/util/profiling.hpp"
 
 #include "common/glm_common.h"

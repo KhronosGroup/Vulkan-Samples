@@ -26,9 +26,6 @@
 DynamicMultisampleRasterization::DynamicMultisampleRasterization()
 {
 	title = "DynamicState3 Multisample Rasterization";
-
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
 
 DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
@@ -53,6 +50,14 @@ DynamicMultisampleRasterization::~DynamicMultisampleRasterization()
 uint32_t DynamicMultisampleRasterization::get_api_version() const
 {
 	return VK_API_VERSION_1_2;
+}
+
+void DynamicMultisampleRasterization::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME]        = vkb::RequestMode::Required;
 }
 
 void DynamicMultisampleRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
@@ -758,10 +763,10 @@ void DynamicMultisampleRasterization::prepare_gui_pipeline()
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
 
-	std::vector<vkb::ShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModuleC *> shader_modules;
 
-	vkb::ShaderSource vert_shader("uioverlay/uioverlay.vert.spv");
-	vkb::ShaderSource frag_shader("uioverlay/uioverlay.frag.spv");
+	vkb::core::ShaderSource vert_shader("uioverlay/uioverlay.vert.spv");
+	vkb::core::ShaderSource frag_shader("uioverlay/uioverlay.frag.spv");
 
 	shader_modules.push_back(&get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vert_shader, {}));
 	shader_modules.push_back(&get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, frag_shader, {}));

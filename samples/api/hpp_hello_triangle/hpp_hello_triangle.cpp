@@ -1,5 +1,5 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2024-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 
 #include "hpp_hello_triangle.h"
 
-#include <common/hpp_error.h>
 #include <common/hpp_vk_common.h>
 #include <core/util/logging.hpp>
 #include <filesystem/legacy.h>
@@ -35,15 +34,26 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL debug_utils_messenger_callback(vk::DebugUtilsMe
                                                                 void                                         *user_data)
 {
 	// Log debug message
-	if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+	std::string message = fmt::format("Debug callback {}\n{}: {}", vk::to_string(message_type), callback_data->pMessageIdName, callback_data->pMessage);
+	switch (message_severity)
 	{
-		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+			LOGD("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+			LOGI("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+			LOGW("{}", message);
+			break;
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+			LOGE("{}", message);
+			break;
+		default:
+			LOGE("Unknown message severity {}!\n{}", vk::to_string(message_severity), message);
+			break;
 	}
-	else if (message_severity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
-	{
-		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
-	}
-	return VK_FALSE;
+	return vk::False;
 }
 #endif
 
@@ -281,7 +291,7 @@ std::pair<vk::Result, uint32_t> HPPHelloTriangle::acquire_next_image()
 	uint32_t   image;
 	std::tie(res, image) = device.acquireNextImageKHR(swapchain_data.swapchain, UINT64_MAX, acquire_semaphore);
 
-	if (res != vk::Result::eSuccess)
+	if (res != vk::Result::eSuccess && res != vk::Result::eSuboptimalKHR)
 	{
 		recycled_semaphores.push_back(acquire_semaphore);
 		return {res, image};

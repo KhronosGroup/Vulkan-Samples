@@ -7,7 +7,7 @@ repos:
     -   id: check-added-large-files
     -   id: trailing-whitespace
 -   repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 'v15.0.7'
+    rev: 'v21.1.8'
     hooks:
     -   id: clang-format
         'types_or': [c++, c]

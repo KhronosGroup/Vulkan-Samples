@@ -26,10 +26,11 @@ namespace vkb
 {
 namespace common
 {
-inline vkb::scene_graph::NodeCpp &add_free_camera(vkb::scene_graph::SceneCpp &scene, const std::string &node_name, vk::Extent2D const &extent)
+inline vkb::scene_graph::NodeCpp &
+    add_free_camera(vkb::scene_graph::SceneCpp &scene, const std::string &node_name, vk::Extent2D const &extent)
 {
-	return reinterpret_cast<vkb::scene_graph::NodeCpp &>(
-	    vkb::add_free_camera(reinterpret_cast<vkb::scene_graph::SceneC &>(scene), node_name, static_cast<VkExtent2D>(extent)));
+	return reinterpret_cast<vkb::scene_graph::NodeCpp &>(vkb::add_free_camera(
+	    reinterpret_cast<vkb::scene_graph::SceneC &>(scene), node_name, static_cast<VkExtent2D>(extent)));
 }
 
 inline void screenshot(vkb::rendering::RenderContextCpp &render_context, const std::string &filename)

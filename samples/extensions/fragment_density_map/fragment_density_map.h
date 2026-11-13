@@ -43,6 +43,7 @@ class FragmentDensityMap : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   protected:
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 
   private:

@@ -23,12 +23,6 @@ FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
 	title = "Dynamic fragment shading rate";
 
 	(void) ubo_scene.skysphere_modelview;        // this is used in the shader
-
-	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
 }
 
 FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
@@ -57,6 +51,16 @@ FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
 		frequency_information_params.reset();
 		vkDestroyCommandPool(get_device().get_handle(), command_pool, VK_NULL_HANDLE);
 	}
+}
+
+void FragmentShadingRateDynamic::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME]   = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MULTIVIEW_EXTENSION_NAME]             = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_MAINTENANCE2_EXTENSION_NAME]          = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void FragmentShadingRateDynamic::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
@@ -1053,9 +1057,7 @@ void FragmentShadingRateDynamic::draw()
 	submit_info.pCommandBuffers      = &draw_cmd_buffers[current_buffer];
 	submit_info.signalSemaphoreCount = 2;
 	submit_info.pSignalSemaphores    = semaphores.data();
-
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-	ApiVulkanSample::submit_frame();
 
 	const std::array<VkPipelineStageFlags, 2> small_wait_mask = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 	                                                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
@@ -1088,6 +1090,8 @@ void FragmentShadingRateDynamic::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &compute_submit_info, compute_fence));
 	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &compute_fence, VK_TRUE, UINT64_MAX));
 	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &compute_fence));
+
+	ApiVulkanSample::submit_frame();
 
 	vkDestroySemaphore(get_device().get_handle(), semaphore, VK_NULL_HANDLE);
 	vkDestroySemaphore(get_device().get_handle(), small_semaphore, VK_NULL_HANDLE);

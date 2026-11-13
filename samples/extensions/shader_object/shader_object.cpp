@@ -25,18 +25,6 @@ ShaderObject::ShaderObject()
 {
 	title = "Shader Object";
 	rng   = std::default_random_engine(12345);        // Use a fixed seed, makes random deterministic.
-
-	// Enable the Shader Object extension
-	add_device_extension(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
-
-	// Enable extensions for Dynamic Rendering
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-
-	// Enable the Depth Stencil Resolve extension
-	add_device_extension(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
-
-	// Enable extensions for sample
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 }
 
 ShaderObject::~ShaderObject()
@@ -297,6 +285,23 @@ void ShaderObject::create_default_sampler()
 	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &standard_sampler));
+}
+
+void ShaderObject::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Enable the Shader Object extension
+	requested_extensions[VK_EXT_SHADER_OBJECT_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Enable extensions for Dynamic Rendering
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Enable the Depth Stencil Resolve extension
+	requested_extensions[VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Enable extensions for sample
+	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void ShaderObject::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

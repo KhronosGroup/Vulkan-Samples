@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, Sascha Willems
+/* Copyright (c) 2022-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,6 @@
 ConditionalRendering::ConditionalRendering()
 {
 	title = "Conditional rendering";
-	add_device_extension(VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME);
 }
 
 ConditionalRendering::~ConditionalRendering()
@@ -40,6 +39,13 @@ ConditionalRendering::~ConditionalRendering()
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 	}
+}
+
+void ConditionalRendering::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void ConditionalRendering::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

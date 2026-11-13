@@ -19,6 +19,8 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "common/vk_common.h"
+#include "core/util/logging.hpp"
 #include "structure_chain_builder.h"
 #include <vulkan/vulkan.hpp>
 
@@ -247,8 +249,7 @@ inline Instance<bindingType>::Instance(std::string const                        
 	                                   .enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions_cstr.size()),
 	                                   .ppEnabledExtensionNames = enabled_extensions_cstr.data()};
 
-	vkb::StructureChainBuilder<vkb::BindingType::Cpp, vk::InstanceCreateInfo> scb;
-	scb.set_anchor_struct(create_info);
+	vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> scb(create_info);
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
 		extend_instance_create_info(scb);

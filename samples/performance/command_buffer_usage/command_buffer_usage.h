@@ -145,8 +145,8 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 	{
 	  public:
 		ForwardSubpassSecondary(vkb::rendering::RenderContextC &render_context,
-		                        vkb::ShaderSource             &&vertex_source,
-		                        vkb::ShaderSource             &&fragment_source,
+		                        vkb::core::ShaderSource       &&vertex_source,
+		                        vkb::core::ShaderSource       &&fragment_source,
 		                        vkb::scene_graph::SceneC       &scene,
 		                        vkb::sg::Camera                &camera);
 
@@ -198,9 +198,9 @@ class CommandBufferUsage : public vkb::VulkanSampleC
 
 		VkRect2D scissor{};
 
-		vkb::ColorBlendAttachmentState color_blend_attachment{};
+		vkb::rendering::ColorBlendAttachmentStateC color_blend_attachment{};
 
-		vkb::ColorBlendState color_blend_state{};
+		vkb::rendering::ColorBlendStateC color_blend_state{};
 
 		ForwardSubpassSecondaryState state{};
 

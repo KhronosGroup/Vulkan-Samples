@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,8 +22,6 @@
 #include <unordered_map>
 
 #include <android/context.hpp>
-
-#include "common/error.h"
 
 #include <fmt/format.h>
 #include <imgui.h>

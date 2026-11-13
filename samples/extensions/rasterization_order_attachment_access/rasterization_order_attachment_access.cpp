@@ -26,14 +26,18 @@ RasterizationOrderAttachmentAccess::RasterizationOrderAttachmentAccess()
 {
 	title = "Rasterization Order Attachment Access";
 
-	// Request extensions
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME);
-	add_device_extension(VK_EXT_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_EXTENSION_NAME, /*optional=*/true);
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
-
 	// Dynamic rendering doesn't use render passes.
 	render_pass = VK_NULL_HANDLE;
+}
+
+void RasterizationOrderAttachmentAccess::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME]                     = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME]          = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_EXTENSION_NAME] = vkb::RequestMode::Optional;
+	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME]                     = vkb::RequestMode::Required;
 }
 
 // Enables specific features within the requested extensions

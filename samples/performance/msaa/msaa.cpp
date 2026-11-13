@@ -73,14 +73,6 @@ const std::string to_string(VkResolveModeFlagBits mode)
 
 MSAASample::MSAASample()
 {
-	// Extension of interest in this sample (optional)
-	add_device_extension(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, true);
-
-	// Extension dependency requirements (given that instance API version is 1.0.0)
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, true);
-	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME, true);
-	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME, true);
-
 	auto &config = get_configuration();
 
 	// MSAA will be enabled by default if supported
@@ -88,6 +80,19 @@ MSAASample::MSAASample()
 	// with writeback resolve of color and depth
 	config.insert<vkb::BoolSetting>(0, gui_run_postprocessing, false);
 	config.insert<vkb::BoolSetting>(1, gui_run_postprocessing, true);
+}
+
+void MSAASample::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Extension of interest in this sample (optional)
+	requested_extensions[VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME] = vkb::RequestMode::Optional;
+
+	// Extension dependency requirements (given that instance API version is 1.0.0)
+	requested_extensions[VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME] = vkb::RequestMode::Optional;
+	requested_extensions[VK_KHR_MAINTENANCE2_EXTENSION_NAME]        = vkb::RequestMode::Optional;
+	requested_extensions[VK_KHR_MULTIVIEW_EXTENSION_NAME]           = vkb::RequestMode::Optional;
 }
 
 bool MSAASample::prepare(const vkb::ApplicationOptions &options)
@@ -110,19 +115,19 @@ bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs{"base.vert.spv"};
-	vkb::ShaderSource scene_fs{"base.frag.spv"};
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
-	scene_pipeline                  = std::make_unique<vkb::rendering::RenderPipelineC>();
+	vkb::core::ShaderSource scene_vs{"base.vert.spv"};
+	vkb::core::ShaderSource scene_fs{"base.frag.spv"};
+	auto                    scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(scene_vs), std::move(scene_fs), get_scene(), *camera);
+	scene_pipeline                        = std::make_unique<vkb::rendering::RenderPipelineC>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
-	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
+	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::core::ShaderSource{"postprocessing/postprocessing.vert.spv"});
 	postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource{"postprocessing/outline.frag.spv"});
+	    .add_subpass(vkb::core::ShaderSource{"postprocessing/outline.frag.spv"});
 
-	ms_depth_postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::ShaderSource{"postprocessing/postprocessing.vert.spv"});
+	ms_depth_postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), vkb::core::ShaderSource{"postprocessing/postprocessing.vert.spv"});
 	ms_depth_postprocessing_pipeline->add_pass()
-	    .add_subpass(vkb::ShaderSource{"postprocessing/outline_ms_depth.frag.spv"});
+	    .add_subpass(vkb::core::ShaderSource{"postprocessing/outline_ms_depth.frag.spv"});
 
 	update_pipelines();
 

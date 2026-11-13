@@ -74,10 +74,6 @@ ConstantData::ConstantData()
 	{
 		config.insert<vkb::IntSetting>(vkb::to_u32(i), gui_method_value, vkb::to_u32(i));
 	}
-
-	// Request sample-specific extensions as optional
-	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME, true);
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME, true);
 }
 
 bool ConstantData::prepare(const vkb::ApplicationOptions &options)
@@ -120,6 +116,15 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	create_gui(*window, &get_stats());
 
 	return true;
+}
+
+void ConstantData::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Request sample-specific extensions as optional
+	requested_extensions[VK_KHR_MAINTENANCE3_EXTENSION_NAME]        = vkb::RequestMode::Optional;
+	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void ConstantData::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
@@ -309,8 +314,8 @@ void ConstantData::PushConstantSubpass::update_uniform(vkb::core::CommandBufferC
 	mvp_uniform = fill_mvp(node, get_camera());
 }
 
-vkb::PipelineLayout &ConstantData::PushConstantSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-                                                                                const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &ConstantData::PushConstantSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+                                                                                const std::vector<vkb::core::ShaderModuleC *> &shader_modules)
 {
 	/**
 	 * POI
@@ -361,8 +366,8 @@ void ConstantData::DescriptorSetSubpass::update_uniform(vkb::core::CommandBuffer
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-vkb::PipelineLayout &ConstantData::DescriptorSetSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-                                                                                 const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &ConstantData::DescriptorSetSubpass::prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+                                                                                 const std::vector<vkb::core::ShaderModuleC *> &shader_modules)
 {
 	/**
 	 * POI
@@ -373,15 +378,15 @@ vkb::PipelineLayout &ConstantData::DescriptorSetSubpass::prepare_pipeline_layout
 	{
 		if (method == Method::DescriptorSets)
 		{
-			shader_module->set_resource_mode("MVPUniform", vkb::ShaderResourceMode::Static);
+			shader_module->set_resource_mode("MVPUniform", vkb::core::ShaderResourceMode::Static);
 		}
 		else if (method == Method::DynamicDescriptorSets)
 		{
-			shader_module->set_resource_mode("MVPUniform", vkb::ShaderResourceMode::Dynamic);
+			shader_module->set_resource_mode("MVPUniform", vkb::core::ShaderResourceMode::Dynamic);
 		}
 		else if (method == Method::UpdateAfterBindDescriptorSets)
 		{
-			shader_module->set_resource_mode("MVPUniform", vkb::ShaderResourceMode::UpdateAfterBind);
+			shader_module->set_resource_mode("MVPUniform", vkb::core::ShaderResourceMode::UpdateAfterBind);
 		}
 	}
 
@@ -450,8 +455,8 @@ void ConstantData::BufferArraySubpass::update_uniform(vkb::core::CommandBufferC 
 	return;
 }
 
-vkb::PipelineLayout &ConstantData::BufferArraySubpass::prepare_pipeline_layout(vkb::core::CommandBufferC              &command_buffer,
-                                                                               const std::vector<vkb::ShaderModule *> &shader_modules)
+vkb::PipelineLayout &ConstantData::BufferArraySubpass::prepare_pipeline_layout(vkb::core::CommandBufferC                     &command_buffer,
+                                                                               const std::vector<vkb::core::ShaderModuleC *> &shader_modules)
 {
 	/**
 	 * POI

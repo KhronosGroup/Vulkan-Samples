@@ -232,6 +232,12 @@ Demonstrate how to use vertex input bindings and attribute descriptions dynamica
 
 Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
 
+=== xref:./{extension_samplespath}layer_settings/README.adoc[Layer Settings]
+
+*Extension*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_EXT_layer_settings[`VK_EXT_layer_settings`]
+
+Demonstrate how to use VK_EXT_layer_settings to fine tune the settings of layers such as Validation Layers programmatically.
+
 === xref:./{extension_samplespath}shader_relaxed_extended_instruction/README.adoc[Shader Relaxed Extended Instruction]
 
 *Extension*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_shader_relaxed_extended_instruction[`VK_KHR_shader_relaxed_extended_instruction`]
@@ -246,6 +252,10 @@ Demonstrate how to use logical operations dynamically, which can reduce the numb
 
 === xref:./{extension_samplespath}patch_control_points/README.adoc[Patch control points]
 
+*Extension*: https://docs.vulkan.org/spec/latest/appendices/extensions.html#VK_KHR_pipeline_binary[`VK_KHR_pipeline_binaries`]
+
+Demonstrate how to use pipeline binaries which provides a method to obtain binary data associated with individual pipelines such that applications can manage caching themselves instead of using VkPipelineCache objects.
+
 *Extension*: https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_extended_dynamic_state2.html[`VK_EXT_extended_dynamic_state2`]
 
 Demonstrate how to use patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
@@ -256,11 +266,19 @@ Demonstrate how to use patch control points dynamically, which can reduce the nu
 
 Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment.
 
-=== xref:./{extension_samplespath}descriptor_buffer_basic/README.adoc[Basic descriptor buffer]
+=== xref:./{extension_samplespath}descriptor_buffer_basic/README.adoc[Descriptor buffer]
 
 *Extension*: https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_ext_descriptor_buffer[`VK_EXT_descriptor_buffer`]
 
-Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
+**Note:** If available, `VK_EXT_descriptor_heap` should be preferred.
+
+Demonstrate how to use the resource descriptor buffers to replace descriptor sets
+
+=== xref:./{extension_samplespath}descriptor_heap/README.adoc[Descriptor heap]
+
+*Extension*: https://www.khronos.org/registry/vulkan/specs/latest/html/vkspec.html#VK_ext_descriptor_heap[`VK_EXT_descriptor_heap`]
+
+Demonstrate how to use descriptor heaps that completely rework how descriptors are handled in Vulkan
 
 === xref:./{extension_samplespath}color_write_enable/README.adoc[Color write enable]
 
@@ -337,11 +355,18 @@ Demonstrate how to build data graph pipelines and execute neural networks:
 * xref:./{extension_samplespath}tensor_and_data_graph/postprocessing_with_vgf/README.adoc[postprocessing_with_vgf]
 - Explains how to load and run a VGF file defining a neural network model. A VGF file contains information regarding input, output and constant tensors along with the SPIR-V code which defines the model, which can then be used to run a data graph pipeline.
 
+=== xref:./{extension_samplespath}shader_quad_control/README.adoc[Shader quad control]
+
+*Extension*: https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_shader_quad_control.html[`VK_KHR_shader_quad_control`]
+
+Demonstrates quad‑scope operations in fragment shaders, such as broadcasting values within a 2x2 quad, and explains the `layout(full_quads)` and `layout(quad_derivatives)` execution modes.
+
 === xref:./{extension_samplespath}compute_shader_derivatives/README.adoc[Compute shader derivatives]
 
 *Extension*: https://docs.vulkan.org/features/latest/features/proposals/VK_KHR_compute_shader_derivatives.html[`VK_KHR_compute_shader_derivatives`]
 
 Demonstrate how to use derivatives (dFdx/dFdy) in compute shaders via derivative groups and how to request/enable the corresponding device feature.
+
 === xref:./{extension_samplespath}ray_tracing_invocation_reorder/README.adoc[Ray Tracing Invocation Reorder]
 
 *Extensions:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_ray_tracing_invocation_reorder.html[`VK_EXT_ray_tracing_invocation_reorder`]

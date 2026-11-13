@@ -20,12 +20,6 @@
 BufferDeviceAddress::BufferDeviceAddress()
 {
 	title = "Buffer device address";
-
-	// Need to enable buffer device address extension.
-	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-
-	// Provides support for VkAllocateMemoryFlagsInfo. Otherwise, core in Vulkan 1.1.
-	add_device_extension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
 }
 
 BufferDeviceAddress::~BufferDeviceAddress()
@@ -421,6 +415,17 @@ void BufferDeviceAddress::render(float delta_time)
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, wait_fences[current_buffer]));
 	ApiVulkanSample::submit_frame();
+}
+
+void BufferDeviceAddress::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Need to enable buffer device address extension.
+	requested_extensions[VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Provides support for VkAllocateMemoryFlagsInfo. Otherwise, core in Vulkan 1.1.
+	requested_extensions[VK_KHR_DEVICE_GROUP_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void BufferDeviceAddress::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

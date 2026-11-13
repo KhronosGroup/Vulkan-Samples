@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/hpp_strings.h"
 #include "common/hpp_utils.h"
 #include "core/debug.h"
 #include "core/hpp_debug.h"
@@ -197,11 +198,9 @@ class VulkanSample : public vkb::Application
 	 */
 	virtual void draw_renderpass(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::rendering::RenderTarget<bindingType> &render_target);
 
-	virtual void                                     extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &create_info) const;
-	virtual uint32_t                                 get_api_version() const;
-	virtual DebugReportCallbackCreateInfoType const *get_debug_report_callback_create_info() const;
-	virtual DebugUtilsMessengerCreateInfoType const *get_debug_utils_messenger_create_info() const;
-	virtual InstanceCreateFlagsType                  get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
+	virtual void                    extend_instance_create_info(vkb::StructureChainBuilder<bindingType, InstanceCreateInfoType> &scb) const;
+	virtual uint32_t                get_api_version() const;
+	virtual InstanceCreateFlagsType get_instance_create_flags(std::vector<std::string> const &enabled_extensions) const;
 
 	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -213,6 +212,7 @@ class VulkanSample : public vkb::Application
 	 * @param command_buffer The command buffer to record the commands to
 	 */
 	virtual void render(vkb::core::CommandBuffer<bindingType> &command_buffer);
+	virtual void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const;
 
 	/**
 	 * @brief Request features from the gpu based on what is supported
@@ -235,16 +235,6 @@ class VulkanSample : public vkb::Application
 	 * @brief Updates the debug window, samples can override this to insert their own data elements
 	 */
 	virtual void update_debug_window();
-
-	/// <summary>
-	/// PROTECTED INTERFACE
-	/// </summary>
-	/**
-	 * @brief Add a sample-specific device extension
-	 * @param extension The extension name
-	 * @param optional (Optional) Whether the extension is optional
-	 */
-	void add_device_extension(const char *extension, bool optional = false);
 
 	void create_gui(const Window &window, vkb::stats::Stats<bindingType> const *stats = nullptr, const float font_size = 21.0f, bool explicit_update = false);
 
@@ -340,12 +330,10 @@ class VulkanSample : public vkb::Application
 	void        request_layer_settings_impl(std::vector<vk::LayerSettingEXT> &requested_layer_settings, vkb::StructureChainBuilderCpp<vk::InstanceCreateInfo> &scb) const;
 	static void set_viewport_and_scissor_impl(vkb::core::CommandBufferCpp const &command_buffer, vk::Extent2D const &extent);
 
-	/**
-	 * @brief Get sample-specific device extensions.
-	 *
-	 * @return Map of device extensions and whether or not they are optional. Default is empty map.
-	 */
-	std::unordered_map<const char *, bool> const &get_device_extensions() const;
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	vk::DebugReportCallbackCreateInfoEXT const &get_debug_report_callback_create_info() const;
+	vk::DebugUtilsMessengerCreateInfoEXT const &get_debug_utils_messenger_create_info() const;
+#endif
 
 	/// <summary>
 	/// PRIVATE MEMBERS
@@ -407,9 +395,6 @@ class VulkanSample : public vkb::Application
 	 */
 	Configuration configuration{};
 
-	/** @brief Set of device extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
-	std::unordered_map<const char *, bool> device_extensions;
-
 	/** @brief Whether or not we want a high priority graphics queue. */
 	bool high_priority_graphics_queue{false};
 
@@ -458,26 +443,23 @@ inline VulkanSample<bindingType>::~VulkanSample()
 }
 
 template <vkb::BindingType bindingType>
-inline void VulkanSample<bindingType>::add_device_extension(const char *extension, bool optional)
-{
-	device_extensions[extension] = optional;
-}
-
-template <vkb::BindingType bindingType>
 inline std::unique_ptr<typename vkb::core::Device<bindingType>>
     VulkanSample<bindingType>::create_device(vkb::core::PhysicalDevice<bindingType> &gpu)
 {
+	std::unordered_map<std::string, vkb::RequestMode> requested_extensions;
+	request_device_extensions(requested_extensions);
+
 	if constexpr (bindingType == BindingType::Cpp)
 	{
 		return std::make_unique<vkb::core::DeviceCpp>(
-		    gpu, surface, std::move(debug_utils), get_device_extensions(), [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
+		    gpu, surface, std::move(debug_utils), requested_extensions, [this](vkb::core::PhysicalDeviceCpp &gpu) { request_gpu_features(gpu); });
 	}
 	else
 	{
 		return std::make_unique<vkb::core::DeviceC>(gpu,
 		                                            static_cast<VkSurfaceKHR>(surface),
 		                                            std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-		                                            get_device_extensions(),
+		                                            requested_extensions,
 		                                            [this](vkb::core::PhysicalDeviceC &gpu) { request_gpu_features(gpu); });
 	}
 }
@@ -533,8 +515,8 @@ void VulkanSample<bindingType>::create_render_context_impl(const std::vector<vk:
 	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
 #else
-	vk::PresentModeKHR               present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
-	std::vector<vk::PresentModeKHR>  present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate, vk::PresentModeKHR::eFifo};
 #endif
 
 	render_context =
@@ -780,16 +762,11 @@ inline void VulkanSample<bindingType>::extend_instance_create_info_impl(vkb::Str
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-		                                                                       .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-		                                                                       .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
-		scb.add_struct(debug_utils_messenger_create_info);
+		scb.add_struct(get_debug_utils_messenger_create_info());
 	}
 	else if (contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-		                                                                       .pfnCallback = vkb::core::debug_callback};
-		scb.add_struct(debug_report_callback_create_info);
+		scb.add_struct(get_debug_report_callback_create_info());
 	}
 #endif
 
@@ -839,45 +816,6 @@ template <vkb::BindingType bindingType>
 inline uint32_t VulkanSample<bindingType>::get_api_version() const
 {
 	return VK_API_VERSION_1_1;
-}
-
-template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::DebugReportCallbackCreateInfoType const *VulkanSample<bindingType>::get_debug_report_callback_create_info() const
-{
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info{.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-	                                                                              .pfnCallback = vkb::core::debug_callback};
-	if constexpr (bindingType == vkb::BindingType::Cpp)
-	{
-		return &debug_report_callback_create_info;
-	}
-	else
-	{
-		return reinterpret_cast<VkDebugReportCallbackCreateInfoEXT *>(&debug_report_callback_create_info);
-	}
-#else
-	return nullptr;
-#endif
-}
-
-template <vkb::BindingType bindingType>
-inline typename VulkanSample<bindingType>::DebugUtilsMessengerCreateInfoType const *VulkanSample<bindingType>::get_debug_utils_messenger_create_info() const
-{
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info{.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-	                                                                              .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-	                                                                              .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
-	if constexpr (bindingType == vkb::BindingType::Cpp)
-	{
-		return &debug_utils_messenger_create_info;
-	}
-	else
-	{
-		return reinterpret_cast<VkDebugUtilsMessengerCreateInfoEXT *>(&debug_utils_messenger_create_info);
-	}
-#else
-	return nullptr;
-#endif
 }
 
 template <vkb::BindingType bindingType>
@@ -933,11 +871,26 @@ inline vkb::core::Device<bindingType> &VulkanSample<bindingType>::get_device()
 	}
 }
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 template <vkb::BindingType bindingType>
-inline std::unordered_map<const char *, bool> const &VulkanSample<bindingType>::get_device_extensions() const
+inline vk::DebugReportCallbackCreateInfoEXT const &VulkanSample<bindingType>::get_debug_report_callback_create_info() const
 {
-	return device_extensions;
+	static vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info =
+	    {.flags       = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+	     .pfnCallback = vkb::core::debug_callback};
+	return debug_report_callback_create_info;
 }
+
+template <vkb::BindingType bindingType>
+inline vk::DebugUtilsMessengerCreateInfoEXT const &VulkanSample<bindingType>::get_debug_utils_messenger_create_info() const
+{
+	static vk::DebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info =
+	    {.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	     .messageType     = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	     .pfnUserCallback = vkb::core::debug_utils_messenger_callback};
+	return debug_utils_messenger_create_info;
+}
+#endif
 
 template <vkb::BindingType bindingType>
 inline vkb::Gui<bindingType> &VulkanSample<bindingType>::get_gui()
@@ -1223,23 +1176,8 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 	VkResult result = volkInitialize();
 	if (result)
 	{
-		throw VulkanException(result, "Failed to initialize volk.");
+		throw vkb::common::VulkanExceptionC(result, "Failed to initialize volk.");
 	}
-
-#ifdef VKB_VULKAN_DEBUG
-	{
-		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-		auto                                 debugExtensionIt =
-		    std::ranges::find_if(available_instance_extensions,
-		                         [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
-		if (debugExtensionIt != available_instance_extensions.end())
-		{
-			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-
-			debug_utils = std::make_unique<vkb::core::HPPDebugUtilsExtDebugUtils>();
-		}
-	}
-#endif
 
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -1250,37 +1188,17 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		instance.reset(reinterpret_cast<vkb::core::InstanceCpp *>(create_instance().release()));
 	}
 
-	// initialize debug utils or report callback based on enabled extensions, if any
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	// initialize debug utils or report callback based on enabled extensions
 	if (instance->is_extension_enabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		auto const *debug_utils_messenger_create_info = get_debug_utils_messenger_create_info();
-		if (debug_utils_messenger_create_info)
-		{
-			if constexpr (bindingType == BindingType::Cpp)
-			{
-				debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*debug_utils_messenger_create_info);
-			}
-			else
-			{
-				debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(*reinterpret_cast<vk::DebugUtilsMessengerCreateInfoEXT const *>(debug_utils_messenger_create_info));
-			}
-		}
+		debug_utils_messenger = instance->get_handle().createDebugUtilsMessengerEXT(get_debug_utils_messenger_create_info());
 	}
 	else if (instance->is_extension_enabled(VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
 	{
-		auto const *debug_report_callback_create_info = get_debug_report_callback_create_info();
-		if (debug_report_callback_create_info)
-		{
-			if constexpr (bindingType == BindingType::Cpp)
-			{
-				debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*debug_report_callback_create_info);
-			}
-			else
-			{
-				debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(*reinterpret_cast<vk::DebugReportCallbackCreateInfoEXT const *>(debug_report_callback_create_info));
-			}
-		}
+		debug_report_callback = instance->get_handle().createDebugReportCallbackEXT(get_debug_report_callback_create_info());
 	}
+#endif
 
 	// Getting a valid vulkan surface from the platform
 	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::core::InstanceC &>(*instance)));
@@ -1299,31 +1217,6 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 		physical_device->get_mutable_requested_features().textureCompressionASTC_LDR = true;
 	}
 
-	// Creating vulkan device, specifying the swapchain extension always
-	// If using VK_EXT_headless_surface, we still create and use a swap-chain
-	{
-		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-
-		if (instance->is_extension_enabled(VK_KHR_DISPLAY_EXTENSION_NAME))
-		{
-			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
-		}
-	}
-
-	// Shaders generated by Slang require a certain SPIR-V environment that can't be satisfied by Vulkan 1.0, so we need to expliclity up that to at least 1.1 and enable some required extensions
-	if (get_shading_language() == ShadingLanguage::SLANG)
-	{
-		assert(VK_API_VERSION_1_1 <= get_api_version());
-		add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-		add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-		add_device_extension(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
-	}
-
-#ifdef VKB_ENABLE_PORTABILITY
-	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
-	add_device_extension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, /*optional=*/true);
-#endif
-
 #ifdef VKB_VULKAN_DEBUG
 	if (!debug_utils)
 	{
@@ -1336,16 +1229,13 @@ inline bool VulkanSample<bindingType>::prepare(const ApplicationOptions &options
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 
 			debug_utils = std::make_unique<vkb::core::HPPDebugMarkerExtDebugUtils>();
-			add_device_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 		}
 	}
-
 	if (!debug_utils)
 	{
 		LOGW("Vulkan debug utils were requested, but no extension that provides them was found");
 	}
 #endif
-
 	if (!debug_utils)
 	{
 		debug_utils = std::make_unique<vkb::core::HPPDummyDebugUtils>();
@@ -1417,6 +1307,37 @@ inline void VulkanSample<bindingType>::render_impl(vkb::core::CommandBufferCpp &
 	{
 		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
 	}
+}
+
+template <vkb::BindingType bindingType>
+inline void VulkanSample<bindingType>::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	// Creating vulkan device, specifying the swapchain extension always
+	// If using VK_EXT_headless_surface, we still create and use a swap-chain
+	requested_extensions[VK_KHR_SWAPCHAIN_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	if (instance->is_extension_enabled(VK_KHR_DISPLAY_EXTENSION_NAME))
+	{
+		requested_extensions[VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME] = vkb::RequestMode::Optional;
+	}
+
+	// Shaders generated by Slang require a certain SPIR-V environment that can't be satisfied by Vulkan 1.0, so we need to expliclity up that to at least 1.1 and enable some required extensions
+	if (get_shading_language() == ShadingLanguage::SLANG)
+	{
+		assert(VK_API_VERSION_1_1 <= get_api_version());
+		requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME]              = vkb::RequestMode::Required;
+		requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME]  = vkb::RequestMode::Required;
+		requested_extensions[VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME] = vkb::RequestMode::Required;
+	}
+
+#ifdef VKB_ENABLE_PORTABILITY
+	// VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS using MoltenVK with beta extensions enabled)
+	requested_extensions[VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME] = vkb::RequestMode::Optional;
+#endif
+
+#ifdef VKB_VULKAN_DEBUG
+	requested_extensions[VK_EXT_DEBUG_MARKER_EXTENSION_NAME] = vkb::RequestMode::Optional;
+#endif
 }
 
 template <vkb::BindingType bindingType>
@@ -1692,8 +1613,7 @@ inline void VulkanSample<bindingType>::update_debug_window()
 	std::string driver_version_str = fmt::format("major: {} minor: {} patch: {}", driver_version.major, driver_version.minor, driver_version.patch);
 
 	get_debug_info().template insert<field::Static, std::string>("driver_version", driver_version_str);
-	get_debug_info().template insert<field::Static, std::string>("resolution",
-	                                                             to_string(static_cast<VkExtent2D const &>(render_context->get_swapchain().get_extent())));
+	get_debug_info().template insert<field::Static, std::string>("resolution", vkb::common::to_string(render_context->get_swapchain().get_extent()));
 	get_debug_info().template insert<field::Static, std::string>("surface_format",
 	                                                             to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                                 to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +

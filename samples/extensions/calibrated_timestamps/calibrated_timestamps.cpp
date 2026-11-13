@@ -42,11 +42,6 @@ CalibratedTimestamps::CalibratedTimestamps() :
     is_time_domain_init(false)
 {
 	title = "Calibrated Timestamps";
-
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
-
-	// NOTICE THAT: calibrated timestamps is a DEVICE extension!
-	add_device_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 }
 
 CalibratedTimestamps::~CalibratedTimestamps()
@@ -84,6 +79,16 @@ CalibratedTimestamps::~CalibratedTimestamps()
 
 		vkDestroySampler(get_device().get_handle(), textures.environment_map.sampler, nullptr);
 	}
+}
+
+void CalibratedTimestamps::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// NOTICE THAT: calibrated timestamps is a DEVICE extension!
+	requested_extensions[VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void CalibratedTimestamps::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

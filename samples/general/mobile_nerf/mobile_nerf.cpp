@@ -79,12 +79,6 @@ void camera_set_look_at(vkb::Camera &camera, const glm::vec3 look, const glm::ve
 MobileNerf::MobileNerf()
 {
 	title = "Mobile NeRF";
-
-	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-	// Required by VK_KHR_spirv_1_4
-	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-	// For choosing different sets of weights
-	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 }
 
 MobileNerf::~MobileNerf()
@@ -473,6 +467,19 @@ bool MobileNerf::resize(const uint32_t width, const uint32_t height)
 	ApiVulkanSample::resize(width, height);
 	rebuild_command_buffers();
 	return true;
+}
+
+void MobileNerf::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// Required by VK_KHR_spirv_1_4
+	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// For choosing different sets of weights
+	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void MobileNerf::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

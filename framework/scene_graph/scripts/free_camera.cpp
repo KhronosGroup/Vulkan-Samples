@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2020-2025, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2020-2026, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,6 @@
  */
 
 #include "free_camera.h"
-
-#include "common/error.h"
 
 #include "common/glm_common.h"
 #include <glm/gtx/euler_angles.hpp>

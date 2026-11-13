@@ -117,12 +117,6 @@ OpenGLInterop::OpenGLInterop()
 {
 	zoom  = -2.5f;
 	title = "Interoperability with OpenGL";
-
-	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
-
-	add_device_extension(HOST_SEMAPHORE_EXTENSION_NAME);
-	add_device_extension(HOST_MEMORY_EXTENSION_NAME);
 }
 
 void OpenGLInterop::prepare_shared_resources()
@@ -315,6 +309,17 @@ void OpenGLInterop::generate_quad()
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
+}
+
+void OpenGLInterop::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME]    = vkb::RequestMode::Required;
+
+	requested_extensions[HOST_SEMAPHORE_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[HOST_MEMORY_EXTENSION_NAME]    = vkb::RequestMode::Required;
 }
 
 void OpenGLInterop::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const

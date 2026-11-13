@@ -32,9 +32,6 @@ Synchronization2::Synchronization2()
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
-
-	// Enable required extension
-	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 }
 
 Synchronization2::~Synchronization2()
@@ -62,6 +59,13 @@ Synchronization2::~Synchronization2()
 		vkDestroySampler(get_device().get_handle(), textures.particle.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.gradient.sampler, nullptr);
 	}
+}
+
+void Synchronization2::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void Synchronization2::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

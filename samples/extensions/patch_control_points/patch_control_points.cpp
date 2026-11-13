@@ -20,9 +20,6 @@
 PatchControlPoints::PatchControlPoints()
 {
 	title = "Patch Control Points";
-
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
-	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
 }
 
 PatchControlPoints::~PatchControlPoints()
@@ -542,6 +539,14 @@ void PatchControlPoints::create_descriptor_sets()
 	                       VK_NULL_HANDLE);
 }
 
+void PatchControlPoints::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME]   = vkb::RequestMode::Required;
+}
+
 /**
  * @fn void PatchControlPoints::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
  * @brief Enabling features related to Vulkan extensions
@@ -563,7 +568,7 @@ void PatchControlPoints::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	}
 	else
 	{
-		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
+		throw vkb::common::VulkanExceptionC(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
 	}
 
 	if (gpu.get_features().fillModeNonSolid)

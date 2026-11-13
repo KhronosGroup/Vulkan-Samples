@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,8 @@ namespace ktx
 ktxTexture *load_texture(std::string const &filename)
 {
 	ktxTexture    *ktx_texture;
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	KTX_error_code result =
+	    ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
 	if ((result != KTX_SUCCESS) || (ktx_texture == nullptr))
 	{
 		throw std::runtime_error("Couldn't load texture");

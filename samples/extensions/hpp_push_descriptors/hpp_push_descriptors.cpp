@@ -32,9 +32,6 @@
 HPPPushDescriptors::HPPPushDescriptors()
 {
 	title = "Push descriptors";
-
-	// Enable extension required for push descriptors
-	add_device_extension(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 }
 
 HPPPushDescriptors::~HPPPushDescriptors()
@@ -81,6 +78,13 @@ bool HPPPushDescriptors::prepare(const vkb::ApplicationOptions &options)
 		prepared = true;
 	}
 	return prepared;
+}
+
+void HPPPushDescriptors::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleCpp::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void HPPPushDescriptors::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)

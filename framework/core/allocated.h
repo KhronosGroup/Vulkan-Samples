@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include "common/error.h"
+#include "common/macros.h"
+#include "common/vulkan_exception.h"
 #include "core/physical_device.h"
 #include "core/vulkan_resource.h"
 
@@ -176,6 +177,14 @@ class Allocated : public vkb::core::VulkanResource<bindingType, HandleType>
 	 * @note This performs no checking that the memory is actually mapped, so it's possible to get a nullptr
 	 */
 	const uint8_t *get_data() const;
+
+	/**
+	 * @brief Retrieves a pointer to the host visible memory as an unsigned byte array.
+	 * @return The pointer to the host visible memory.
+	 * @note Non-const. This performs no checking that the memory is actually mapped, so it's possible to get a nullptr
+	 */
+	uint8_t *get_mapped_data() const;
+
 	/**
 	 * @brief Retrieves the raw Vulkan memory object.
 	 * @return The Vulkan memory object.
@@ -471,7 +480,7 @@ inline vk::Buffer Allocated<bindingType, HandleType>::create_buffer_impl(vk::Buf
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create Buffer"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create Buffer"};
 	}
 	post_create(allocation_info);
 	return buffer;
@@ -523,7 +532,7 @@ inline vk::Image Allocated<bindingType, HandleType>::create_image_impl(vk::Image
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create Image"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create Image"};
 	}
 
 	post_create(allocation_info);
@@ -584,6 +593,12 @@ inline void Allocated<bindingType, HandleType>::flush(DeviceSizeType offset, Dev
 
 template <vkb::BindingType bindingType, typename HandleType>
 inline const uint8_t *Allocated<bindingType, HandleType>::get_data() const
+{
+	return mapped_data;
+}
+
+template <vkb::BindingType bindingType, typename HandleType>
+inline uint8_t *Allocated<bindingType, HandleType>::get_mapped_data() const
 {
 	return mapped_data;
 }

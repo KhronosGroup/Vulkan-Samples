@@ -27,7 +27,6 @@
 #include "core/image.h"
 #include "core/physical_device.h"
 #include "hpp_resource_binding_state.h"
-#include "rendering/hpp_pipeline_state.h"
 #include "rendering/subpass.h"
 #include "resource_cache.h"
 
@@ -75,29 +74,16 @@ class CommandBuffer
 
 	using BufferMemoryBarrierType =
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPBufferMemoryBarrier, vkb::BufferMemoryBarrier>::type;
-	using ColorBlendStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPColorBlendState, vkb::ColorBlendState>::type;
-	using DepthStencilStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPDepthStencilState, vkb::DepthStencilState>::type;
 	using FramebufferType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPFramebuffer, vkb::Framebuffer>::type;
 	using ImageMemoryBarrierType =
 	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPImageMemoryBarrier, vkb::ImageMemoryBarrier>::type;
-	using ImageType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPImage, vkb::core::Image>::type;
-	using ImageViewType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPImageView, vkb::core::ImageView>::type;
-	using InputAssemblyStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPInputAssemblyState, vkb::InputAssemblyState>::type;
-	using LoadStoreInfoType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPLoadStoreInfo, vkb::LoadStoreInfo>::type;
-	using MultisampleStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPMultisampleState, vkb::MultisampleState>::type;
+	using ImageType          = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPImage, vkb::core::Image>::type;
+	using ImageViewType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPImageView, vkb::core::ImageView>::type;
+	using LoadStoreInfoType  = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPLoadStoreInfo, vkb::LoadStoreInfo>::type;
 	using PipelineLayoutType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
 	using QueryPoolType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPQueryPool, vkb::QueryPool>::type;
-	using RasterizationStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPRasterizationState, vkb::RasterizationState>::type;
-	using RenderPassType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPRenderPass, vkb::RenderPass>::type;
-	using SamplerType    = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPSampler, vkb::core::Sampler>::type;
-	using VertexInputStateType =
-	    typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPVertexInputState, vkb::VertexInputState>::type;
-	using ViewportStateType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::rendering::HPPViewportState, vkb::ViewportState>::type;
+	using RenderPassType     = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPRenderPass, vkb::RenderPass>::type;
+	using SamplerType        = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::core::HPPSampler, vkb::core::Sampler>::type;
 
   public:
 	CommandBuffer(vkb::core::CommandPool<bindingType> &command_pool, CommandBufferLevelType level);
@@ -193,14 +179,14 @@ class CommandBuffer
 	void reset_query_pool(QueryPoolType const &query_pool, uint32_t first_query, uint32_t query_count);
 	void resolve_image(ImageType const &src_img, ImageType const &dst_img, std::vector<ImageResolveType> const &regions);
 	void set_blend_constants(std::array<float, 4> const &blend_constants);
-	void set_color_blend_state(ColorBlendStateType const &state_info);
+	void set_color_blend_state(vkb::rendering::ColorBlendState<bindingType> const &state_info);
 	void set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor);
 	void set_depth_bounds(float min_depth_bounds, float max_depth_bounds);
-	void set_depth_stencil_state(DepthStencilStateType const &state_info);
-	void set_input_assembly_state(InputAssemblyStateType const &state_info);
+	void set_depth_stencil_state(vkb::rendering::DepthStencilState<bindingType> const &state_info);
+	void set_input_assembly_state(vkb::rendering::InputAssemblyState<bindingType> const &state_info);
 	void set_line_width(float line_width);
-	void set_multisample_state(MultisampleStateType const &state_info);
-	void set_rasterization_state(RasterizationStateType const &state_info);
+	void set_multisample_state(vkb::rendering::MultisampleState<bindingType> const &state_info);
+	void set_rasterization_state(vkb::rendering::RasterizationState<bindingType> const &state_info);
 	void set_scissor(uint32_t first_scissor, std::vector<Rect2DType> const &scissors);
 
 	template <class T>
@@ -208,9 +194,9 @@ class CommandBuffer
 	void set_specialization_constant(uint32_t constant_id, std::vector<uint8_t> const &data);
 
 	void set_update_after_bind(bool update_after_bind_);
-	void set_vertex_input_state(VertexInputStateType const &state_info);
+	void set_vertex_input_state(vkb::rendering::VertexInputState<bindingType> const &state_info);
 	void set_viewport(uint32_t first_viewport, std::vector<ViewportType> const &viewports);
-	void set_viewport_state(ViewportStateType const &state_info);
+	void set_viewport_state(vkb::rendering::ViewportState const &state_info);
 	void update_buffer(vkb::core::Buffer<bindingType> const &buffer, DeviceSizeType offset, std::vector<uint8_t> const &data);
 	void write_timestamp(PipelineStagFlagBitsType pipeline_stage, QueryPoolType const &query_pool, uint32_t query);
 
@@ -269,7 +255,7 @@ class CommandBuffer
 	vk::Extent2D                                                            last_render_area_extent = {};
 	const vk::CommandBufferLevel                                            level                   = {};
 	const uint32_t                                                          max_push_constants_size = {};
-	vkb::rendering::HPPPipelineState                                        pipeline_state          = {};
+	vkb::rendering::PipelineStateCpp                                        pipeline_state          = {};
 	vkb::HPPResourceBindingState                                            resource_binding_state  = {};
 	std::vector<uint8_t>                                                    stored_push_constants   = {};
 
@@ -1101,7 +1087,7 @@ inline void CommandBuffer<bindingType>::set_blend_constants(std::array<float, 4>
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_color_blend_state(ColorBlendStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_color_blend_state(vkb::rendering::ColorBlendState<bindingType> const &state_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -1109,7 +1095,7 @@ inline void CommandBuffer<bindingType>::set_color_blend_state(ColorBlendStateTyp
 	}
 	else
 	{
-		pipeline_state.set_color_blend_state(reinterpret_cast<vkb::rendering::HPPColorBlendState const &>(state_info));
+		pipeline_state.set_color_blend_state(reinterpret_cast<vkb::rendering::ColorBlendStateCpp const &>(state_info));
 	}
 }
 
@@ -1126,7 +1112,7 @@ inline void CommandBuffer<bindingType>::set_depth_bounds(float min_depth_bounds,
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_depth_stencil_state(DepthStencilStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_depth_stencil_state(vkb::rendering::DepthStencilState<bindingType> const &state_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -1134,12 +1120,12 @@ inline void CommandBuffer<bindingType>::set_depth_stencil_state(DepthStencilStat
 	}
 	else
 	{
-		pipeline_state.set_depth_stencil_state(reinterpret_cast<vkb::rendering::HPPDepthStencilState const &>(state_info));
+		pipeline_state.set_depth_stencil_state(reinterpret_cast<vkb::rendering::DepthStencilStateCpp const &>(state_info));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_input_assembly_state(InputAssemblyStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_input_assembly_state(vkb::rendering::InputAssemblyState<bindingType> const &state_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -1147,7 +1133,7 @@ inline void CommandBuffer<bindingType>::set_input_assembly_state(InputAssemblySt
 	}
 	else
 	{
-		pipeline_state.set_input_assembly_state(reinterpret_cast<vkb::rendering::HPPInputAssemblyState const &>(state_info));
+		pipeline_state.set_input_assembly_state(reinterpret_cast<vkb::rendering::InputAssemblyStateCpp const &>(state_info));
 	}
 }
 
@@ -1158,7 +1144,7 @@ inline void CommandBuffer<bindingType>::set_line_width(float line_width)
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_multisample_state(MultisampleStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_multisample_state(vkb::rendering::MultisampleState<bindingType> const &state_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -1166,12 +1152,12 @@ inline void CommandBuffer<bindingType>::set_multisample_state(MultisampleStateTy
 	}
 	else
 	{
-		pipeline_state.set_multisample_state(reinterpret_cast<vkb::rendering::HPPMultisampleState const &>(state_info));
+		pipeline_state.set_multisample_state(reinterpret_cast<vkb::rendering::MultisampleStateCpp const &>(state_info));
 	}
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_rasterization_state(RasterizationStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_rasterization_state(vkb::rendering::RasterizationState<bindingType> const &state_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -1179,7 +1165,7 @@ inline void CommandBuffer<bindingType>::set_rasterization_state(RasterizationSta
 	}
 	else
 	{
-		pipeline_state.set_rasterization_state(reinterpret_cast<vkb::rendering::HPPRasterizationState const &>(state_info));
+		pipeline_state.set_rasterization_state(reinterpret_cast<vkb::rendering::RasterizationStateCpp const &>(state_info));
 	}
 }
 
@@ -1223,7 +1209,7 @@ inline void CommandBuffer<bindingType>::set_update_after_bind(bool update_after_
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_vertex_input_state(VertexInputStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_vertex_input_state(vkb::rendering::VertexInputState<bindingType> const &state_info)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -1231,7 +1217,7 @@ inline void CommandBuffer<bindingType>::set_vertex_input_state(VertexInputStateT
 	}
 	else
 	{
-		pipeline_state.set_vertex_input_state(reinterpret_cast<vkb::rendering::HPPVertexInputState const &>(state_info));
+		pipeline_state.set_vertex_input_state(reinterpret_cast<vkb::rendering::VertexInputStateCpp const &>(state_info));
 	}
 }
 
@@ -1249,16 +1235,9 @@ inline void CommandBuffer<bindingType>::set_viewport(uint32_t first_viewport, st
 }
 
 template <vkb::BindingType bindingType>
-inline void CommandBuffer<bindingType>::set_viewport_state(ViewportStateType const &state_info)
+inline void CommandBuffer<bindingType>::set_viewport_state(vkb::rendering::ViewportState const &state_info)
 {
-	if constexpr (bindingType == vkb::BindingType::Cpp)
-	{
-		pipeline_state.set_viewport_state(state_info);
-	}
-	else
-	{
-		pipeline_state.set_viewport_state(reinterpret_cast<vkb::rendering::HPPViewportState const &>(state_info));
-	}
+	pipeline_state.set_viewport_state(state_info);
 }
 
 template <vkb::BindingType bindingType>

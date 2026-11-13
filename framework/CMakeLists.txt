@@ -52,7 +52,6 @@ set(FRAMEWORK_FILES
     structure_chain_builder.h
     # Source Files
     drawer.cpp
-    spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
     fence_pool.cpp
@@ -76,17 +75,16 @@ set(COMMON_FILES
     common/glm_common.h
     common/resource_caching.h
     common/helpers.h
-    common/error.h
     common/utils.h
     common/strings.h
     common/tags.h
-    common/hpp_error.h
     common/hpp_resource_caching.h
     common/hpp_strings.h
     common/hpp_utils.h
     common/hpp_vk_common.h
+    common/macros.h
+    common/vulkan_exception.h
     # Source Files
-    common/error.cpp
     common/ktx_common.cpp
     common/vk_common.cpp
     common/utils.cpp
@@ -104,19 +102,15 @@ set(RENDERING_FILES
     rendering/postprocessing_pipeline.h
     rendering/postprocessing_pass.h
     rendering/postprocessing_renderpass.h
-    rendering/postprocessing_computepass.h
     rendering/render_context.h
     rendering/render_frame.h
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
-    rendering/hpp_pipeline_state.h
     # Source files
-    rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
     rendering/postprocessing_pass.cpp
-    rendering/postprocessing_renderpass.cpp
-    rendering/postprocessing_computepass.cpp)
+    rendering/postprocessing_renderpass.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
@@ -240,14 +234,12 @@ set(CORE_FILES
     core/hpp_queue.h
 	core/hpp_render_pass.h
     core/hpp_sampler.h
-    core/hpp_shader_module.h
     core/hpp_swapchain.h
     core/vulkan_resource.h
     # Source Files
     core/command_pool_base.cpp
     core/debug.cpp
     core/image_core.cpp
-    core/shader_module.cpp
     core/pipeline_layout.cpp
     core/pipeline.cpp
     core/descriptor_set_layout.cpp
@@ -406,7 +398,7 @@ if(WIN32)
 endif()
 
 #NB: switch this to shared library and things stop working. (there is likely two copies of volk somewhere.
-add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
+add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # compiler flags based on compiler type

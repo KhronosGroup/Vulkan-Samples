@@ -57,11 +57,6 @@ struct CopyBuffer
 
 }        // namespace
 
-MultiDrawIndirect::MultiDrawIndirect()
-{
-	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, true /* optional */);
-}
-
 MultiDrawIndirect::~MultiDrawIndirect()
 {
 	if (has_device())
@@ -95,6 +90,13 @@ MultiDrawIndirect::~MultiDrawIndirect()
 uint32_t MultiDrawIndirect::get_api_version() const
 {
 	return VK_API_VERSION_1_2;
+}
+
+void MultiDrawIndirect::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME] = vkb::RequestMode::Optional;
 }
 
 void MultiDrawIndirect::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

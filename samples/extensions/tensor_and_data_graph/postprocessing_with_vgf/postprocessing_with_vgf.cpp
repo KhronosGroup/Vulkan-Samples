@@ -27,16 +27,6 @@
 
 #include <vgf/decoder.h>
 
-PostprocessingWithVgf::PostprocessingWithVgf()
-{
-	// Declare that we need the data graph and tensor extensions
-	add_device_extension("VK_ARM_tensors");
-	add_device_extension("VK_ARM_data_graph");
-	// These extensions are dependencies of the above, so we need to add them too.
-	add_device_extension("VK_KHR_maintenance5");
-	add_device_extension("VK_KHR_deferred_host_operations");
-}
-
 uint32_t PostprocessingWithVgf::get_api_version() const
 {
 	return VK_API_VERSION_1_3;        // Required by the emulation layers
@@ -56,6 +46,19 @@ PostprocessingWithVgf::~PostprocessingWithVgf()
 	// Make sure resources created in the render pipeline are destroyed before the Device gets destroyed.
 	// TODO: Could move this to the base VulkanSample class and upstream this patch.
 	set_render_pipeline(nullptr);
+}
+
+void PostprocessingWithVgf::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Declare that we need the data graph and tensor extensions
+	requested_extensions[VK_ARM_TENSORS_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_ARM_DATA_GRAPH_EXTENSION_NAME] = vkb::RequestMode::Required;
+
+	// These extensions are dependencies of the above, so we need to add them too.
+	requested_extensions[VK_KHR_MAINTENANCE_5_EXTENSION_NAME]            = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 /**
@@ -111,9 +114,9 @@ bool PostprocessingWithVgf::prepare(const vkb::ApplicationOptions &options)
 	vkb::sg::Camera &camera      = camera_node.get_component<vkb::sg::Camera>();
 
 	// Create a forward rendering pipeline to render the scene.
-	vkb::ShaderSource vert_shader("base.vert.spv");
-	vkb::ShaderSource frag_shader("base.frag.spv");
-	auto              scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
+	vkb::core::ShaderSource vert_shader("base.vert.spv");
+	vkb::core::ShaderSource frag_shader("base.frag.spv");
+	auto                    scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassC>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), camera);
 
 	auto render_pipeline = std::make_unique<vkb::rendering::RenderPipelineC>();
 	render_pipeline->add_subpass(std::move(scene_subpass));

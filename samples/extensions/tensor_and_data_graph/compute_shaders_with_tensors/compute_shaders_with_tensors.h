@@ -67,6 +67,7 @@ class ComputeShadersWithTensors : public vkb::VulkanSampleC
   private:
 	// from vkb::VulkanSample
 	uint32_t get_api_version() const override;
+	void     request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 
   private:
 	void prepare_descriptor_pool();

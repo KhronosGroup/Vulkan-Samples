@@ -70,7 +70,7 @@ const HPPResourceCacheState &HPPResourceCache::get_internal_state() const
 	return state;
 }
 
-vkb::core::HPPComputePipeline &HPPResourceCache::request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
+vkb::core::HPPComputePipeline &HPPResourceCache::request_compute_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state)
 {
 	return request_resource(device, recorder, compute_pipeline_mutex, state.compute_pipelines, pipeline_cache, pipeline_state);
 }
@@ -84,8 +84,8 @@ vkb::core::HPPDescriptorSet &HPPResourceCache::request_descriptor_set(vkb::core:
 }
 
 vkb::core::HPPDescriptorSetLayout &HPPResourceCache::request_descriptor_set_layout(const uint32_t                                   set_index,
-                                                                                   const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
-                                                                                   const std::vector<vkb::core::HPPShaderResource> &set_resources)
+                                                                                   const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules,
+                                                                                   const std::vector<vkb::core::ShaderResourceCpp> &set_resources)
 {
 	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 }
@@ -96,12 +96,12 @@ vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rend
 	return request_resource(device, recorder, framebuffer_mutex, state.framebuffers, render_target, render_pass);
 }
 
-vkb::core::HPPGraphicsPipeline &HPPResourceCache::request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
+vkb::core::HPPGraphicsPipeline &HPPResourceCache::request_graphics_pipeline(vkb::rendering::PipelineStateCpp &pipeline_state)
 {
 	return request_resource(device, recorder, graphics_pipeline_mutex, state.graphics_pipelines, pipeline_cache, pipeline_state);
 }
 
-vkb::core::HPPPipelineLayout &HPPResourceCache::request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
+vkb::core::HPPPipelineLayout &HPPResourceCache::request_pipeline_layout(const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules)
 {
 	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
 }
@@ -113,9 +113,9 @@ vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vecto
 	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);
 }
 
-vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits            stage,
-                                                                    const vkb::core::HPPShaderSource  &glsl_source,
-                                                                    const vkb::core::HPPShaderVariant &shader_variant)
+vkb::core::ShaderModuleCpp &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits         stage,
+                                                                    const vkb::core::ShaderSource  &glsl_source,
+                                                                    const vkb::core::ShaderVariant &shader_variant)
 {
 	std::string entry_point{"main"};
 	return request_resource(device, recorder, shader_module_mutex, state.shader_modules, stage, glsl_source, entry_point, shader_variant);

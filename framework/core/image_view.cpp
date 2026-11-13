@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,7 +60,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Cannot create ImageView"};
+		throw vkb::common::VulkanExceptionC{result, "Cannot create ImageView"};
 	}
 
 	// Register this image view to its image

@@ -88,6 +88,14 @@ void SwapchainRecreation::query_compatible_present_modes(VkPresentModeKHR presen
 	compatible_modes.resize(modes.presentModeCount);
 	modes.pPresentModes = compatible_modes.data();
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilities2KHR(get_gpu_handle(), &surface_info, &surface_caps));
+
+	// The driver may report FIFO latest ready even when its device extension is not enabled.
+	// Remove it in that case, since passing it to swapchain creation would be invalid.
+	if (!get_device().is_extension_enabled(
+	        VK_EXT_PRESENT_MODE_FIFO_LATEST_READY_EXTENSION_NAME))
+	{
+		std::erase(compatible_modes, VK_PRESENT_MODE_FIFO_LATEST_READY_EXT);
+	}
 }
 
 void SwapchainRecreation::adjust_desired_present_mode()
@@ -893,15 +901,10 @@ SwapchainRecreation::SwapchainRecreation()
 {
 	const char *use_maintenance1 = std::getenv("USE_MAINTENANCE1");
 
-	if ((use_maintenance1 == nullptr) || (strcmp(use_maintenance1, "no") != 0))
-	{
-		// Request sample-specific extensions as optional
-		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME, true);
-	}
-	else
+	allow_maintenance1 = (use_maintenance1 == nullptr) || (strcmp(use_maintenance1, "no") != 0);
+	if (!allow_maintenance1)
 	{
 		LOGI("Disabling usage of VK_EXT_surface_maintenance1 due to USE_MAINTENANCE1=no");
-		allow_maintenance1 = false;
 	}
 }
 
@@ -968,6 +971,17 @@ SwapchainRecreation::~SwapchainRecreation()
 	if (render_pass != VK_NULL_HANDLE)
 	{
 		vkDestroyRenderPass(get_device_handle(), render_pass, nullptr);
+	}
+}
+
+void SwapchainRecreation::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// Request sample-specific extensions as optional
+	if (allow_maintenance1)
+	{
+		requested_extensions[VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME] = vkb::RequestMode::Optional;
 	}
 }
 

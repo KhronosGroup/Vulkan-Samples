@@ -87,12 +87,9 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
   public:
 	using FrontFaceType = typename std::conditional<bindingType == BindingType::Cpp, vk::FrontFace, VkFrontFace>::type;
 
-	using MeshType               = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPMesh, vkb::sg::Mesh>::type;
-	using PipelineLayoutType     = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
-	using RasterizationStateType = typename std::conditional<bindingType == BindingType::Cpp, vkb::rendering::HPPRasterizationState, vkb::RasterizationState>::type;
-	using ShaderModuleType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderModule, vkb::ShaderModule>::type;
-	using ShaderSourceType       = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPShaderSource, vkb::ShaderSource>::type;
-	using SubMeshType            = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPSubMesh, vkb::sg::SubMesh>::type;
+	using MeshType           = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPMesh, vkb::sg::Mesh>::type;
+	using PipelineLayoutType = typename std::conditional<bindingType == BindingType::Cpp, vkb::core::HPPPipelineLayout, vkb::PipelineLayout>::type;
+	using SubMeshType        = typename std::conditional<bindingType == BindingType::Cpp, vkb::scene_graph::components::HPPSubMesh, vkb::sg::SubMesh>::type;
 
   public:
 	/**
@@ -104,8 +101,8 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	 * @param camera Camera used to look at the scene
 	 */
 	GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
-	                ShaderSourceType                          &&vertex_shader,
-	                ShaderSourceType                          &&fragment_shader,
+	                vkb::core::ShaderSource                   &&vertex_shader,
+	                vkb::core::ShaderSource                   &&fragment_shader,
 	                vkb::scene_graph::Scene<bindingType>       &scene,
 	                sg::Camera                                 &camera);
 
@@ -125,12 +122,12 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	void set_thread_index(uint32_t index);
 
   protected:
-	void                                        draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
-	virtual void                                draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
-	vkb::sg::Camera const                      &get_camera() const;
-	std::vector<MeshType *> const              &get_meshes() const;
-	RasterizationStateType const               &get_rasterization_state() const;
-	vkb::scene_graph::Scene<bindingType> const &get_scene() const;
+	void                                                   draw_submesh(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh, FrontFaceType front_face = DefaultFrontFaceTypeValue<FrontFaceType>::value);
+	virtual void                                           draw_submesh_command(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
+	vkb::sg::Camera const                                 &get_camera() const;
+	std::vector<MeshType *> const                         &get_meshes() const;
+	vkb::rendering::RasterizationState<bindingType> const &get_rasterization_state() const;
+	vkb::scene_graph::Scene<bindingType> const            &get_scene() const;
 
 	/**
 	 * @brief Sorts objects based on distance from camera and classifies them
@@ -140,8 +137,8 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	                      std::multimap<float, std::pair<vkb::scene_graph::Node<bindingType> *, SubMeshType *>> &transparent_nodes);
 
 	uint32_t                    get_thread_index() const;
-	void                        set_rasterization_state(const RasterizationStateType &rasterization_state);
-	virtual PipelineLayoutType &prepare_pipeline_layout(vkb::core::CommandBuffer<bindingType> &command_buffer, const std::vector<ShaderModuleType *> &shader_modules);
+	void                        set_rasterization_state(const vkb::rendering::RasterizationState<bindingType> &rasterization_state);
+	virtual PipelineLayoutType &prepare_pipeline_layout(vkb::core::CommandBuffer<bindingType> &command_buffer, const std::vector<vkb::core::ShaderModule<bindingType> *> &shader_modules);
 	virtual void                prepare_pipeline_state(vkb::core::CommandBuffer<bindingType> &command_buffer, FrontFaceType front_face, bool double_sided_material);
 	virtual void                prepare_push_constants(vkb::core::CommandBuffer<bindingType> &command_buffer, SubMeshType &sub_mesh);
 	virtual void                update_uniform(vkb::core::CommandBuffer<bindingType> &command_buffer, vkb::scene_graph::Node<bindingType> &node, size_t thread_index);
@@ -157,13 +154,13 @@ class GeometrySubpass : public vkb::rendering::Subpass<bindingType>
 	void                          get_sorted_nodes_impl(std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &opaque_nodes,
 	                                                    std::multimap<float, std::pair<vkb::scene_graph::NodeCpp *, vkb::scene_graph::components::HPPSubMesh *>> &transparent_nodes);
 	vkb::core::HPPPipelineLayout &prepare_pipeline_layout_impl(vkb::core::CommandBufferCpp                     &command_buffer,
-	                                                           const std::vector<vkb::core::HPPShaderModule *> &shader_modules);
+	                                                           const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules);
 	void                          prepare_pipeline_state_impl(vkb::core::CommandBufferCpp &command_buffer, vk::FrontFace front_face, bool double_sided_material);
 	virtual void                  prepare_push_constants_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::components::HPPSubMesh &sub_mesh);
 	void                          update_uniform_impl(vkb::core::CommandBufferCpp &command_buffer, vkb::scene_graph::NodeCpp &node, size_t thread_index);
 
   private:
-	vkb::rendering::HPPRasterizationState                base_rasterization_state;
+	vkb::rendering::RasterizationStateCpp                base_rasterization_state;
 	vkb::sg::Camera                                     &camera;
 	std::vector<vkb::scene_graph::components::HPPMesh *> meshes;
 	vkb::scene_graph::SceneCpp                          *scene;
@@ -177,8 +174,8 @@ using GeometrySubpassCpp = GeometrySubpass<vkb::BindingType::Cpp>;
 
 template <vkb::BindingType bindingType>
 inline GeometrySubpass<bindingType>::GeometrySubpass(vkb::rendering::RenderContext<bindingType> &render_context,
-                                                     ShaderSourceType                          &&vertex_source,
-                                                     ShaderSourceType                          &&fragment_source,
+                                                     vkb::core::ShaderSource                   &&vertex_source,
+                                                     vkb::core::ShaderSource                   &&fragment_source,
                                                      vkb::scene_graph::Scene<bindingType>       &scene_,
                                                      sg::Camera                                 &camera) :
     Subpass<bindingType>{render_context, std::move(vertex_source), std::move(fragment_source)}, camera{camera}
@@ -244,12 +241,12 @@ inline void GeometrySubpass<bindingType>::draw_impl(vkb::core::CommandBufferCpp 
 	if (!transparent_nodes.empty())
 	{
 		// Enable alpha blending
-		vkb::rendering::HPPColorBlendAttachmentState color_blend_attachment{.blend_enable           = true,
+		vkb::rendering::ColorBlendAttachmentStateCpp color_blend_attachment{.blend_enable           = true,
 		                                                                    .src_color_blend_factor = vk::BlendFactor::eSrcAlpha,
 		                                                                    .dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha,
 		                                                                    .src_alpha_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha};
 
-		vkb::rendering::HPPColorBlendState color_blend_state{};
+		vkb::rendering::ColorBlendStateCpp color_blend_state{};
 		color_blend_state.attachments.assign(this->get_output_attachments().size(), color_blend_attachment);
 
 		command_buffer.set_color_blend_state(color_blend_state);
@@ -287,8 +284,8 @@ inline void GeometrySubpass<bindingType>::prepare()
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
 			auto &variant     = sub_mesh->get_shader_variant();
-			auto &vert_module = resource_cache.request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader_impl(), variant);
-			auto &frag_module = resource_cache.request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader_impl(), variant);
+			auto &vert_module = resource_cache.request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader(), variant);
+			auto &frag_module = resource_cache.request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader(), variant);
 		}
 	}
 }
@@ -354,7 +351,7 @@ inline std::vector<typename GeometrySubpass<bindingType>::MeshType *> const &Geo
 }
 
 template <vkb::BindingType bindingType>
-inline typename GeometrySubpass<bindingType>::RasterizationStateType const &GeometrySubpass<bindingType>::get_rasterization_state() const
+inline typename vkb::rendering::RasterizationState<bindingType> const &GeometrySubpass<bindingType>::get_rasterization_state() const
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -362,7 +359,7 @@ inline typename GeometrySubpass<bindingType>::RasterizationStateType const &Geom
 	}
 	else
 	{
-		return reinterpret_cast<vkb::RasterizationState const &>(base_rasterization_state);
+		return reinterpret_cast<vkb::rendering::RasterizationStateC const &>(base_rasterization_state);
 	}
 }
 
@@ -438,7 +435,7 @@ inline uint32_t GeometrySubpass<bindingType>::get_thread_index() const
 }
 
 template <vkb::BindingType bindingType>
-inline void GeometrySubpass<bindingType>::set_rasterization_state(const RasterizationStateType &rasterization_state)
+inline void GeometrySubpass<bindingType>::set_rasterization_state(const vkb::rendering::RasterizationState<bindingType> &rasterization_state)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -446,14 +443,14 @@ inline void GeometrySubpass<bindingType>::set_rasterization_state(const Rasteriz
 	}
 	else
 	{
-		base_rasterization_state = *reinterpret_cast<const vkb::rendering::HPPRasterizationState *>(&rasterization_state);
+		base_rasterization_state = *reinterpret_cast<const vkb::rendering::RasterizationStateCpp *>(&rasterization_state);
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline typename GeometrySubpass<bindingType>::PipelineLayoutType &
-    GeometrySubpass<bindingType>::prepare_pipeline_layout(vkb::core::CommandBuffer<bindingType> &command_buffer,
-                                                          const std::vector<ShaderModuleType *> &shader_modules)
+    GeometrySubpass<bindingType>::prepare_pipeline_layout(vkb::core::CommandBuffer<bindingType>                     &command_buffer,
+                                                          const std::vector<vkb::core::ShaderModule<bindingType> *> &shader_modules)
 {
 	if constexpr (bindingType == BindingType::Cpp)
 	{
@@ -463,14 +460,14 @@ inline typename GeometrySubpass<bindingType>::PipelineLayoutType &
 	{
 		return reinterpret_cast<vkb::PipelineLayout &>(
 		    prepare_pipeline_layout_impl(reinterpret_cast<vkb::core::CommandBufferCpp &>(command_buffer),
-		                                 reinterpret_cast<const std::vector<vkb::core::HPPShaderModule *> &>(shader_modules)));
+		                                 reinterpret_cast<const std::vector<vkb::core::ShaderModuleCpp *> &>(shader_modules)));
 	}
 }
 
 template <vkb::BindingType bindingType>
 inline vkb::core::HPPPipelineLayout &
     GeometrySubpass<bindingType>::prepare_pipeline_layout_impl(vkb::core::CommandBufferCpp                     &command_buffer,
-                                                               const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
+                                                               const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules)
 {
 	// Sets any specified resource modes
 	for (auto &shader_module : shader_modules)
@@ -507,18 +504,18 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 		    reinterpret_cast<vkb::core::CommandBufferC &>(command_buffer), static_cast<VkFrontFace>(front_face), sub_mesh.get_material()->is_double_sided());
 	}
 
-	vkb::rendering::HPPMultisampleState multisample_state{.rasterization_samples = this->get_sample_count_impl()};
+	vkb::rendering::MultisampleStateCpp multisample_state{.rasterization_samples = this->get_sample_count_impl()};
 	command_buffer.set_multisample_state(multisample_state);
 
 	auto &resource_cache = command_buffer.get_device().get_resource_cache();
 	auto &vert_shader_module =
-	    resource_cache.request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader_impl(), sub_mesh.get_shader_variant());
+	    resource_cache.request_shader_module(vk::ShaderStageFlagBits::eVertex, this->get_vertex_shader(), sub_mesh.get_shader_variant());
 	auto &frag_shader_module =
-	    resource_cache.request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader_impl(), sub_mesh.get_shader_variant());
+	    resource_cache.request_shader_module(vk::ShaderStageFlagBits::eFragment, this->get_fragment_shader(), sub_mesh.get_shader_variant());
 
 	auto &pipeline_layout = reinterpret_cast<vkb::core::HPPPipelineLayout &>(
 	    prepare_pipeline_layout(reinterpret_cast<vkb::core::CommandBuffer<bindingType> &>(command_buffer),
-	                            {reinterpret_cast<ShaderModuleType *>(&vert_shader_module), reinterpret_cast<ShaderModuleType *>(&frag_shader_module)}));
+	                            {reinterpret_cast<vkb::core::ShaderModule<bindingType> *>(&vert_shader_module), reinterpret_cast<vkb::core::ShaderModule<bindingType> *>(&frag_shader_module)}));
 
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
@@ -545,9 +542,9 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 		}
 	}
 
-	auto vertex_input_resources = pipeline_layout.get_resources(vkb::core::HPPShaderResourceType::Input, vk::ShaderStageFlagBits::eVertex);
+	auto vertex_input_resources = pipeline_layout.get_resources(vkb::core::ShaderResourceType::Input, vk::ShaderStageFlagBits::eVertex);
 
-	HPPVertexInputState vertex_input_state;
+	vkb::rendering::VertexInputStateCpp vertex_input_state;
 
 	for (auto &input_resource : vertex_input_resources)
 	{
@@ -610,7 +607,7 @@ inline void GeometrySubpass<bindingType>::prepare_pipeline_state_impl(vkb::core:
                                                                       vk::FrontFace                front_face,
                                                                       bool                         double_sided_material)
 {
-	vkb::rendering::HPPRasterizationState rasterization_state = this->base_rasterization_state;
+	vkb::rendering::RasterizationStateCpp rasterization_state = this->base_rasterization_state;
 	rasterization_state.front_face                            = front_face;
 
 	if (double_sided_material)
@@ -620,7 +617,7 @@ inline void GeometrySubpass<bindingType>::prepare_pipeline_state_impl(vkb::core:
 
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	vkb::rendering::HPPMultisampleState multisample_state{};
+	vkb::rendering::MultisampleStateCpp multisample_state{};
 	multisample_state.rasterization_samples = this->get_sample_count_impl();
 	command_buffer.set_multisample_state(multisample_state);
 }

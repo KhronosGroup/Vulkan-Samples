@@ -21,6 +21,7 @@
 #include <array>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <functional>
 #include <iterator>
@@ -34,8 +35,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "common/error.h"
-
 #include "common/glm_common.h"
 #include <glm/gtx/hash.hpp>
 
@@ -43,7 +42,8 @@ namespace vkb
 {
 inline bool contains(uint32_t range_count, char const *const *range, char const *value)
 {
-	return std::any_of(range, range + range_count, [value](char const *range_value) { return strcmp(range_value, value) == 0; });
+	return std::any_of(
+	    range, range + range_count, [value](char const *range_value) { return strcmp(range_value, value) == 0; });
 }
 
 inline bool contains(std::vector<std::string> const &range, char const *value)

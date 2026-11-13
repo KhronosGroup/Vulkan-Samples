@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,8 +18,6 @@
 #include "heightmap.h"
 
 #include <cstring>
-
-#include "common/error.h"
 
 #include "common/glm_common.h"
 

@@ -31,9 +31,6 @@
 ConservativeRasterization::ConservativeRasterization()
 {
 	title = "Conservative rasterization";
-
-	// Enable extension required for conservative rasterization
-	add_device_extension(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME);
 }
 
 ConservativeRasterization::~ConservativeRasterization()
@@ -66,6 +63,13 @@ ConservativeRasterization::~ConservativeRasterization()
 	uniform_buffers.scene.reset();
 	triangle.vertices.reset();
 	triangle.indices.reset();
+}
+
+void ConservativeRasterization::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void ConservativeRasterization::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)

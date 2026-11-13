@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2024, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,8 +27,10 @@
 
 namespace vkb
 {
+namespace core
+{
 enum class ShaderResourceType;
-
+}
 namespace sg
 {
 enum class AlphaMode;
@@ -210,7 +212,7 @@ const std::string to_string(bool flag);
  * @param type Vulkan ShaderResourceType to convert
  * @return The string to return
  */
-const std::string to_string(ShaderResourceType type);
+const std::string to_string(vkb::core::ShaderResourceType type);
 
 /**
  * @brief Helper generic function to convert a bitmask to a string of its components

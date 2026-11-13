@@ -49,6 +49,7 @@ class OpenCLInterop : public ApiVulkanSample
 	void build_command_buffers() override;
 
   protected:
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 
   private:

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2023-2026, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,6 +41,7 @@ class MobileNerf : public ApiVulkanSample
   public:
 	MobileNerf();
 	~MobileNerf() override;
+	void request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -82,6 +82,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
+	void          request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const override;
 	void          request_gpu_features(vkb::core::PhysicalDeviceC &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);

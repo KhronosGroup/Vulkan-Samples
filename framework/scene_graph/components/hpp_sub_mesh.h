@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <core/hpp_shader_module.h>
 #include <scene_graph/components/hpp_material.h>
 #include <scene_graph/components/sub_mesh.h>
 
@@ -67,14 +66,14 @@ class HPPSubMesh : private vkb::sg::SubMesh
 		return reinterpret_cast<vkb::scene_graph::components::HPPMaterial const *>(vkb::sg::SubMesh::get_material());
 	}
 
-	vkb::core::HPPShaderVariant &get_mut_shader_variant()
+	vkb::core::ShaderVariant &get_mut_shader_variant()
 	{
-		return reinterpret_cast<vkb::core::HPPShaderVariant &>(vkb::sg::SubMesh::get_mut_shader_variant());
+		return reinterpret_cast<vkb::core::ShaderVariant &>(vkb::sg::SubMesh::get_mut_shader_variant());
 	}
 
-	const vkb::core::HPPShaderVariant &get_shader_variant() const
+	const vkb::core::ShaderVariant &get_shader_variant() const
 	{
-		return reinterpret_cast<vkb::core::HPPShaderVariant const &>(vkb::sg::SubMesh::get_shader_variant());
+		return reinterpret_cast<vkb::core::ShaderVariant const &>(vkb::sg::SubMesh::get_shader_variant());
 	}
 
 	vkb::core::BufferCpp const &get_vertex_buffer(std::string const &name) const

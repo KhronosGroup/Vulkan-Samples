@@ -1,4 +1,5 @@
 /* Copyright (c) 2023-2026, Holochip Corporation
+ * Copyright (c) 2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,31 +18,38 @@
 
 #include "full_screen_exclusive.h"
 
+#include "common/macros.h"
 #include "filesystem/legacy.h"
 #include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity,
+                                                     VkDebugUtilsMessageTypeFlagsEXT             message_type,
                                                      const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                      void                                       *user_data)
 {
-	(void) user_data;
-
-	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	// Log debug message
+	std::string message = fmt::format("Debug callback {}\n{}: {}",
+	                                  vk::to_string(static_cast<vk::DebugUtilsMessageTypeFlagsEXT>(message_type)),
+	                                  callback_data->pMessageIdName,
+	                                  callback_data->pMessage);
+	switch (message_severity)
 	{
-		LOGE("{} Validation Layer: Error: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
-	}
-	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-	{
-		LOGE("{} Validation Layer: Warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
-	}
-	else if (message_type & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-	{
-		LOGI("{} Validation Layer: Performance warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
-	}
-	else
-	{
-		LOGI("{} Validation Layer: Information: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+			LOGD("{}", message);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+			LOGI("{}", message);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			LOGW("{}", message);
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+			LOGE("{}", message);
+			break;
+		default:
+			LOGE("Unknown message severity {}!\n{}", vk::to_string(static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(message_severity)), message);
+			break;
 	}
 	return VK_FALSE;
 }
@@ -177,6 +185,7 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 	std::vector<VkPhysicalDevice> gpus(gpu_count);
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
 
+	// look for a PhysicalDevice that supports graphics, presentation, and full screen exclusive
 	for (uint32_t i = 0; i < gpu_count && (context.graphics_queue_index < 0); i++)
 	{
 		context.gpu = gpus[i];
@@ -189,25 +198,42 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 			throw std::runtime_error("No queue family found.");
 		}
 
-		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
-		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
+		// Get the full screen exclusive capabilities of this physical device and surface.
+		VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_win32_info{.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT};
+		VkPhysicalDeviceSurfaceInfo2KHR          surface_info_2{.sType   = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR,
+		                                                        .pNext   = &surface_full_screen_exclusive_win32_info,
+		                                                        .surface = context.surface};
 
-		for (uint32_t j = 0; j < queue_family_count; j++)
+		VkSurfaceCapabilitiesFullScreenExclusiveEXT surface_full_screen_exclusive_capabilities{.sType =
+		                                                                                           VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_FULL_SCREEN_EXCLUSIVE_EXT};
+		VkSurfaceCapabilities2KHR                   surface_capabilities_2{.sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR,
+		                                                                   .pNext = &surface_full_screen_exclusive_capabilities};
+
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilities2KHR(context.gpu, &surface_info_2, &surface_capabilities_2));
+
+		if (surface_full_screen_exclusive_capabilities.fullScreenExclusiveSupported == VK_TRUE)
 		{
-			VkBool32 supports_present;
-			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, j, context.surface, &supports_present);
+			std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
+			vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
 
-			if ((queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+			for (uint32_t j = 0; j < queue_family_count; j++)
 			{
-				context.graphics_queue_index = j;
-				break;
+				VkBool32 supports_present;
+				vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, j, context.surface, &supports_present);
+
+				if ((queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+				{
+					LOGI("Found a suitable queue which supports graphics, presentation, and full screen exclusive.")
+					context.graphics_queue_index = j;
+					break;
+				}
 			}
 		}
 	}
 
 	if (context.graphics_queue_index < 0)
 	{
-		LOGE("Did not find suitable queue which supports graphics, and presentation.")
+		LOGE("Did not find suitable queue which supports graphics, presentation, and full screen exclusive.")
 	}
 
 	uint32_t device_extension_count;
@@ -594,7 +620,7 @@ VkResult FullScreenExclusive::acquire_next_image(uint32_t *image)
 
 	VkResult result = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, image);
 
-	if (result != VK_SUCCESS)
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		context.recycled_semaphores.push_back(acquire_semaphore);
 		return result;

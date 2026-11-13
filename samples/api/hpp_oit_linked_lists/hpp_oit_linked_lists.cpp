@@ -20,8 +20,6 @@
 HPPOITLinkedLists::HPPOITLinkedLists()
 {
 	title = "HPP OIT linked lists";
-
-	add_device_extension(vk::KHRSynchronization2ExtensionName);
 }
 
 HPPOITLinkedLists::~HPPOITLinkedLists()
@@ -75,6 +73,13 @@ bool HPPOITLinkedLists::resize(const uint32_t width, const uint32_t height)
 		update_descriptors();
 	}
 	return HPPApiVulkanSample::resize(width, height);
+}
+
+void HPPOITLinkedLists::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleCpp::request_device_extensions(requested_extensions);
+
+	requested_extensions[vk::KHRSynchronization2ExtensionName] = vkb::RequestMode::Required;
 }
 
 void HPPOITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)

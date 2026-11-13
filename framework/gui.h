@@ -28,7 +28,6 @@
 #include "filesystem/legacy.h"
 #include "platform/input_events.h"
 #include "platform/window.h"
-#include "rendering/hpp_pipeline_state.h"
 #include "stats/stats.h"
 #include <glm/glm.hpp>
 #include <imgui.h>
@@ -486,10 +485,10 @@ inline Gui<bindingType>::Gui(
 	vkb::common::make_filters_valid(device.get_gpu().get_handle(), font_image->get_format(), &filter);
 
 	// Load shaders
-	vkb::core::HPPShaderSource vert_shader("imgui.vert.spv");
-	vkb::core::HPPShaderSource frag_shader("imgui.frag.spv");
+	vkb::core::ShaderSource vert_shader("imgui.vert.spv");
+	vkb::core::ShaderSource frag_shader("imgui.frag.spv");
 
-	std::vector<vkb::core::HPPShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModuleCpp *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, vert_shader, {}));
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, frag_shader, {}));
 
@@ -646,7 +645,10 @@ inline void
 #if defined(PLATFORM__MACOS) && TARGET_OS_IOS && TARGET_OS_SIMULATOR
 		// iOS Simulator does not support vkCmdDrawIndexed() with vertex_offset > 0, so rebind vertex buffer instead
 		vertex_offsets[0] += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
-		command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
+		if (vertex_offsets[0] < vertex_buffer->get_size())
+		{
+			command_buffer.bindVertexBuffers(0, vertex_buffer_handle, vertex_offsets);
+		}
 #else
 		vertex_offset += cmd_list->VtxBuffer.Size;
 #endif
@@ -695,26 +697,26 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 	// Location 2: Color
 	vk::VertexInputAttributeDescription col_attr = {.location = 2, .format = vk::Format::eR8G8B8A8Unorm, .offset = offsetof(ImDrawVert, col)};
 
-	vkb::rendering::HPPVertexInputState vertex_input_state = {.bindings = {vertex_input_binding}, .attributes = {pos_attr, uv_attr, col_attr}};
+	vkb::rendering::VertexInputStateCpp vertex_input_state = {.bindings = {vertex_input_binding}, .attributes = {pos_attr, uv_attr, col_attr}};
 
 	command_buffer.set_vertex_input_state(vertex_input_state);
 
 	// Blend state
-	vkb::rendering::HPPColorBlendAttachmentState color_attachment = {.blend_enable           = true,
+	vkb::rendering::ColorBlendAttachmentStateCpp color_attachment = {.blend_enable           = true,
 	                                                                 .src_color_blend_factor = vk::BlendFactor::eSrcAlpha,
 	                                                                 .dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha,
 	                                                                 .src_alpha_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha,
 	                                                                 .color_write_mask       = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
 	                                                                                     vk::ColorComponentFlagBits::eB};
 
-	vkb::rendering::HPPColorBlendState blend_state{.attachments = {color_attachment}};
+	vkb::rendering::ColorBlendStateCpp blend_state{.attachments = {color_attachment}};
 
 	command_buffer.set_color_blend_state(blend_state);
 
-	vkb::rendering::HPPRasterizationState rasterization_state = {.cull_mode = vk::CullModeFlagBits::eNone};
+	vkb::rendering::RasterizationStateCpp rasterization_state = {.cull_mode = vk::CullModeFlagBits::eNone};
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	vkb::rendering::HPPDepthStencilState depth_state = {.depth_test_enable = false, .depth_write_enable = false};
+	vkb::rendering::DepthStencilStateCpp depth_state = {.depth_test_enable = false, .depth_write_enable = false};
 	command_buffer.set_depth_stencil_state(depth_state);
 
 	// Bind pipeline layout
@@ -754,6 +756,7 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 
 	std::vector<std::reference_wrapper<const vkb::core::BufferCpp>> vertex_buffers;
 	std::vector<vk::DeviceSize>                                     vertex_offsets;
+	vk::DeviceSize                                                  vertex_size;
 
 	// If a render context is used, then use the frames buffer pools to allocate GUI vertex/index data from
 	if (!explicit_update)
@@ -764,12 +767,14 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 		{
 			vertex_buffers.push_back(vertex_allocation.get_buffer());
 			vertex_offsets.push_back(vertex_allocation.get_offset());
+			vertex_size = vertex_allocation.get_size();
 		}
 	}
 	else
 	{
 		vertex_buffers.push_back(*vertex_buffer);
 		vertex_offsets.push_back(0);
+		vertex_size = vertex_buffer->get_size();
 		command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
 		command_buffer.bind_index_buffer(*index_buffer, 0, vk::IndexType::eUint16);
 	}
@@ -822,7 +827,10 @@ inline void Gui<bindingType>::draw_impl(vkb::core::CommandBufferCpp &command_buf
 		if (!vertex_offsets.empty())
 		{
 			vertex_offsets.back() += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
-			command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+			if (vertex_offsets.back() < vertex_size)
+			{
+				command_buffer.bind_vertex_buffers(0, vertex_buffers, vertex_offsets);
+			}
 		}
 #else
 		vertex_offset += cmd_list->VtxBuffer.Size;
@@ -1407,7 +1415,7 @@ inline bool Gui<bindingType>::update_buffers()
 	}
 
 	bool updated = false;
-	if (!vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
+	if (!vertex_buffer || !vertex_buffer->get_handle() || (vertex_buffer_size != vertex_buffer->get_size()))
 	{
 		vertex_buffer.reset();
 		vertex_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), vertex_buffer_size,
@@ -1417,7 +1425,7 @@ inline bool Gui<bindingType>::update_buffers()
 		updated = true;
 	}
 
-	if (!index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
+	if (!index_buffer || !index_buffer->get_handle() || (index_buffer_size != index_buffer->get_size()))
 	{
 		index_buffer.reset();
 		index_buffer = std::make_unique<vkb::core::BufferCpp>(render_context.get_device(), index_buffer_size,

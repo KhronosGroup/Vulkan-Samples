@@ -100,21 +100,6 @@ OpenCLInterop::OpenCLInterop()
 {
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
-
-	// To use external memory, semaphores and fences, we need to enable several extensions, both on the device as well as the instance
-	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_FENCE_EXTENSION_NAME);
-	// Some of the extensions are platform dependent
-#ifdef _WIN32
-	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME);
-#else
-	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
-	add_device_extension(VK_KHR_EXTERNAL_FENCE_FD_EXTENSION_NAME);
-#endif
 }
 
 OpenCLInterop::~OpenCLInterop()
@@ -213,6 +198,27 @@ void OpenCLInterop::render(float delta_time)
 	CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
 	// Signal a semaphore that the next Vulkan frame can wait on (first_submit != false)
 	CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
+}
+
+void OpenCLInterop::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	// To use external memory, semaphores and fences, we need to enable several extensions, both on the device as well as the instance
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_FENCE_EXTENSION_NAME]     = vkb::RequestMode::Required;
+
+	// Some of the extensions are platform dependent
+#ifdef _WIN32
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_FENCE_WIN32_EXTENSION_NAME]     = vkb::RequestMode::Required;
+#else
+	requested_extensions[VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME]    = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME] = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_EXTERNAL_FENCE_FD_EXTENSION_NAME]     = vkb::RequestMode::Required;
+#endif
 }
 
 void OpenCLInterop::request_instance_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const

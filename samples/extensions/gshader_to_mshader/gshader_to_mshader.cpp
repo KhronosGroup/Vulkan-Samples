@@ -20,10 +20,6 @@
 GshaderToMshader::GshaderToMshader()
 {
 	title = "task_mesh_migration";
-
-	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 }
 
 GshaderToMshader::~GshaderToMshader()
@@ -422,6 +418,15 @@ void GshaderToMshader::on_update_ui_overlay(vkb::Drawer &drawer)
 			rebuild_command_buffers();
 		}
 	}
+}
+
+void GshaderToMshader::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
+{
+	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+
+	requested_extensions[VK_EXT_MESH_SHADER_EXTENSION_NAME]           = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SPIRV_1_4_EXTENSION_NAME]             = vkb::RequestMode::Required;
+	requested_extensions[VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME] = vkb::RequestMode::Required;
 }
 
 void GshaderToMshader::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
