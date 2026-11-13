@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -204,7 +204,7 @@ VkDeviceSize Image::get_image_required_size() const
 
 VkImageCompressionPropertiesEXT Image::get_applied_compression() const
 {
-	return query_applied_compression(get_device().get_handle(), get_handle());
+	return vkb::common::query_image_subresource_layout_extension<VkImageCompressionPropertiesEXT>(get_device().get_handle(), get_handle());
 }
 }        // namespace core
 }        // namespace vkb

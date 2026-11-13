@@ -17,7 +17,6 @@
 
 #include "swapchain_recreation.h"
 
-#include "common/vk_common.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 
@@ -41,7 +40,7 @@ void SwapchainRecreation::get_queue()
 
 void SwapchainRecreation::query_surface_format()
 {
-	surface_format = vkb::select_surface_format(get_gpu_handle(), get_surface());
+	surface_format = vkb::common::select_surface_format(get_gpu_handle(), get_surface());
 }
 
 void SwapchainRecreation::query_present_modes()

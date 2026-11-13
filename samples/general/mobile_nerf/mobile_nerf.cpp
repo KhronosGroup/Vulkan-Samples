@@ -16,6 +16,7 @@
  */
 
 #include "mobile_nerf.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "glm/gtx/matrix_decompose.hpp"
 #include "gltf_loader.h"
@@ -535,14 +536,14 @@ void MobileNerf::setup_attachment(VkFormat format, VkImageUsageFlags usage, Fram
         VMA_MEMORY_USAGE_GPU_ONLY);
 
 	with_command_buffer([&](VkCommandBuffer command_buffer) {
-		vkb::image_layout_transition(command_buffer, attachment.image->get_handle(),
-		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		                             {},
-		                             {},
-		                             VK_IMAGE_LAYOUT_UNDEFINED,
-		                             VK_IMAGE_LAYOUT_GENERAL,
-		                             {aspectMask, 0, 1, 0, 1});
+		vkb::common::image_layout_transition(command_buffer, attachment.image->get_handle(),
+		                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                                     {},
+		                                     {},
+		                                     VK_IMAGE_LAYOUT_UNDEFINED,
+		                                     VK_IMAGE_LAYOUT_GENERAL,
+		                                     {aspectMask, 0, 1, 0, 1});
 	});
 
 	VkImageViewCreateInfo color_image_view           = vkb::initializers::image_view_create_info();
@@ -1601,7 +1602,7 @@ void MobileNerf::create_texture_helper(std::string const &texturePath, Texture &
 
 	// Calculate valid filter
 	VkFilter filter = using_original_nerf_models[0] ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), texture_input.image->get_format(), &filter);
 
 	VkSamplerCreateInfo samplerCreateInfo     = {};
 	samplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

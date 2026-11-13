@@ -16,6 +16,7 @@
  */
 
 #include "oit_linked_lists.h"
+#include "common/vk_initializers.h"
 #include <algorithm>
 
 OITLinkedLists::OITLinkedLists()
@@ -300,7 +301,7 @@ void OITLinkedLists::clear_sized_resources()
 		vkCmdFillBuffer(command_buffer, fragment_counter->get_handle(), 0, sizeof(glm::uint), 0);
 
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		vkb::image_layout_transition(
+		vkb::common::image_layout_transition(
 		    command_buffer, linked_list_head_image->get_handle(),
 		    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,

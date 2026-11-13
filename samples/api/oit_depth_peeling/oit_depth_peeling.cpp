@@ -1,4 +1,4 @@
-/* Copyright (c) 2024-2025, Google
+/* Copyright (c) 2024-2026, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,6 +16,7 @@
  */
 
 #include "oit_depth_peeling.h"
+#include "common/vk_initializers.h"
 #include <algorithm>
 
 OITDepthPeeling::OITDepthPeeling()
@@ -159,7 +160,7 @@ void OITDepthPeeling::build_command_buffers()
 				// It is bound as texture and read in the shader to discard fragments from the
 				// previous layers.
 				VkImageSubresourceRange depth_subresource_range = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
-				vkb::image_layout_transition(
+				vkb::common::image_layout_transition(
 				    draw_cmd_buffers[i], depth_image[l % kDepthCount]->get_handle(),
 				    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
 				    VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
@@ -167,7 +168,7 @@ void OITDepthPeeling::build_command_buffers()
 				    depth_subresource_range);
 				if (l > 0)
 				{
-					vkb::image_layout_transition(
+					vkb::common::image_layout_transition(
 					    draw_cmd_buffers[i], depth_image[(l + 1) % kDepthCount]->get_handle(),
 					    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 					    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
@@ -177,7 +178,7 @@ void OITDepthPeeling::build_command_buffers()
 
 				// Set one of the layer textures as color attachment, as the gather pass will render to it.
 				VkImageSubresourceRange layer_subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-				vkb::image_layout_transition(
+				vkb::common::image_layout_transition(
 				    draw_cmd_buffers[i], layer_image[l]->get_handle(),
 				    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 				    VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -203,7 +204,7 @@ void OITDepthPeeling::build_command_buffers()
 				vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 				// Get the layer texture ready to be read by the combine pass.
-				vkb::image_layout_transition(
+				vkb::common::image_layout_transition(
 				    draw_cmd_buffers[i], layer_image[l]->get_handle(),
 				    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 				    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,

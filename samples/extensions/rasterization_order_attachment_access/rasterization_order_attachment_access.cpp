@@ -16,6 +16,7 @@
  */
 
 #include "rasterization_order_attachment_access.h"
+#include "common/vk_initializers.h"
 
 // ============================================================================
 // Initialization
@@ -404,7 +405,7 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			}
 
 			// Transition: UNDEFINED -> RENDERING_LOCAL_READ_KHR (enables framebuffer fetch)
-			vkb::image_layout_transition(
+			vkb::common::image_layout_transition(
 			    draw_cmd_buffers[i], swapchain_buffers[i].image,
 			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			    0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -501,7 +502,7 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			}
 
 			// Transition: RENDERING_LOCAL_READ_KHR -> COLOR_ATTACHMENT_OPTIMAL (required for UI rendering)
-			vkb::image_layout_transition(
+			vkb::common::image_layout_transition(
 			    draw_cmd_buffers[i], swapchain_buffers[i].image,
 			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -511,7 +512,7 @@ void RasterizationOrderAttachmentAccess::build_command_buffers()
 			draw_ui(draw_cmd_buffers[i], i);
 
 			// Transition: COLOR_ATTACHMENT_OPTIMAL -> PRESENT_SRC_KHR
-			vkb::image_layout_transition(
+			vkb::common::image_layout_transition(
 			    draw_cmd_buffers[i], swapchain_buffers[i].image,
 			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,

@@ -17,7 +17,6 @@
 
 #include "image_compression_control.h"
 
-#include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/platform.h"
@@ -114,6 +113,12 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	return true;
 }
 
+std::vector<VkImageCompressionFixedRateFlagBitsEXT> vectorize_flags(VkImageCompressionFixedRateFlagsEXT flags)
+{
+	auto flag_bits = vkb::common::vectorize_flags(static_cast<vk::ImageCompressionFixedRateFlagsEXT>(flags));
+	return *reinterpret_cast<std::vector<VkImageCompressionFixedRateFlagBitsEXT> *>(&flag_bits);
+}
+
 void ImageCompressionControlSample::create_render_context()
 {
 	/**
@@ -189,7 +194,7 @@ void ImageCompressionControlSample::create_render_context()
 		if (selected_surface_format.format == surface_compression_properties_list[i].surface_format.surfaceFormat.format &&
 		    selected_surface_format.colorSpace == surface_compression_properties_list[i].surface_format.surfaceFormat.colorSpace)
 		{
-			supported_fixed_rate_flags_swapchain = vkb::fixed_rate_compression_flags_to_vector(
+			supported_fixed_rate_flags_swapchain = vectorize_flags(
 			    surface_compression_properties_list[i].compression_properties.imageCompressionFixedRateFlags);
 			break;
 		}
@@ -199,6 +204,30 @@ void ImageCompressionControlSample::create_render_context()
 void ImageCompressionControlSample::prepare_render_context()
 {
 	get_render_context().prepare(1, std::bind(&ImageCompressionControlSample::create_render_target, this, std::placeholders::_1));
+}
+
+VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(VkPhysicalDevice         gpu,
+                                                                       const VkImageCreateInfo &create_info)
+{
+	VkImageCompressionPropertiesEXT supported_compression_properties{
+	    VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
+
+	VkImageCompressionControlEXT compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
+	compression_control.flags = VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT;
+
+	VkPhysicalDeviceImageFormatInfo2 image_format_info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2};
+	image_format_info.format = create_info.format;
+	image_format_info.type   = create_info.imageType;
+	image_format_info.tiling = create_info.tiling;
+	image_format_info.usage  = create_info.usage;
+	image_format_info.pNext  = &compression_control;
+
+	VkImageFormatProperties2 image_format_properties{VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2};
+	image_format_properties.pNext = &supported_compression_properties;
+
+	vkGetPhysicalDeviceImageFormatProperties2KHR(gpu, &image_format_info, &image_format_properties);
+
+	return supported_compression_properties;
 }
 
 std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::create_render_target(vkb::core::Image &&swapchain_image)
@@ -235,9 +264,9 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 				 * calling vkGetPhysicalDeviceImageFormatProperties2KHR.
 				 * See the implementation of this helper function in vkb::core::Image.
 				 */
-				VkImageCompressionPropertiesEXT supported_compression_properties = vkb::query_supported_fixed_rate_compression(get_device().get_gpu().get_handle(), color_image_info);
+				VkImageCompressionPropertiesEXT supported_compression_properties = query_supported_fixed_rate_compression(get_device().get_gpu().get_handle(), color_image_info);
 
-				auto fixed_rate_flags = vkb::fixed_rate_compression_flags_to_vector(supported_compression_properties.imageCompressionFixedRateFlags);
+				auto fixed_rate_flags = vectorize_flags(supported_compression_properties.imageCompressionFixedRateFlags);
 
 				VkImageFormatProperties format_properties;
 				auto                    result = vkGetPhysicalDeviceImageFormatProperties(get_device().get_gpu().get_handle(),
@@ -291,7 +320,7 @@ std::unique_ptr<vkb::rendering::RenderTargetC> ImageCompressionControlSample::cr
 
 	vkb::core::Image depth_image{get_device(),
 	                             vkb::core::ImageBuilder(color_image_info.extent)
-	                                 .with_format(vkb::get_suitable_depth_format(get_device().get_gpu().get_handle()))
+	                                 .with_format(vkb::common::select_suitable_depth_format(get_device().get_gpu().get_handle()))
 	                                 .with_usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)
 	                                 .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY)};
 

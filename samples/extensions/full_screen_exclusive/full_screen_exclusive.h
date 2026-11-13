@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "core/instance.h"
 #include "platform/application.h"
 
@@ -89,10 +88,14 @@ class FullScreenExclusive : public vkb::Application
 	SwapchainMode                            full_screen_status        = SwapchainMode::Default;                 // declare and initialize the swapchain mode
 
   private:
-	VkExtent2D get_current_max_image_extent() const;                            // This detects the maximum surface resolution and return them in vkExtent2D format
-	void       input_event(const vkb::InputEvent &input_event) override;        // This is to introduce a customized input events for switching application window and swapchain modes.
-	void       update_application_window();                                     // This switches application window modes corresponding to the selected swapchain modes
-	void       recreate();                                                      // to recreate the swapchain and related per switch of display mode
+	VkExtent2D         get_current_max_image_extent() const;                            // This detects the maximum surface resolution and return them in vkExtent2D format
+	void               input_event(const vkb::InputEvent &input_event) override;        // This is to introduce a customized input events for switching application window and swapchain modes.
+	void               update_application_window();                                     // This switches application window modes corresponding to the selected swapchain modes
+	void               recreate();                                                      // to recreate the swapchain and related per switch of display mode
+	VkSurfaceFormatKHR select_surface_format(
+	    VkPhysicalDevice             gpu,
+	    VkSurfaceKHR                 surface,
+	    std::vector<VkFormat> const &format_priority_list = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R5G6B5_UNORM_PACK16});
 
   public:
 	FullScreenExclusive() = default;

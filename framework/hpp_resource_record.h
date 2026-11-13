@@ -21,11 +21,6 @@
 
 namespace vkb
 {
-namespace common
-{
-struct HPPLoadStoreInfo;
-}
-
 namespace core
 {
 class HPPGraphicsPipeline;
@@ -65,11 +60,11 @@ class HPPResourceRecord : private vkb::ResourceRecord
 	}
 
 	size_t register_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
-	                            const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
+	                            const std::vector<vkb::common::LoadStoreInfoCpp> &load_store_infos,
 	                            const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
 	{
 		return vkb::ResourceRecord::register_render_pass(reinterpret_cast<std::vector<vkb::rendering::AttachmentC> const &>(attachments),
-		                                                 reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
+		                                                 reinterpret_cast<std::vector<vkb::common::LoadStoreInfoC> const &>(load_store_infos),
 		                                                 reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses));
 	}
 

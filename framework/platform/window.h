@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2025, Arm Limited and Contributors
+/* Copyright (c) 2018-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/optional.h"
-#include "common/vk_common.h"
 #include "core/instance.h"
 
 namespace vkb

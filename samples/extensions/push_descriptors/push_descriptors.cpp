@@ -27,7 +27,7 @@
  */
 
 #include "push_descriptors.h"
-
+#include "common/vk_initializers.h"
 #include "core/buffer.h"
 #include "scene_graph/components/sub_mesh.h"
 

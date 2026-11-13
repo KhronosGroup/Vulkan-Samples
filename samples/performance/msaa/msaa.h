@@ -175,7 +175,7 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        triangle and MSAA only works on primitive edges
 	 */
 	void use_multisampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-	                            std::vector<vkb::LoadStoreInfo>           &load_store,
+	                            std::vector<vkb::common::LoadStoreInfoC>  &load_store,
 	                            uint32_t                                   resolve_attachment);
 
 	/**
@@ -184,7 +184,7 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        color attachments
 	 */
 	void use_singlesampled_color(std::unique_ptr<vkb::rendering::SubpassC> &subpass,
-	                             std::vector<vkb::LoadStoreInfo>           &load_store,
+	                             std::vector<vkb::common::LoadStoreInfoC>  &load_store,
 	                             uint32_t                                   output_attachment);
 
 	/**
@@ -217,13 +217,13 @@ class MSAASample : public vkb::VulkanSampleC
 	 *        attachment if depth resolve on writeback is supported
 	 *        Update the load/store operations of the depth attachments
 	 */
-	void store_multisampled_depth(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
+	void store_multisampled_depth(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::common::LoadStoreInfoC> &load_store);
 
 	/**
 	 * @brief Disables depth writeback resolve and updates the load/store operations of
 	 *        the depth resolve attachment
 	 */
-	void disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
+	void disable_depth_writeback_resolve(std::unique_ptr<vkb::rendering::SubpassC> &subpass, std::vector<vkb::common::LoadStoreInfoC> &load_store);
 
 	/**
 	 * @brief Selects the depth resolve mode (e.g. min or max sample values)
@@ -257,7 +257,7 @@ class MSAASample : public vkb::VulkanSampleC
 
 	std::vector<uint32_t> depth_atts{};
 
-	std::vector<vkb::LoadStoreInfo> scene_load_store{};
+	std::vector<vkb::common::LoadStoreInfoC> scene_load_store{};
 
 	/* Helpers for managing GUI input */
 

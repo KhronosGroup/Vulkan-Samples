@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/hpp_vk_common.h"
 #include "common/vk_common.h"
 #include "core/buffer.h"
 #include "core/physical_device.h"
@@ -636,7 +635,7 @@ inline void Device<bindingType>::init(std::unordered_map<std::string, vkb::Reque
 
 		queue_priorities.push_back(std::vector<float>(queue_family_property.queueCount, 0.5f));
 		if (gpu.has_high_priority_graphics_queue() &&
-		    (vkb::common::get_queue_family_index(queue_family_properties, vk::QueueFlagBits::eGraphics) == queue_family_index))
+		    (vkb::common::select_queue_family_index(queue_family_properties, vk::QueueFlagBits::eGraphics) == queue_family_index))
 		{
 			queue_priorities.back()[0] = 0.5f;
 		}

@@ -20,12 +20,14 @@
  */
 
 #include "ray_tracing_invocation_reorder.h"
+#include "common/vk_initializers.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include <map>
+
 #define ASSERT_LOG(cond, msg)              \
 	{                                      \
 		if (!(cond))                       \
@@ -216,15 +218,15 @@ void RaytracingInvocationReorder::create_storage_image()
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &storage_image.view));
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::image_layout_transition(command_buffer,
-	                             storage_image.image,
-	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             {},
-	                             {},
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_GENERAL,
-	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+	vkb::common::image_layout_transition(command_buffer,
+	                                     storage_image.image,
+	                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                                     {},
+	                                     {},
+	                                     VK_IMAGE_LAYOUT_UNDEFINED,
+	                                     VK_IMAGE_LAYOUT_GENERAL,
+	                                     {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	get_device().flush_command_buffer(command_buffer, queue);
 }
 
@@ -321,11 +323,10 @@ void RaytracingInvocationReorder::create_static_object_buffers()
 			auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
-			vkb::BufferMemoryBarrier barrier;
-			barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+			vkb::common::BufferMemoryBarrierC barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+			                                          .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			                                          .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+			                                          .dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT};
 			cmd->buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
 			return output_buffer;
 		};
@@ -1275,26 +1276,26 @@ void RaytracingInvocationReorder::draw()
 	    Copy ray tracing output to swap chain image
 	*/
 	// Prepare current swap chain image as transfer destination
-	vkb::image_layout_transition(draw_cmd_buffers[i],
-	                             get_render_context().get_swapchain().get_images()[i],
-	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                             {},
-	                             VK_ACCESS_TRANSFER_WRITE_BIT,
-	                             VK_IMAGE_LAYOUT_UNDEFINED,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             subresource_range);
+	vkb::common::image_layout_transition(draw_cmd_buffers[i],
+	                                     get_render_context().get_swapchain().get_images()[i],
+	                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                                     {},
+	                                     VK_ACCESS_TRANSFER_WRITE_BIT,
+	                                     VK_IMAGE_LAYOUT_UNDEFINED,
+	                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                                     subresource_range);
 
 	// Prepare ray tracing output image as transfer source
-	vkb::image_layout_transition(draw_cmd_buffers[i],
-	                             storage_image.image,
-	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                             {},
-	                             VK_ACCESS_TRANSFER_READ_BIT,
-	                             VK_IMAGE_LAYOUT_GENERAL,
-	                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-	                             subresource_range);
+	vkb::common::image_layout_transition(draw_cmd_buffers[i],
+	                                     storage_image.image,
+	                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                                     {},
+	                                     VK_ACCESS_TRANSFER_READ_BIT,
+	                                     VK_IMAGE_LAYOUT_GENERAL,
+	                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                                     subresource_range);
 
 	VkImageCopy copy_region{};
 	copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -1306,26 +1307,26 @@ void RaytracingInvocationReorder::draw()
 	               get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
 	// Transition swap chain image for render pass (render pass expects PRESENT_SRC_KHR as initial layout)
-	vkb::image_layout_transition(draw_cmd_buffers[i],
-	                             get_render_context().get_swapchain().get_images()[i],
-	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-	                             VK_ACCESS_TRANSFER_WRITE_BIT,
-	                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-	                             subresource_range);
+	vkb::common::image_layout_transition(draw_cmd_buffers[i],
+	                                     get_render_context().get_swapchain().get_images()[i],
+	                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+	                                     VK_ACCESS_TRANSFER_WRITE_BIT,
+	                                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+	                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+	                                     subresource_range);
 
 	// Transition ray tracing output image back to general layout
-	vkb::image_layout_transition(draw_cmd_buffers[i],
-	                             storage_image.image,
-	                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-	                             VK_ACCESS_TRANSFER_READ_BIT,
-	                             {},
-	                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-	                             VK_IMAGE_LAYOUT_GENERAL,
-	                             subresource_range);
+	vkb::common::image_layout_transition(draw_cmd_buffers[i],
+	                                     storage_image.image,
+	                                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+	                                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                                     VK_ACCESS_TRANSFER_READ_BIT,
+	                                     {},
+	                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                                     VK_IMAGE_LAYOUT_GENERAL,
+	                                     subresource_range);
 
 	// Begin render pass for UI rendering
 	// Note: Even though we use ColorAttachmentLoad, the depth attachment still uses CLEAR,

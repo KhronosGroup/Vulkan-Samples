@@ -21,8 +21,7 @@
  */
 
 #include "profiles.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "core/command_pool.h"
 #include "core/queue.h"
 #include "fence_pool.h"
@@ -270,14 +269,14 @@ void Profiles::generate_textures()
 		auto cmd = get_device().get_command_pool().request_command_buffer();
 		cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-		vkb::image_layout_transition(cmd->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		vkb::common::image_layout_transition(cmd->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		VkBufferImageCopy copy_info{};
 		copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 		copy_info.imageExtent      = image_info.extent;
 		vkCmdCopyBufferToImage(cmd->get_handle(), staging_buffer.get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
-		vkb::image_layout_transition(cmd->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		vkb::common::image_layout_transition(cmd->get_handle(), textures[i].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		cmd->end();
 

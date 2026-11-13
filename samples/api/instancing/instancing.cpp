@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,8 @@
  */
 
 #include "instancing.h"
-
 #include "benchmark_mode/benchmark_mode.h"
+#include "common/vk_initializers.h"
 
 Instancing::Instancing()
 {

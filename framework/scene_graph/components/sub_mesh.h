@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/vk_common.h"
 #include "core/buffer.h"
 #include "core/shader_module.h"
 #include "scene_graph/component.h"

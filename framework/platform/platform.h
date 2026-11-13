@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- * Copyright (c) 2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
+ * Copyright (c) 2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,6 @@
 #include "apps.h"
 #include "common/optional.h"
 #include "common/utils.h"
-#include "common/vk_common.h"
 #include "platform/application.h"
 #include "platform/plugins/plugin.h"
 #include "platform/window.h"

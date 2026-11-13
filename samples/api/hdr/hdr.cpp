@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2025, Sascha Willems
+/* Copyright (c) 2019-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,7 @@
  */
 
 #include "hdr.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 HDR::HDR()
@@ -293,7 +293,7 @@ void HDR::prepare_offscreen_buffer()
 	    VK_FORMAT_R16G16B16A16_SFLOAT        // Guaranteed blend support for this
 	};
 
-	VkFormat color_format = vkb::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
+	VkFormat color_format = vkb::common::select_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 	{
 		offscreen.width  = width;
@@ -406,7 +406,7 @@ void HDR::prepare_offscreen_buffer()
 		// Calculate valid filter and mipmap modes
 		VkFilter            filter      = VK_FILTER_NEAREST;
 		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		vkb::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
+		vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
 
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
@@ -507,7 +507,7 @@ void HDR::prepare_offscreen_buffer()
 		// Calculate valid filter and mipmap modes
 		VkFilter            filter      = VK_FILTER_NEAREST;
 		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		vkb::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
+		vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), color_format, &filter, &mipmap_mode);
 
 		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();

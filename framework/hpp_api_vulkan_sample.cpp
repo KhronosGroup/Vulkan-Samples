@@ -30,7 +30,7 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	depth_format = vkb::common::get_suitable_depth_format(get_device().get_gpu().get_handle());
+	depth_format = vkb::common::select_suitable_depth_format(get_device().get_gpu().get_handle());
 
 	// Update extent from surface extent to reflect command line arguments
 	extent = get_render_context().get_surface_extent();

@@ -21,6 +21,7 @@
  */
 
 #include "fragment_shading_rate.h"
+#include "common/vk_initializers.h"
 
 FragmentShadingRate::FragmentShadingRate()
 {
@@ -186,7 +187,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
 	VkCommandBuffer copy_cmd = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-	vkb::image_layout_transition(copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vkb::common::image_layout_transition(copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy buffer_copy_region           = {};
 	buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -197,7 +198,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	vkCmdCopyBufferToImage(copy_cmd, staging_buffer.get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 	// Transfer image layout to fragment shading rate attachment layout required to access this in the renderpass
-	vkb::image_layout_transition(
+	vkb::common::image_layout_transition(
 	    copy_cmd, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR);
 
 	get_device().flush_command_buffer(copy_cmd, queue, true);

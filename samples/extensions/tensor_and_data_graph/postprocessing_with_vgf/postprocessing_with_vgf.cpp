@@ -17,7 +17,6 @@
 
 #include "postprocessing_with_vgf.h"
 
-#include "common/vk_common.h"
 #include "filesystem/filesystem.hpp"
 #include "gltf_loader.h"
 #include "gui.h"
@@ -372,7 +371,7 @@ void PostprocessingWithVgf::prepare_scene_render_target(uint32_t width, uint32_t
 	                                    .build(get_device().get_device());
 
 	vkb::core::Image depth_image = vkb::core::ImageBuilder(width, height)
-	                                   .with_format(vkb::get_suitable_depth_format(get_device().get_gpu().get_handle()))
+	                                   .with_format(vkb::common::select_suitable_depth_format(get_device().get_gpu().get_handle()))
 	                                   .with_usage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	                                   .with_debug_name("SceneRenderDepth")
 	                                   .build(get_device().get_device());
@@ -508,7 +507,7 @@ void PostprocessingWithVgf::prepare_data_graph_pipeline()
 		data_graph_pipeline_constants.push_back(&tensor->pipeline_constant);
 	}
 
-	VkShaderModule shader_module = vkb::load_shader_from_vector(vgf_data.code, get_device().get_handle());
+	VkShaderModule shader_module = vkb::common::load_shader_from_vector(vgf_data.code, get_device().get_handle());
 
 	data_graph_pipeline =
 	    std::make_unique<DataGraphPipeline>(get_device(),

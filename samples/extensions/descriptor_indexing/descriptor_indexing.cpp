@@ -16,6 +16,7 @@
  */
 
 #include "descriptor_indexing.h"
+#include "common/vk_initializers.h"
 
 static constexpr uint32_t NumDescriptorsStreaming  = 2048;
 static constexpr uint32_t NumDescriptorsNonUniform = 64;
@@ -152,7 +153,7 @@ void DescriptorIndexing::create_immutable_sampler_descriptor_set()
 {
 	// Calculate valid filter
 	VkFilter filter = VK_FILTER_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter);
 
 	// The common case for bindless is to have an array of sampled images, not combined image sampler.
 	// It is more efficient to use a single sampler instead, and we can just use a single immutable sampler for this purpose.
@@ -429,14 +430,14 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	vkb::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vkb::common::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy copy_info{};
 	copy_info.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
 	copy_info.imageExtent      = image_info.extent;
 	vkCmdCopyBufferToImage(cmd->get_handle(), staging_buffer.get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_info);
 
-	vkb::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vkb::common::image_layout_transition(cmd->get_handle(), test_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	cmd->end();
 

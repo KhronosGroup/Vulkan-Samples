@@ -91,7 +91,7 @@ DescriptorSet &ResourceCache::request_descriptor_set(DescriptorSetLayout &descri
 	return request_resource(device, recorder, descriptor_set_mutex, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
-RenderPass &ResourceCache::request_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
+RenderPass &ResourceCache::request_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments, const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
 	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);
 }
