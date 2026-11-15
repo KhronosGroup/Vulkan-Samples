@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Arm Limited and Contributors
+# Copyright (c) 2020-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,7 @@ add_sample(
     NAME "MSAA"
     DESCRIPTION "How to efficiently use multisampling for MSAA."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag"
+        "base/glsl/base.vert"
+        "base/glsl/base.frag"
         "postprocessing/postprocessing.vert"
         "postprocessing/outline.frag")

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,8 +26,8 @@ add_sample(
     NAME "Specialization Constants"
     DESCRIPTION "Using specialization constants to enable the compiler to produce more optimised shaders."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.vert"
+        "base/glsl/base.vert"
+        "base/glsl/base.vert"
         "specialization_constants/specialization_constants.frag"
         "specialization_constants/UBOs.frag"
     )
