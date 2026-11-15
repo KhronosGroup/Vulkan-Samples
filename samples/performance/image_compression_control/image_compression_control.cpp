@@ -87,9 +87,9 @@ bool ImageCompressionControlSample::prepare(const vkb::ApplicationOptions &optio
 	set_render_pipeline(std::move(render_pipeline));
 
 	// Post-processing pass (chromatic aberration)
-	vkb::core::ShaderSource postprocessing_vs("postprocessing/postprocessing.vert.spv");
+	vkb::core::ShaderSource postprocessing_vs("postprocessing", "postprocessing.vert.spv");
 	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
-	postprocessing_pipeline->add_pass().add_subpass(vkb::core::ShaderSource("postprocessing/chromatic_aberration.frag.spv"));
+	postprocessing_pipeline->add_pass().add_subpass(vkb::core::ShaderSource("postprocessing", "chromatic_aberration.frag.spv"));
 
 	// Trigger recreation of Swapchain and render targets, with initial compression parameters
 	update_render_targets();

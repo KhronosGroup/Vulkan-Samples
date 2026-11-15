@@ -28,5 +28,5 @@ add_sample(
     SHADER_FILES_GLSL
         "base/glsl/base.vert"
         "base/glsl/base.frag"
-        "postprocessing/postprocessing.vert"
-        "postprocessing/outline.frag")
+        "postprocessing/glsl/postprocessing.vert"
+        "postprocessing/glsl/outline.frag")

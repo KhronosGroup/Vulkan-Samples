@@ -28,6 +28,6 @@ add_sample(
     SHADER_FILES_GLSL
         "base/glsl/base.vert"
         "base/glsl/base.vert"
-        "specialization_constants/specialization_constants.frag"
-        "specialization_constants/UBOs.frag"
+        "specialization_constants/glsl/specialization_constants.frag"
+        "specialization_constants/glsl/UBOs.frag"
     )

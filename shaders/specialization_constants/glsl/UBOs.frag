@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,15 +61,13 @@ layout(push_constant, std430) uniform PBRMaterialUniform
 }
 pbr_material_uniform;
 
-layout (constant_id = 0) const uint light_count = 0U;
-
 void main(void)
 {
 	vec3 normal = normalize(in_normal);
 
 	vec3 light_contribution = vec3(0.0);
 
-	for (uint i = 0U; i < light_count; i++)
+	for (uint i = 0U; i < lights.count; i++)
 	{
 		vec3 world_to_light = -lights.light[i].direction.xyz;
 
