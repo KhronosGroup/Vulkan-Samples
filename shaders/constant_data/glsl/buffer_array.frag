@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,14 +27,6 @@ layout(location = 1) in vec2 in_uv;
 layout(location = 2) in vec3 in_normal;
 
 layout(location = 0) out vec4 o_color;
-
-layout(set = 0, binding = 1) uniform MVPUniform
-{
-	mat4 model;
-	mat4 view_proj;
-	mat4 scale;
-	mat4 padding;
-} mvp_uniform;
 
 #include "lighting.h"
 

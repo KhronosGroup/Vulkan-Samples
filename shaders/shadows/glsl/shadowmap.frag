@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,16 +16,8 @@
  * limitations under the License.
  */
 
-layout(location = 0) in vec3 position;
-
-layout(set = 0, binding = 1) uniform GlobalUniform {
-    mat4 model;
-    mat4 view_proj;
-    vec3 camera_position;
-} global_uniform;
+precision highp float;
 
 void main(void)
 {
-    vec4 pos = global_uniform.model * vec4(position, 1.0);
-    gl_Position = global_uniform.view_proj * pos;
 }

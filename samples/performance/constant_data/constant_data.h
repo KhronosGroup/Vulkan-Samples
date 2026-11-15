@@ -239,8 +239,8 @@ class ConstantData : public vkb::VulkanSampleC
 	{
 		static_assert(std::is_base_of<ConstantDataSubpass, T>::value, "T is an invalid type. Must be a derived class from ConstantDataSubpass");
 
-		vkb::core::ShaderSource vert_shader(vertex_shader);
-		vkb::core::ShaderSource frag_shader(fragment_shader);
+		vkb::core::ShaderSource vert_shader("constant_data", vertex_shader);
+		vkb::core::ShaderSource frag_shader("constant_data", fragment_shader);
 
 		auto subpass = std::make_unique<T>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 

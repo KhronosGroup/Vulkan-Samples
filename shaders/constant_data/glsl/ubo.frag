@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2025, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,10 +16,9 @@
  * limitations under the License.
  */
 
-#define MAX_LIGHT_COUNT 48 
+#define MAX_LIGHT_COUNT 8
 
 precision highp float;
-precision highp sampler2DShadow;
 
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
 
@@ -29,23 +28,13 @@ layout(location = 2) in vec3 in_normal;
 
 layout(location = 0) out vec4 o_color;
 
-layout(set = 0, binding = 1) uniform GlobalUniform
+layout(set = 0, binding = 1) uniform MVPUniform
 {
 	mat4 model;
 	mat4 view_proj;
-	vec3 camera_position;
-}
-global_uniform;
-
-// Push constants come with a limitation in the size of data.
-// The standard requires at least 128 bytes
-layout(push_constant, std430) uniform PBRMaterialUniform
-{
-	vec4  base_color_factor;
-	float metallic_factor;
-	float roughness_factor;
-}
-pbr_material_uniform;
+	mat4 scale;
+	mat4 padding;
+} mvp_uniform;
 
 #include "lighting.h"
 
@@ -61,25 +50,6 @@ layout(constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
 layout(constant_id = 1) const uint POINT_LIGHT_COUNT       = 0U;
 layout(constant_id = 2) const uint SPOT_LIGHT_COUNT        = 0U;
 
-layout(set = 0, binding = 5) uniform sampler2DShadow shadowmap_texture;
-
-layout(set = 0, binding = 6) uniform ShadowUniform
-{
-	mat4 light_matrix;
-}
-shadow_uniform;
-
-float calculate_shadow()
-{
-    vec4 projected_coord = shadow_uniform.light_matrix * vec4(in_pos.xyz, 1.0);
-
-    projected_coord /= projected_coord.w;
-
-    projected_coord.xy = 0.5 * projected_coord.xy + 0.5;
-
-    return texture(shadowmap_texture, vec3(projected_coord.xy, projected_coord.z));
-}
-
 void main(void)
 {
 	vec3 normal = normalize(in_normal);
@@ -89,12 +59,6 @@ void main(void)
 	for (uint i = 0U; i < DIRECTIONAL_LIGHT_COUNT; ++i)
 	{
 		light_contribution += apply_directional_light(lights_info.directional_lights[i], normal);
-
-		// Shadows are enabled for the light source #0
-		if(i == 0U) 
-        {
-            light_contribution *= calculate_shadow();
-        }
 	}
 
 	for (uint i = 0U; i < POINT_LIGHT_COUNT; ++i)
