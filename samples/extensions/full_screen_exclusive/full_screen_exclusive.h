@@ -108,7 +108,7 @@ class FullScreenExclusive : public vkb::Application
 	void           teardown_per_frame(PerFrame &per_frame) const;
 	void           init_swapchain();
 	void           init_render_pass();
-	VkShaderModule load_shader_module(const char *path) const;
+	VkShaderModule load_shader_module(const std::string &path) const;
 	void           init_pipeline();
 	VkResult       acquire_next_image(uint32_t *image);
 	void           render_triangle(uint32_t swapchain_index);
