@@ -122,7 +122,9 @@ class ShaderSource
 {
   public:
 	ShaderSource() = default;
+	// @todo: remove
 	ShaderSource(std::string const &filename);
+	ShaderSource(const std::string &folder_name, const std::string &shader_filename);
 
 	std::string const &get_filename() const;
 	size_t             get_id() const;
@@ -231,6 +233,15 @@ inline ShaderSource::ShaderSource(std::string const &filename)
 {
 	auto shader_folder = vkb::Application::get_shader_folder();
 	this->filename     = shader_folder + "/" + filename;
+	source             = fs::read_text_file(this->filename);
+	std::hash<std::string> hasher{};
+	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
+}
+
+inline ShaderSource::ShaderSource(const std::string &folder_name, const std::string &shader_filename)
+{
+	auto shader_folder = vkb::Application::get_shader_folder();
+	this->filename     = folder_name + "/" + shader_folder + "/" + shader_filename;
 	source             = fs::read_text_file(this->filename);
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
