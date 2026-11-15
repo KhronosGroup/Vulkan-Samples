@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Holochip Corporation
+# Copyright (c) 2023-2026, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,8 +34,8 @@ if (WIN32)
                     NAME "Full Screen Exclusive"
                     DESCRIPTION "Demonstrates and showcases full_screen_exclusive related functionalities."
                     SHADER_FILES_GLSL
-                    "triangle.vert"
-                    "triangle.frag")
+                    "triangle/glsl/triangle.vert"
+                    "triangle/glsl/triangle.frag")
         endif ()
     endif ()
 endif ()
