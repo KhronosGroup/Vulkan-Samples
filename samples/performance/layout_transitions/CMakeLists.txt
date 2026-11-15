@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,7 @@ add_sample(
     NAME "Layout Transitions"
     DESCRIPTION "Choosing the correct layout when transitioning images."
     SHADER_FILES_GLSL
-        "deferred/geometry.vert"
-        "deferred/geometry.frag"
-        "deferred/lighting.vert"
-        "deferred/lighting.frag")
+        "deferred/glsl/geometry.vert"
+        "deferred/glsl/geometry.frag"
+        "deferred/glsl/lighting.vert"
+        "deferred/glsl/lighting.frag")
