@@ -265,20 +265,20 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 
 	prepare_render_targets();
 
-	vkb::core::ShaderSource vert_shader("async_compute/forward.vert.spv");
-	vkb::core::ShaderSource frag_shader("async_compute/forward.frag.spv");
+	vkb::core::ShaderSource vert_shader("async_compute", "forward.vert.spv");
+	vkb::core::ShaderSource frag_shader("async_compute", "forward.frag.spv");
 	auto                    scene_subpass =
 	    std::make_unique<ShadowMapForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera, *shadow_camera);
 
-	vkb::core::ShaderSource shadow_vert_shader("async_compute/shadow.vert.spv");
-	vkb::core::ShaderSource shadow_frag_shader("async_compute/shadow.frag.spv");
+	vkb::core::ShaderSource shadow_vert_shader("async_compute", "shadow.vert.spv");
+	vkb::core::ShaderSource shadow_frag_shader("async_compute", "shadow.frag.spv");
 	auto                    shadow_scene_subpass =
 	    std::make_unique<DepthMapSubpass>(get_render_context(), std::move(shadow_vert_shader), std::move(shadow_frag_shader), get_scene(), *shadow_camera);
 	shadow_render_pipeline.add_subpass(std::move(shadow_scene_subpass));
 	shadow_render_pipeline.set_load_store({{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE}});
 
-	vkb::core::ShaderSource composite_vert_shader("async_compute/composite.vert.spv");
-	vkb::core::ShaderSource composite_frag_shader("async_compute/composite.frag.spv");
+	vkb::core::ShaderSource composite_vert_shader("async_compute", "composite.vert.spv");
+	vkb::core::ShaderSource composite_frag_shader("async_compute", "composite.frag.spv");
 	auto                    composite_scene_subpass =
 	    std::make_unique<CompositeSubpass>(get_render_context(), std::move(composite_vert_shader), std::move(composite_frag_shader));
 
@@ -306,11 +306,11 @@ bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 	create_gui(*window, &get_stats());
 
 	auto &threshold_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::core::ShaderSource("async_compute/threshold.comp.spv"));
+	                                                                                 vkb::core::ShaderSource("async_compute", "threshold.comp.spv"));
 	auto &blur_up_module   = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::core::ShaderSource("async_compute/blur_up.comp.spv"));
+	                                                                                 vkb::core::ShaderSource("async_compute", "blur_up.comp.spv"));
 	auto &blur_down_module = get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                                                 vkb::core::ShaderSource("async_compute/blur_down.comp.spv"));
+	                                                                                 vkb::core::ShaderSource("async_compute", "blur_down.comp.spv"));
 	threshold_pipeline     = &get_device().get_resource_cache().request_pipeline_layout({&threshold_module});
 	blur_up_pipeline       = &get_device().get_resource_cache().request_pipeline_layout({&blur_up_module});
 	blur_down_pipeline     = &get_device().get_resource_cache().request_pipeline_layout({&blur_down_module});

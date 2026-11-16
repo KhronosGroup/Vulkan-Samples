@@ -1,5 +1,6 @@
 #version 450
-/* Copyright (c) 2021, Arm Limited and Contributors
+
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,25 +17,20 @@
  * limitations under the License.
  */
 
+// Downscale pass. Simple and naive :)
+
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(set = 0, binding = 0) uniform sampler2D in_tex;
-layout(rgba16f, set = 0, binding = 1) writeonly uniform image2D out_tex;
+#include "blur_common.h"
 
-layout(push_constant) uniform Registers
-{
-    uvec2 resolution;
-    vec2 inv_resolution;
-    vec2 inv_input_resolution;
-} registers;
+const float SCALE = 1.75;
 
 void main()
 {
     if (all(lessThan(gl_GlobalInvocationID.xy, registers.resolution)))
     {
         vec2 uv = (vec2(gl_GlobalInvocationID.xy) + 0.5) * registers.inv_resolution;
-        vec3 rgb = textureLod(in_tex, uv, 0.0).rgb;
-        rgb = 0.2 * max(rgb - 1.0, vec3(0.0));
+        vec3 rgb = bloom_blur(uv, SCALE);
         imageStore(out_tex, ivec2(gl_GlobalInvocationID.xy), vec4(rgb, 1.0));
     }
 }

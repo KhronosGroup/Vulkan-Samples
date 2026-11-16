@@ -1,6 +1,5 @@
 #version 450
-
-/* Copyright (c) 2021-2025, Arm Limited and Contributors
+/* Copyright (c) 2021-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,20 +16,18 @@
  * limitations under the License.
  */
 
-// Upscale pass. Simple and naive :)
+// Trivial shader that blits compute result to screen.
 
-layout(local_size_x = 8, local_size_y = 8) in;
-
-#include "blur_common.h"
-
-const float SCALE = 0.875;
+layout(location = 0) out vec2 o_uv;
 
 void main()
 {
-    if (all(lessThan(gl_GlobalInvocationID.xy, registers.resolution)))
-    {
-        vec2 uv = (vec2(gl_GlobalInvocationID.xy) + 0.5) * registers.inv_resolution;
-        vec3 rgb = bloom_blur(uv, SCALE);
-        imageStore(out_tex, ivec2(gl_GlobalInvocationID.xy), vec4(rgb, 1.0));
-    }
+    if (gl_VertexIndex == 0)
+    gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
+    else if (gl_VertexIndex == 1)
+    gl_Position = vec4(-1.0, 3.0, 0.0, 1.0);
+    else
+    gl_Position = vec4(3.0, -1.0, 0.0, 1.0);
+
+    o_uv = gl_Position.xy * 0.5 + 0.5;
 }
