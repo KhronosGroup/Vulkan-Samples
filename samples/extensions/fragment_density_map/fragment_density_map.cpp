@@ -1753,8 +1753,8 @@ void FragmentDensityMap::prepare_gui()
 
 	create_gui(*window, &get_stats(), 15.0f, true);
 	get_gui().prepare(pipeline_cache, present.render_pass,
-	                  {load_shader("uioverlay/uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	                   load_shader("uioverlay/uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	                  {load_shader("uioverlay", "uioverlay.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	                   load_shader("uioverlay", "uioverlay.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void FragmentDensityMap::on_update_ui_overlay(vkb::Drawer &drawer)
