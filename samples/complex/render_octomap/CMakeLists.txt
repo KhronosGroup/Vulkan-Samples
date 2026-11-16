@@ -70,3 +70,7 @@ add_sample_with_tags(
         LIBS
             dynamicEDT3d
 )
+
+set_target_properties(octomap PROPERTIES FOLDER "ThirdParty")
+set_target_properties(octomath PROPERTIES FOLDER "ThirdParty")
+set_target_properties(dynamicEDT3d PROPERTIES FOLDER "ThirdParty")
