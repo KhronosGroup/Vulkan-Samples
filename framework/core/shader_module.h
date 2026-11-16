@@ -122,8 +122,6 @@ class ShaderSource
 {
   public:
 	ShaderSource() = default;
-	// @todo: remove
-	ShaderSource(std::string const &filename);
 	ShaderSource(const std::string &folder_name, const std::string &shader_filename);
 
 	std::string const &get_filename() const;
@@ -227,15 +225,6 @@ inline std::unordered_map<std::string, size_t> const &ShaderVariant::get_runtime
 inline void ShaderVariant::set_runtime_array_sizes(std::unordered_map<std::string, size_t> const &sizes)
 {
 	runtime_array_sizes = sizes;
-}
-
-inline ShaderSource::ShaderSource(std::string const &filename)
-{
-	auto shader_folder = vkb::Application::get_shader_folder();
-	this->filename     = shader_folder + "/" + filename;
-	source             = fs::read_text_file(this->filename);
-	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
 }
 
 inline ShaderSource::ShaderSource(const std::string &folder_name, const std::string &shader_filename)
