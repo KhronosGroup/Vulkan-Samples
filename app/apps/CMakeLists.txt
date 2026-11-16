@@ -62,18 +62,25 @@ set(SRC
 add_library(${PROJECT_NAME} STATIC ${SRC})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC framework)
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/samples)
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)        # must match the PCH owner
+if(VKB_USE_PCH)
+    target_precompile_headers(${PROJECT_NAME} REUSE_FROM framework)
+endif()
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+# apps.cpp includes "<category>/<sample>/<sample>.h"
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/samples)
 
-# Link all samples
+# Link all samples.
+# PRIVATE on purpose: apps.cpp is the only thing that needs the samples' headers, and the samples' include directories
+# must not propagate to everything that links apps (that used to add ~200 -I paths to every compilation command).
+# The static libraries are still passed to the linker of the final executable (CMake's $<LINK_ONLY:...>).
 set(PROJECT_ID_LIST ${TOTAL_SAMPLE_ID_LIST})
 foreach(ID ${PROJECT_ID_LIST})
     if(TARGET ${ID})
         get_target_property(TARGET_TYPE ${ID} TYPE)
 
         if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY" OR TARGET_TYPE STREQUAL "STATIC_LIBRARY")
-            target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${ID})
         endif()
     endif()
 endforeach()

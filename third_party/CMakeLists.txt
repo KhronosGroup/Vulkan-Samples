@@ -231,7 +231,13 @@ target_include_directories(imgui SYSTEM PUBLIC ${IMGUI_DIR})
 set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # spirv-cross
+# Only spirv-cross-glsl (and its core) is needed by the framework: don't build the CLI or the other backends by default
 add_subdirectory(spirv-cross)
+foreach(SPIRV_CROSS_UNUSED spirv-cross spirv-cross-c spirv-cross-cpp spirv-cross-hlsl spirv-cross-msl spirv-cross-reflect spirv-cross-util)
+    if(TARGET ${SPIRV_CROSS_UNUSED})
+        set_target_properties(${SPIRV_CROSS_UNUSED} PROPERTIES EXCLUDE_FROM_ALL ON)
+    endif()
+endforeach()
 
 set_target_properties(spirv-cross PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-c PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)

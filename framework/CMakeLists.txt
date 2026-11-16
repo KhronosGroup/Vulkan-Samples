@@ -267,6 +267,7 @@ set(CORE_FILES
 
 set(PLATFORM_FILES
     # Header Files
+    platform/app_info.h
     platform/application.h
     platform/platform.h
     platform/window.h
@@ -452,7 +453,11 @@ if(${VKB_WARNINGS_AS_ERRORS})
     endif()
 endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
+# NB: the framework must not depend on the app (apps/plugins), which depends on it and on every sample. Do not add
+# include directories or libraries from app/ here; they would leak into every sample's compile command.
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+# platform.cpp only needs the header-only plugin tag lookup (force_close.h); PRIVATE so it does not leak to consumers.
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/app/plugins)
 
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
@@ -467,8 +472,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     glm
     vma
     spirv-cross-glsl
-    spdlog
-    plugins)
+    spdlog)
 
 if(${NEED_LINK_ATOMIC})
     target_link_libraries(${PROJECT_NAME} PUBLIC atomic)
@@ -487,6 +491,22 @@ else()
             target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
         endif ()
     endif()
+endif()
+
+# Precompiled header (common/pch.h) with the heavy, stable headers: vulkan.hpp, glm, spdlog/fmt, the standard library and
+# the sample base classes (which pull in most of the framework). Parsing these dominated the compile time of nearly every
+# translation unit. The samples, apps and plugins reuse this PCH (REUSE_FROM framework), so it is built only once.
+# Translation units that define a header-only library's *_IMPLEMENTATION macro before including it cannot use a PCH that
+# already includes that header, so they opt out.
+if(VKB_USE_PCH)
+    target_precompile_headers(${PROJECT_NAME} PRIVATE
+        "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/common/pch.h>")
+    set_source_files_properties(
+        api_vulkan_sample.cpp                    # VMA_IMPLEMENTATION
+        gltf_loader.cpp                          # TINYGLTF_IMPLEMENTATION
+        scene_graph/components/image/stb.cpp     # STB_IMAGE_IMPLEMENTATION
+        scene_graph/components/image.cpp         # STB_IMAGE_RESIZE_IMPLEMENTATION
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 endif()
 
 if(VKB_DO_CLANG_TIDY)
