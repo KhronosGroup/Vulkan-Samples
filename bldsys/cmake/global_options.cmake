@@ -131,6 +131,7 @@ set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND,
 set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")
 set(VKB_CLANG_TIDY_EXTRAS "-header-filter=framework,samples,app;-checks=-*,google-*,-google-runtime-references;--fix;--fix-errors" CACHE STRING "Clang Tidy Parameters")
 set(VKB_PROFILING OFF CACHE BOOL "Enable Tracy profiling")
+set(VKB_USE_PCH ON CACHE BOOL "Use a precompiled header (shared by framework and samples) for vulkan.hpp, glm, spdlog. Greatly reduces build times.")
 set(VKB_SKIP_SLANG_SHADER_COMPILATION OFF CACHE BOOL "Skips compilation for Slang shader")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")

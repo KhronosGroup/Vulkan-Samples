@@ -38,6 +38,7 @@ source_group("\\" FILES ${SRC})
 
 # select target type based on platform
 if(ANDROID)
+    list(APPEND SRC android/sample_list_jni.cpp)
     if(CMAKE_VS_NsightTegra_VERSION)
         list(APPEND SRC ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
     endif()
