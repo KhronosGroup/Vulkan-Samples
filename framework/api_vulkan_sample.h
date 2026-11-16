@@ -390,8 +390,15 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	/**
 	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
 	 *        sets the default wait and signal semaphores
+	 *        Retries once after an out-of-date acquisition and reports an error if it fails again
 	 */
 	void prepare_frame();
+
+	/**
+	 * @brief Try to prepare a frame for workload submission
+	 * @return False if the swapchain was out of date and the frame must be skipped, true otherwise
+	 */
+	bool try_prepare_frame();
 
 	/**
 	 * @brief Submit the frames' workload
