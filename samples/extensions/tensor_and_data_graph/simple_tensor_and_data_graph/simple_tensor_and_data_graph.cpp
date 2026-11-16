@@ -265,7 +265,7 @@ void SimpleTensorAndDataGraph::prepare_visualization_pipeline()
 {
 	// Load the compute shader
 	vkb::core::ShaderModuleC &visualization_comp =
-	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/visualization_two_tensors.comp.spv"});
+	    get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT, vkb::core::ShaderSource{"tensor_and_data_graph", "visualization_two_tensors.comp.spv"});
 
 	// Create pipeline layout from the reflected shader code. Note that this will include bindings to Tensor resources, so we use our own
 	// class to do this, rather than the sample framework's vkb::PipelineLayout.

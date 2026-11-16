@@ -705,7 +705,7 @@ ComputePipelineWithTensors::~ComputePipelineWithTensors()
 }
 
 BlitSubpass::BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::core::ImageView *source) :
-    vkb::rendering::SubpassC(renderContext, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"}, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"}),
+    vkb::rendering::SubpassC(renderContext, vkb::core::ShaderSource{"tensor_and_data_graph", "fullscreen.vert.spv"}, vkb::core::ShaderSource{"tensor_and_data_graph", "blit.frag.spv"}),
     source(source)
 {
 }
@@ -713,9 +713,9 @@ BlitSubpass::BlitSubpass(vkb::rendering::RenderContextC &renderContext, vkb::cor
 void BlitSubpass::prepare()
 {
 	vkb::core::ShaderModuleC &fullscreen_vert =
-	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/fullscreen.vert.spv"});
+	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, vkb::core::ShaderSource{"tensor_and_data_graph", "fullscreen.vert.spv"});
 	vkb::core::ShaderModuleC &blit_frag =
-	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, vkb::core::ShaderSource{"tensor_and_data_graph/glsl/blit.frag.spv"});
+	    get_render_context().get_device().get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, vkb::core::ShaderSource{"tensor_and_data_graph", "blit.frag.spv"});
 	pipeline_layout = &get_render_context().get_device().get_resource_cache().request_pipeline_layout({&fullscreen_vert, &blit_frag});
 
 	VkSamplerCreateInfo sampler_create_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
