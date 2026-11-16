@@ -87,6 +87,14 @@ MultiDrawIndirect::~MultiDrawIndirect()
 	}
 }
 
+void MultiDrawIndirect::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+
+	// Query whether the device supports buffer device addresses
+	m_supports_buffer_device = ENABLE_OPTIONAL_FEATURE(get_physical_device(), scb, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
+}
+
 uint32_t MultiDrawIndirect::get_api_version() const
 {
 	return VK_API_VERSION_1_2;
@@ -101,21 +109,17 @@ void MultiDrawIndirect::request_device_extensions(std::unordered_map<std::string
 
 void MultiDrawIndirect::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	if (gpu.get_features().multiDrawIndirect)
+	if (gpu.get_supported_features().multiDrawIndirect)
 	{
 		gpu.get_mutable_requested_features().multiDrawIndirect = VK_TRUE;
 		m_supports_mdi                                         = true;
 	}
 
-	if (gpu.get_features().drawIndirectFirstInstance)
+	if (gpu.get_supported_features().drawIndirectFirstInstance)
 	{
 		gpu.get_mutable_requested_features().drawIndirectFirstInstance = VK_TRUE;
 		m_supports_first_instance                                      = true;
 	}
-
-	// Query whether the device supports buffer device addresses
-	m_supports_buffer_device =
-	    REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, bufferDeviceAddress);
 
 	// This sample references 128 objects. We need to check whether this is supported by the device
 	VkPhysicalDeviceProperties physical_device_properties;

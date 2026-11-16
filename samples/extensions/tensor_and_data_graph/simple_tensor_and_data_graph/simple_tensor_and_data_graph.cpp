@@ -34,6 +34,38 @@ SimpleTensorAndDataGraph::~SimpleTensorAndDataGraph()
 	set_render_pipeline(nullptr);
 }
 
+void SimpleTensorAndDataGraph::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+
+	auto const &gpu = get_physical_device();
+	if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME))
+	{
+		ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceImageCompressionControlFeaturesEXT, imageCompressionControl);
+	}
+	if (vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME))
+	{
+		ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT, imageCompressionControlSwapchain);
+	}
+
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan12Features, shaderInt8);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan13Features, synchronization2);
+
+	// Enable the features for tensors and data graphs which we intend to use.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_ARM_TENSORS_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceTensorFeaturesARM, tensors);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceTensorFeaturesARM, shaderTensorAccess);
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_ARM_DATA_GRAPH_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDataGraphFeaturesARM, dataGraphShaderModule);
+
+	// Update-after-bind is required for the emulation layer
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
+}
+
 uint32_t SimpleTensorAndDataGraph::get_api_version() const
 {
 	return VK_API_VERSION_1_3;        // Required by the emulation layers
@@ -57,20 +89,8 @@ void SimpleTensorAndDataGraph::request_device_extensions(std::unordered_map<std:
  */
 void SimpleTensorAndDataGraph::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, shaderInt8);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan13Features, synchronization2);
-
-	// Enable the features for tensors and data graphs which we intend to use.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, tensors);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTensorFeaturesARM, shaderTensorAccess);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraph);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDataGraphFeaturesARM, dataGraphShaderModule);
-
-	// Update-after-bind is required for the emulation layer
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceVulkan12Features, descriptorBindingUniformBufferUpdateAfterBind);
-
 	// Enable Int64, if available.
-	if (gpu.get_features().shaderInt64)
+	if (gpu.get_supported_features().shaderInt64)
 	{
 		gpu.get_mutable_requested_features().shaderInt64 = VK_TRUE;
 	}

@@ -106,6 +106,20 @@ void OITLinkedLists::render(float delta_time)
 	update_scene_constants();
 }
 
+void OITLinkedLists::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
+}
+
 void OITLinkedLists::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
@@ -115,7 +129,7 @@ void OITLinkedLists::request_device_extensions(std::unordered_map<std::string, v
 
 void OITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	if (gpu.get_features().fragmentStoresAndAtomics)
+	if (gpu.get_supported_features().fragmentStoresAndAtomics)
 	{
 		gpu.get_mutable_requested_features().fragmentStoresAndAtomics = VK_TRUE;
 	}
@@ -123,8 +137,6 @@ void OITLinkedLists::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 	{
 		throw std::runtime_error("This sample requires support for buffers and images stores and atomic operations in the fragment shader stage");
 	}
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceSynchronization2FeaturesKHR, synchronization2);
 }
 
 void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)

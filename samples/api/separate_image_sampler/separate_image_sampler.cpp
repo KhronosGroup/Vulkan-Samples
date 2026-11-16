@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,7 +53,7 @@ SeparateImageSampler::~SeparateImageSampler()
 void SeparateImageSampler::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
@@ -123,7 +123,7 @@ void SeparateImageSampler::setup_samplers()
 	samplerCI.compareOp           = VK_COMPARE_OP_NEVER;
 	samplerCI.minLod              = 0.0f;
 	samplerCI.maxLod              = static_cast<float>(texture.image->get_mipmaps().size());
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_supported_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
 		samplerCI.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;

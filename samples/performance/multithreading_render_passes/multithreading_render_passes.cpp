@@ -39,13 +39,22 @@ MultithreadingRenderPasses::MultithreadingRenderPasses()
 	config.insert<vkb::IntSetting>(2, multithreading_mode, 2);
 }
 
-void MultithreadingRenderPasses::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
 #ifdef VKB_ENABLE_PORTABILITY
+void MultithreadingRenderPasses::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#	if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#	endif
+
+	auto const &gpu = get_physical_device();
+
 	// Since shadowmap_sampler_create_info.compareEnable = VK_TRUE, must enable the mutableComparisonSamplers feature of VK_KHR_portability_subset
-	REQUEST_OPTIONAL_FEATURE(gpu, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
-#endif
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_PORTABILITY_SUBSET_SPEC_VERSION));
+	ENABLE_OPTIONAL_FEATURE(gpu, scb, VkPhysicalDevicePortabilitySubsetFeaturesKHR, mutableComparisonSamplers);
 }
+#endif
 
 bool MultithreadingRenderPasses::prepare(const vkb::ApplicationOptions &options)
 {
