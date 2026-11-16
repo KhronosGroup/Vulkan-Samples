@@ -17,6 +17,9 @@
 -
 ////
 = Postprocessing with VGF
+// Set defaults for docs and source code links so that they work nicely on local clones and the GitHub viewer.
+// antora.yml overrides these so that they work nicely on the docs website.
+ifndef::doc-link-prefix[:doc-link-prefix: link:../../../../]
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/tensor_and_data_graph/postprocessing_with_vgf[Khronos Vulkan samples github repository].
@@ -26,18 +29,18 @@ image::./images/sample.png[Sample]
 
 == Overview
 
-This is the fifth sample in a series, which follows on from the previous xref:samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor image aliasing sample]. To best understand this sample, it would be helpful to have first looked at the xref:samples/extensions/tensor_and_data_graph/README.adoc[previous samples in the series].
-This sample shows how to use the VGF format, which stores information about a neural network model such as SPIR-V code, input and output info and constant data used to run a data graph pipeline. The same tensor aliasing features are used as in the previous sample xref:samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor image aliasing] to run a simple post-processing effect on a 3D scene.
+This is the fifth sample in a series, which follows on from the previous {doc-link-prefix}samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor image aliasing sample]. To best understand this sample, it would be helpful to have first looked at the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[previous samples in the series].
+This sample shows how to use the VGF format, which stores information about a neural network model such as SPIR-V code, input and output info and constant data used to run a data graph pipeline. The same tensor aliasing features are used as in the previous sample {doc-link-prefix}samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor image aliasing] to run a simple post-processing effect on a 3D scene.
 
 == Setup
 
-If you would like to build and run this sample, please make sure to first follow the setup steps on the xref:samples/extensions/tensor_and_data_graph/README.adoc[tensor and data graph] page.
+If you would like to build and run this sample, please make sure to first follow the setup steps on the {doc-link-prefix}samples/extensions/tensor_and_data_graph/README.adoc[tensor and data graph] page.
 
 == Introduction
 
 A neural network model is more complicated than single shader and so benefits from a more structured format to describe it. The VGF format is a binary file that contains all the information needed to run a neural network model, including SPIR-V code which defines the model architecture, constant data for the trained weights and information about the inputs and outputs of the model.
 
-VGF files are typically produced from offline tools that convert models from native formats such as PyTorch. In this sample, the VGF file is very simple and was generated from the same model used in the xref:samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor image aliasing sample].
+VGF files are typically produced from offline tools that convert models from native formats such as PyTorch. In this sample, the VGF file is very simple and was generated from the same model used in the {doc-link-prefix}samples/extensions/tensor_and_data_graph/tensor_image_aliasing/README.adoc[tensor image aliasing sample].
 
 A VGF file is made up of multiple sections, as described below:
 
@@ -55,8 +58,8 @@ In this sample the VGF file has been generated offline, but there are a number o
 The link:https://github.com/arm/ai-ml-sdk-model-converter[ai-ml-sdk-model-converter] tool from the link:https://github.com/arm/ai-ml-sdk-for-vulkan[ai-ml-sdk-for-vulkan] can be used to create VGF files.
 
 This tool currently supports several different link:https://www.mlplatform.org/tosa/[TOSA] encodings as inputs such as TOSA FlatBuffers, TOSA MLIR bytecode and TOSA MLIR textual format.
-The link:https://review.mlplatform.org/plugins/gitiles/tosa/tosa_mlir_translator[tosa_mlir_translator] can be used to translate TOSA MLIR dialect into TOSA Flatbuffers.
-The link:https://review.mlplatform.org/plugins/gitiles/tosa/serialization_lib[TOSA Serialization Library] also provides an API for creating TOSA FlatBuffers.
+The link:https://gitlab.arm.com/tosa/tosa-tools/-/tree/main/mlir_translator[TOSA MLIR Translator] can be used to translate TOSA MLIR dialect into TOSA Flatbuffers.
+The link:https://gitlab.arm.com/tosa/tosa-tools/-/tree/main/serialization[TOSA Serialization Library] also provides an API for creating TOSA FlatBuffers.
 
 === ai-ml-sdk-vgf-library Encoder
 
