@@ -50,7 +50,10 @@ class SampledImage
 	 * @remarks If the render target is null, the default is assumed.
 	 *          If the sampler is null, a default sampler is used.
 	 */
-	SampledImage(uint32_t target_attachment, vkb::rendering::RenderTargetC *render_target = nullptr, Sampler *sampler = nullptr, bool isDepthResolve = false);
+	SampledImage(uint32_t                       target_attachment,
+	             vkb::rendering::RenderTargetC *render_target  = nullptr,
+	             Sampler                       *sampler        = nullptr,
+	             bool                           isDepthResolve = false);
 
 	SampledImage(const SampledImage &to_copy);
 	SampledImage &operator=(const SampledImage &to_copy);

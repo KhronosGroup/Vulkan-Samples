@@ -22,9 +22,9 @@ namespace vkb
 {
 namespace core
 {
-HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp &device, const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules) :
-    device{device},
-    shader_modules{shader_modules}
+HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp                            &device,
+                                     const std::vector<vkb::core::ShaderModuleCpp *> &shader_modules) :
+    device{device}, shader_modules{shader_modules}
 {
 	// Collect and combine all the shader resources from each of the shader modules
 	// Collate them all into a map that is indexed by the name of the resource
@@ -35,7 +35,8 @@ HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp &device, const std::ve
 			std::string key = shader_resource.name;
 
 			// Since 'Input' and 'Output' resources can have the same name, we modify the key string
-			if (shader_resource.type == vkb::core::ShaderResourceType::Input || shader_resource.type == vkb::core::ShaderResourceType::Output)
+			if (shader_resource.type == vkb::core::ShaderResourceType::Input ||
+			    shader_resource.type == vkb::core::ShaderResourceType::Output)
 			{
 				key = std::to_string(static_cast<uint32_t>(shader_resource.stages)) + "_" + key;
 			}
@@ -79,8 +80,8 @@ HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp &device, const std::ve
 	// Create a descriptor set layout for each shader set in the shader modules
 	for (auto &shader_set_it : shader_sets)
 	{
-		descriptor_set_layouts.emplace_back(
-		    &device.get_resource_cache().request_descriptor_set_layout(shader_set_it.first, shader_modules, shader_set_it.second));
+		descriptor_set_layouts.emplace_back(&device.get_resource_cache().request_descriptor_set_layout(
+		    shader_set_it.first, shader_modules, shader_set_it.second));
 	}
 
 	// Collect all the descriptor set layout handles, maintaining set order
@@ -94,13 +95,15 @@ HPPPipelineLayout::HPPPipelineLayout(vkb::core::DeviceCpp &device, const std::ve
 	std::vector<vk::PushConstantRange> push_constant_ranges;
 	for (auto &push_constant_resource : get_resources(vkb::core::ShaderResourceType::PushConstant))
 	{
-		push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
+		push_constant_ranges.push_back(
+		    {push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
 	}
 
-	vk::PipelineLayoutCreateInfo create_info{.setLayoutCount         = static_cast<uint32_t>(descriptor_set_layout_handles.size()),
-	                                         .pSetLayouts            = descriptor_set_layout_handles.data(),
-	                                         .pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size()),
-	                                         .pPushConstantRanges    = push_constant_ranges.data()};
+	vk::PipelineLayoutCreateInfo create_info{
+	    .setLayoutCount         = static_cast<uint32_t>(descriptor_set_layout_handles.size()),
+	    .pSetLayouts            = descriptor_set_layout_handles.data(),
+	    .pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size()),
+	    .pPushConstantRanges    = push_constant_ranges.data()};
 
 	// Create the Vulkan pipeline layout handle
 	handle = device.get_handle().createPipelineLayout(create_info);
@@ -128,8 +131,9 @@ HPPPipelineLayout::~HPPPipelineLayout()
 
 vkb::core::HPPDescriptorSetLayout const &HPPPipelineLayout::get_descriptor_set_layout(const uint32_t set_index) const
 {
-	auto it = std::ranges::find_if(descriptor_set_layouts,
-	                               [&set_index](auto const *descriptor_set_layout) { return descriptor_set_layout->get_index() == set_index; });
+	auto it = std::ranges::find_if(descriptor_set_layouts, [&set_index](auto const *descriptor_set_layout) {
+		return descriptor_set_layout->get_index() == set_index;
+	});
 	if (it == descriptor_set_layouts.end())
 	{
 		throw std::runtime_error("Couldn't find descriptor set layout at set index " + to_string(set_index));
@@ -148,7 +152,8 @@ vk::ShaderStageFlags HPPPipelineLayout::get_push_constant_range_stage(uint32_t s
 
 	for (auto &push_constant_resource : get_resources(vkb::core::ShaderResourceType::PushConstant))
 	{
-		if (push_constant_resource.offset <= offset && offset + size <= push_constant_resource.offset + push_constant_resource.size)
+		if (push_constant_resource.offset <= offset &&
+		    offset + size <= push_constant_resource.offset + push_constant_resource.size)
 		{
 			stages |= push_constant_resource.stages;
 		}
@@ -156,7 +161,8 @@ vk::ShaderStageFlags HPPPipelineLayout::get_push_constant_range_stage(uint32_t s
 	return stages;
 }
 
-std::vector<vkb::core::ShaderResourceCpp> HPPPipelineLayout::get_resources(const vkb::core::ShaderResourceType &type, vk::ShaderStageFlagBits stage) const
+std::vector<vkb::core::ShaderResourceCpp> HPPPipelineLayout::get_resources(const vkb::core::ShaderResourceType &type,
+                                                                           vk::ShaderStageFlagBits stage) const
 {
 	std::vector<vkb::core::ShaderResourceCpp> found_resources;
 
@@ -181,7 +187,8 @@ const std::vector<vkb::core::ShaderModuleCpp *> &HPPPipelineLayout::get_shader_m
 	return shader_modules;
 }
 
-const std::unordered_map<uint32_t, std::vector<vkb::core::ShaderResourceCpp>> &HPPPipelineLayout::get_shader_sets() const
+const std::unordered_map<uint32_t, std::vector<vkb::core::ShaderResourceCpp>> &
+    HPPPipelineLayout::get_shader_sets() const
 {
 	return shader_sets;
 }
