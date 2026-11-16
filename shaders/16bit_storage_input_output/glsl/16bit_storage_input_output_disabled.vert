@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020-2025, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
 
 #define MAX_LIGHT_COUNT 48
 
@@ -28,9 +27,9 @@ layout(set = 0, binding = 1) uniform GlobalUniform {
     vec3 camera_position;
 } global_uniform;
 
-layout (location = 0) out f16vec3 o_vertex_color;
-layout (location = 1) out f16vec3 o_normal;
-layout (location = 2) out f16vec3 o_delta_pos;
+layout (location = 0) out vec3 o_vertex_color;
+layout (location = 1) out vec3 o_normal;
+layout (location = 2) out vec3 o_delta_pos;
 
 // Push constants come with a limitation in the size of data.
 // The standard requires at least 128 bytes
@@ -70,7 +69,7 @@ void main(void)
 
     light_contribution += vec3(0.2);
     light_contribution *= pbr_material_uniform.base_color_factor.rgb;
-    o_vertex_color = f16vec3(light_contribution);
-    o_normal = f16vec3(normal);
-    o_delta_pos = f16vec3(pos.xyz - global_uniform.camera_position);
+    o_vertex_color = light_contribution;
+    o_normal = normal;
+    o_delta_pos = pos.xyz - global_uniform.camera_position;
 }

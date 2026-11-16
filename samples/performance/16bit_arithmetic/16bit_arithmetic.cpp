@@ -136,7 +136,7 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	// Load shader modules.
 	auto &module =
 	    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-	                                                      vkb::core::ShaderSource{"16bit_arithmetic/compute_buffer.comp.spv"});
+	                                                      vkb::core::ShaderSource{"16bit_arithmetic", "compute_buffer.comp.spv"});
 	compute_layout = &device.get_resource_cache().request_pipeline_layout({&module});
 
 	if (supported_extensions)
@@ -146,14 +146,14 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 		{
 			auto &module_fp16 =
 			    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-			                                                      vkb::core::ShaderSource{"16bit_arithmetic/compute_buffer_fp16.comp.spv"}, variant);
+			                                                      vkb::core::ShaderSource{"16bit_arithmetic", "compute_buffer_fp16.comp.spv"}, variant);
 			compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
 		}
 		else
 		{
 			auto &module_fp16 =
 			    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-			                                                      vkb::core::ShaderSource{"16bit_arithmetic/compute_buffer_fp16_fallback.comp.spv"}, variant);
+			                                                      vkb::core::ShaderSource{"16bit_arithmetic", "compute_buffer_fp16_fallback.comp.spv"}, variant);
 			compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
 		}
 	}
@@ -163,8 +163,8 @@ bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 	}
 
 	// Setup the visualization subpass which is there to blit the final result to screen.
-	vkb::core::ShaderSource vertex_source{"16bit_arithmetic/visualize.vert.spv"};
-	vkb::core::ShaderSource fragment_source{"16bit_arithmetic/visualize.frag.spv"};
+	vkb::core::ShaderSource vertex_source{"16bit_arithmetic", "visualize.vert.spv"};
+	vkb::core::ShaderSource fragment_source{"16bit_arithmetic", "visualize.frag.spv"};
 	auto                    subpass = std::make_unique<VisualizationSubpass>(get_render_context(), std::move(vertex_source), std::move(fragment_source));
 
 	subpass->view    = image_view.get();

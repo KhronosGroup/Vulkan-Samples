@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
-// Trivial shader that blits compute result to screen.
-
 layout(location = 0) out vec4 o_color;
-layout(location = 0) in vec2 in_uv;
-layout(set = 0, binding = 0) uniform sampler2D tex;
+layout(location = 0) in vec3 in_color;
+layout(location = 1) in vec3 in_normal;
+layout(location = 2) in vec3 in_delta_pos;
 
 void main()
 {
-    o_color = vec4(textureLod(tex, in_uv, 0.0).rgb, 1.0);
+    vec3 normal_color = in_normal * 0.5 + 0.5;
+    o_color = vec4(mix(in_color, normal_color, 0.3), 1.0);
+    o_color.rgb -= 0.2 * fract(2.0 * in_delta_pos);
 }

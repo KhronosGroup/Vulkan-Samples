@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,17 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#extension GL_EXT_shader_explicit_arithmetic_types_float16: require
 
-layout(location = 0) out f16vec4 o_color;
-layout(location = 0) in f16vec3 in_color;
-layout(location = 1) in f16vec3 in_normal;
-layout(location = 2) in f16vec3 in_delta_pos;
+// Trivial shader that blits compute result to screen.
+
+layout(location = 0) out vec2 o_uv;
 
 void main()
 {
-    vec3 normal_color = vec3(in_normal) * 0.5 + 0.5;
-    vec4 color = vec4(mix(vec3(in_color), normal_color, 0.3), 1.0);
-    color.rgb -= 0.2 * fract(2.0 * vec3(in_delta_pos));
-    o_color = f16vec4(color);
+    if (gl_VertexIndex == 0)
+        gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
+    else if (gl_VertexIndex == 1)
+        gl_Position = vec4(-1.0, 3.0, 0.0, 1.0);
+    else
+        gl_Position = vec4(3.0, -1.0, 0.0, 1.0);
+
+    o_uv = gl_Position.xy * 0.5 + 0.5;
 }

@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,16 +18,11 @@
 
 // Trivial shader that blits compute result to screen.
 
-layout(location = 0) out vec2 o_uv;
+layout(location = 0) out vec4 o_color;
+layout(location = 0) in vec2 in_uv;
+layout(set = 0, binding = 0) uniform sampler2D tex;
 
 void main()
 {
-    if (gl_VertexIndex == 0)
-        gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
-    else if (gl_VertexIndex == 1)
-        gl_Position = vec4(-1.0, 3.0, 0.0, 1.0);
-    else
-        gl_Position = vec4(3.0, -1.0, 0.0, 1.0);
-
-    o_uv = gl_Position.xy * 0.5 + 0.5;
+    o_color = vec4(textureLod(tex, in_uv, 0.0).rgb, 1.0);
 }
