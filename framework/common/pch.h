@@ -1,4 +1,4 @@
-/* Copyright (c) 2026, Arm Limited and Contributors
+/* Copyright (c) 2026, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
