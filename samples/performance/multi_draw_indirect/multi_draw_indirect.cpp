@@ -16,6 +16,7 @@
  */
 
 #include "multi_draw_indirect.h"
+#include "common/vk_initializers.h"
 #include "gltf_loader.h"
 #include "ktx.h"
 #include "scene_graph/components/camera.h"
@@ -339,7 +340,7 @@ void MultiDrawIndirect::load_scene()
 		subresource_range.baseMipLevel            = 0;
 		subresource_range.levelCount              = texture.n_mip_maps;
 
-		vkb::image_layout_transition(
+		vkb::common::image_layout_transition(
 		    texture_cmd->get_handle(), texture.image->get_handle(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 		auto              offsets              = image->get_offsets();
@@ -424,7 +425,7 @@ void MultiDrawIndirect::load_scene()
 
 	auto cmd = get_device().get_command_pool().request_command_buffer();
 	cmd->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-	vkb::image_layout_transition(cmd->get_handle(), imagesAndRanges, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	vkb::common::image_layout_transition(cmd->get_handle(), imagesAndRanges, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	cmd->end();
 	auto &queue = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 	queue.submit(*cmd, get_device().get_fence_pool().request_fence());
@@ -498,11 +499,10 @@ void MultiDrawIndirect::initialize_resources()
 		auto output_buffer = std::make_unique<vkb::core::BufferC>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 		cmd->copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
-		vkb::BufferMemoryBarrier barrier;
-		barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+		vkb::common::BufferMemoryBarrierC barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                          .dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		                                          .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                          .dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT};
 		cmd->buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
 		return output_buffer;
 	};

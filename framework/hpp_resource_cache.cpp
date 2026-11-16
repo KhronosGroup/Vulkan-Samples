@@ -107,7 +107,7 @@ vkb::core::HPPPipelineLayout &HPPResourceCache::request_pipeline_layout(const st
 }
 
 vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vector<vkb::rendering::AttachmentCpp> &attachments,
-                                                                const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
+                                                                const std::vector<vkb::common::LoadStoreInfoCpp> &load_store_infos,
                                                                 const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
 {
 	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);

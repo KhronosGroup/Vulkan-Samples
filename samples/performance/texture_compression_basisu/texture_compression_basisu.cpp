@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@
  */
 
 #include "texture_compression_basisu.h"
+#include "common/vk_initializers.h"
 
 TextureCompressionBasisu::TextureCompressionBasisu()
 {
@@ -225,7 +226,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 
 	// Transition the texture image layout to transfer target, so we can safely copy our buffer data to it.
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	vkb::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+	vkb::common::image_layout_transition(copy_command, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -238,7 +239,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 
 	// Once the data has been uploaded we transfer to the texture image to the shader read layout, so it can be sampled from
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	vkb::image_layout_transition(
+	vkb::common::image_layout_transition(
 	    copy_command, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 
 	// Store current layout for later reuse
@@ -253,7 +254,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
 
 	// Create a texture sampler
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();

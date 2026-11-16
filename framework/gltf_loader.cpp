@@ -30,7 +30,6 @@
 
 #include "api_vulkan_sample.h"
 #include "common/utils.h"
-#include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
 #include "core/util/logging.hpp"
@@ -288,13 +287,11 @@ inline void upload_image_to_gpu(vkb::core::CommandBufferC &command_buffer, vkb::
 	image.clear_data();
 
 	{
-		ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
-		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_UNDEFINED,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL};
 
 		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
@@ -319,13 +316,12 @@ inline void upload_image_to_gpu(vkb::core::CommandBufferC &command_buffer, vkb::
 	command_buffer.copy_buffer_to_image(staging_buffer, image.get_vk_image(), buffer_copy_regions);
 
 	{
-		ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		vkb::common::ImageMemoryBarrierC memory_barrier{.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                                                .dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		                                                .src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		                                                .dst_access_mask = VK_ACCESS_SHADER_READ_BIT,
+		                                                .old_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                                                .new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
 		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}

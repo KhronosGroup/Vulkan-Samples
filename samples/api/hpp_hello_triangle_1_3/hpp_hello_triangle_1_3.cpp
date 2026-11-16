@@ -17,7 +17,6 @@
 
 #include "hpp_hello_triangle_1_3.h"
 
-#include "common/hpp_vk_common.h"
 #include "filesystem/legacy.h"
 #include "platform/window.h"
 

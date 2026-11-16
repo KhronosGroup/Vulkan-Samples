@@ -16,6 +16,7 @@
  */
 
 #include "dynamic_line_rasterization.h"
+#include "common/vk_initializers.h"
 
 DynamicLineRasterization::~DynamicLineRasterization()
 {

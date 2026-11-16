@@ -333,12 +333,32 @@ void FullScreenExclusive::teardown_per_frame(PerFrame &per_frame) const
 	per_frame.queue_index = -1;
 }
 
+VkSurfaceFormatKHR FullScreenExclusive::select_surface_format(
+    VkPhysicalDevice             gpu,
+    VkSurfaceKHR                 surface,
+    std::vector<VkFormat> const &format_priority_list)
+{
+	uint32_t surface_format_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, nullptr);
+	assert(0 < surface_format_count);
+	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, supported_surface_formats.data());
+
+	auto it = std::ranges::find_if(supported_surface_formats, [&format_priority_list](VkSurfaceFormatKHR surface_format) {
+		return std::ranges::any_of(format_priority_list,
+		                           [&surface_format](VkFormat format) { return format == surface_format.format; });
+	});
+
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
+}
+
 void FullScreenExclusive::init_swapchain()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	VkSurfaceFormatKHR format = vkb::select_surface_format(context.gpu, context.surface);
+	VkSurfaceFormatKHR format = select_surface_format(context.gpu, context.surface);
 
 	VkExtent2D swapchain_size;
 	if (is_full_screen_exclusive)

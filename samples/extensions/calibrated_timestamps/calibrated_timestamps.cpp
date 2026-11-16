@@ -16,6 +16,7 @@
  */
 
 #include "calibrated_timestamps.h"
+#include "common/vk_initializers.h"
 
 std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 {
@@ -294,7 +295,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 	    VK_FORMAT_R16G16B16A16_SFLOAT        // Guaranteed blend support for this
 	};
 
-	VkFormat color_format = vkb::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
+	VkFormat color_format = vkb::common::select_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 	{
 		offscreen.width  = static_cast<int32_t>(width);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -695,7 +695,7 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 		    vk::Format::eR16G16B16A16Sfloat        // Guaranteed blend support for this
 		};
 
-		vk::Format color_format = vkb::common::choose_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
+		vk::Format color_format = vkb::common::select_blendable_format(get_device().get_gpu().get_handle(), float_format_priority_list);
 
 		// One floating point color buffer
 		filter_pass.color = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);

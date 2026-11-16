@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/hpp_debug.h"
 #include "core/hpp_sampler.h"
@@ -439,7 +438,7 @@ inline Gui<bindingType>::Gui(
 
 		{
 			// Prepare for transfer
-			vkb::common::HPPImageMemoryBarrier memory_barrier = {.src_stage_mask  = vk::PipelineStageFlagBits::eHost,
+			vkb::common::ImageMemoryBarrierCpp memory_barrier = {.src_stage_mask  = vk::PipelineStageFlagBits::eHost,
 			                                                     .dst_stage_mask  = vk::PipelineStageFlagBits::eTransfer,
 			                                                     .dst_access_mask = vk::AccessFlagBits::eTransferWrite,
 			                                                     .old_layout      = vk::ImageLayout::eUndefined,
@@ -457,7 +456,7 @@ inline Gui<bindingType>::Gui(
 
 		{
 			// Prepare for fragment shader
-			vkb::common::HPPImageMemoryBarrier memory_barrier = {.src_stage_mask  = vk::PipelineStageFlagBits::eTransfer,
+			vkb::common::ImageMemoryBarrierCpp memory_barrier = {.src_stage_mask  = vk::PipelineStageFlagBits::eTransfer,
 			                                                     .dst_stage_mask  = vk::PipelineStageFlagBits::eFragmentShader,
 			                                                     .src_access_mask = vk::AccessFlagBits::eTransferWrite,
 			                                                     .dst_access_mask = vk::AccessFlagBits::eShaderRead,

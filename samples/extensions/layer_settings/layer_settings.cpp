@@ -17,7 +17,6 @@
 
 #include "layer_settings.h"
 
-#include "common/vk_common.h"
 #include "common/vk_initializers.h"
 
 #include <array>

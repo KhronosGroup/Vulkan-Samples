@@ -489,7 +489,7 @@ Swapchain::Swapchain(Swapchain                                &old_swapchain,
 	    VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT == requested_compression)
 	{
 		// Check if fixed-rate compression was applied
-		const auto applied_compression_fixed_rate = vkb::query_applied_compression(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
+		const auto applied_compression_fixed_rate = vkb::common::query_image_subresource_layout_extension<VkImageCompressionPropertiesEXT>(device.get_handle(), images[0]).imageCompressionFixedRateFlags;
 
 		if (applied_compression_fixed_rate != requested_compression_fixed_rate)
 		{
@@ -594,7 +594,7 @@ VkPresentModeKHR Swapchain::get_present_mode() const
 
 VkImageCompressionFlagsEXT Swapchain::get_applied_compression() const
 {
-	return vkb::query_applied_compression(device.get_handle(), get_images()[0]).imageCompressionFlags;
+	return vkb::common::query_image_subresource_layout_extension<VkImageCompressionPropertiesEXT>(device.get_handle(), get_images()[0]).imageCompressionFlags;
 }
 
 std::vector<Swapchain::SurfaceFormatCompression> Swapchain::query_supported_fixed_rate_compression(vkb::core::DeviceC &device, const VkSurfaceKHR &surface)

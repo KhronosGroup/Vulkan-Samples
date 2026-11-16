@@ -16,6 +16,7 @@
  */
 
 #include "vertex_dynamic_state.h"
+#include "common/vk_initializers.h"
 
 VertexDynamicState::VertexDynamicState()
 {

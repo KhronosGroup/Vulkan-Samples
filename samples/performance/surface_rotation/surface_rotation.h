@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2024, Arm Limited and Contributors
+/* Copyright (c) 2019-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
 #include <iomanip>        // setprecision
 #include <sstream>        // stringstream
 
-#include "common/vk_common.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "vulkan_sample.h"

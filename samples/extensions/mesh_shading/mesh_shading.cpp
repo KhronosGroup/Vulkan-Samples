@@ -21,6 +21,7 @@
  */
 
 #include "mesh_shading.h"
+#include "common/vk_initializers.h"
 
 MeshShading::MeshShading() :
     pipeline(VK_NULL_HANDLE), pipeline_layout(VK_NULL_HANDLE), descriptor_set(VK_NULL_HANDLE), descriptor_set_layout(VK_NULL_HANDLE)

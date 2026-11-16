@@ -16,6 +16,7 @@
  */
 
 #include "host_image_copy.h"
+#include "common/vk_initializers.h"
 
 HostImageCopy::HostImageCopy()
 {
@@ -198,7 +199,7 @@ void HostImageCopy::load_texture()
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), image_format, &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), image_format, &filter, &mipmap_mode);
 
 	// Create a texture sampler
 	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();

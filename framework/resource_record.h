@@ -66,7 +66,7 @@ class ResourceRecord
 	size_t register_pipeline_layout(const std::vector<vkb::core::ShaderModuleC *> &shader_modules);
 
 	size_t register_render_pass(const std::vector<vkb::rendering::AttachmentC> &attachments,
-	                            const std::vector<LoadStoreInfo>               &load_store_infos,
+	                            const std::vector<vkb::common::LoadStoreInfoC> &load_store_infos,
 	                            const std::vector<SubpassInfo>                 &subpasses);
 
 	size_t register_graphics_pipeline(VkPipelineCache                 pipeline_cache,
