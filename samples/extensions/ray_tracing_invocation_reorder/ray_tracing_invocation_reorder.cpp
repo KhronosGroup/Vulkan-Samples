@@ -921,9 +921,6 @@ void RaytracingInvocationReorder::create_ray_tracing_pipeline()
 	*/
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
-	// Force to use slang due to glslc not currently in public SDK supporting GL_EXT_shader_invocation_reorder; Remove when glslc supports.
-	set_shading_language(vkb::ShadingLanguage::SLANG);
-
 	// Ray generation group
 	{
 		shader_stages.push_back(load_shader("ray_tracing_invocation_reorder", "raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
@@ -1171,6 +1168,12 @@ bool RaytracingInvocationReorder::prepare(const vkb::ApplicationOptions &options
 	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
+	}
+
+	// Require slang due to glslc not currently in public SDK supporting GL_EXT_shader_invocation_reorder; Remove when glslc supports.
+	if (get_shading_language() != vkb::ShadingLanguage::SLANG)
+	{
+		throw std::runtime_error("Ray tracing invocation reorder shaders are only available in Slang. Please select Slang via the \"--shading-language slang\" argument.");
 	}
 
 	// This sample copies the ray traced output to the swap chain image, so we need to enable the required image usage flags

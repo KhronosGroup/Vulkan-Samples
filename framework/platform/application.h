@@ -106,6 +106,7 @@ class Application
 	/**
 	 * @brief Set the shading language to be used for this sample (glsl, hlsl)
 	 * @param language The shading language that the sample will use
+	 * @not Do not call this from within a sample, as that may break batch run
 	 */
 	static void set_shading_language(const vkb::ShadingLanguage language);
 
