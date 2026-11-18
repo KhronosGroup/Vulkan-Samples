@@ -18,7 +18,7 @@
 ////
 
 ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_relaxed_extended[Khronos Vulkan samples github repository].
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_relaxed_extended_instruction[Khronos Vulkan samples github repository].
 endif::[]
 
 = VK_KHR_shader_relaxed_extended_instruction — Enable SPIR-V relaxed extended instruction for non-semantic sets

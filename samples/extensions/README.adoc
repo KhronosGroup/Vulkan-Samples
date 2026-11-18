@@ -282,7 +282,7 @@ Demonstrate how to use descriptor heaps that completely rework how descriptors a
 
 === xref:./{extension_samplespath}color_write_enable/README.adoc[Color write enable]
 
-*Extension*: https://https://registry.khronos.org/vulkan/specs/latest/man/html/VK_EXT_color_write_enable.html[`VK_EXT_color_write_enable`]
+*Extension*: https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_color_write_enable.html[`VK_EXT_color_write_enable`]
 
 Demonstrate how to create multiple color blend attachments and then toggle them dynamically.
 
