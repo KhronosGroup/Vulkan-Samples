@@ -73,8 +73,8 @@ void HPPApiVulkanSample::prepare_gui()
 	create_gui(*window, nullptr, 15.0f, true);
 
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
-	    load_shader("uioverlay/uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("uioverlay/uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)};
+	    load_shader("uioverlay", "uioverlay.vert.spv", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("uioverlay", "uioverlay.frag.spv", vk::ShaderStageFlagBits::eFragment)};
 
 	if (uses_dynamic_rendering())
 	{

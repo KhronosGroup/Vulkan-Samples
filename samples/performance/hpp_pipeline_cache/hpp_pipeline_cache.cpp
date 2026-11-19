@@ -104,8 +104,8 @@ bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 	auto &camera_node = vkb::common::add_free_camera(get_scene(), "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::core::ShaderSource vert_shader("base.vert.spv");
-	vkb::core::ShaderSource frag_shader("base.frag.spv");
+	vkb::core::ShaderSource vert_shader("base", "base.vert.spv");
+	vkb::core::ShaderSource frag_shader("base", "base.frag.spv");
 	auto                    scene_subpass = std::make_unique<vkb::rendering::subpasses::ForwardSubpassCpp>(
         get_render_context(), std::move(vert_shader), std::move(frag_shader), get_scene(), *camera);
 

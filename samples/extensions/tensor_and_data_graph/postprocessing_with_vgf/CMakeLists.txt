@@ -36,8 +36,8 @@ if(WIN32 OR ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
             "postprocessing_with_vgf.h"
             "postprocessing_with_vgf.cpp"
         SHADER_FILES_GLSL
-            "base.vert"
-            "base.frag"
+            "base/glsl/base.vert"
+            "base/glsl/base.frag"
             "tensor_and_data_graph/glsl/blit.frag"
             "tensor_and_data_graph/glsl/fullscreen.vert"
     )

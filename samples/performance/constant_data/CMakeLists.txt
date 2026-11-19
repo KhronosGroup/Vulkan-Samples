@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,11 +26,20 @@ add_sample(
     NAME "Constant Data"
     DESCRIPTION "Comparing the various ways of specifying shader constants."
     SHADER_FILES_GLSL
-        "constant_data/push_constant_small.vert"
-        "constant_data/push_constant_large.vert"
-        "constant_data/push_constant.frag"
-        "constant_data/ubo_small.vert"
-        "constant_data/ubo_large.vert"
-        "constant_data/ubo.frag"
-        "constant_data/buffer_array.vert"
-        "constant_data/buffer_array.frag")
+        "constant_data/glsl/push_constant_small.vert"
+        "constant_data/glsl/push_constant_large.vert"
+        "constant_data/glsl/push_constant.frag"
+        "constant_data/glsl/ubo_small.vert"
+        "constant_data/glsl/ubo_large.vert"
+        "constant_data/glsl/ubo.frag"
+        "constant_data/glsl/buffer_array.vert"
+        "constant_data/glsl/buffer_array.frag"
+    SHADER_FILES_SLANG
+        "constant_data/slang/push_constant_small.vert.slang"
+        "constant_data/slang/push_constant_large.vert.slang"
+        "constant_data/slang/push_constant.frag.slang"
+        "constant_data/slang/ubo_small.vert.slang"
+        "constant_data/slang/ubo_large.vert.slang"
+        "constant_data/slang/ubo.frag.slang"
+        "constant_data/slang/buffer_array.vert.slang"
+        "constant_data/slang/buffer_array.frag.slang")

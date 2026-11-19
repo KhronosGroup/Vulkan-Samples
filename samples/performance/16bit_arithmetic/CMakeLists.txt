@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2025, Arm Limited and Contributors
+# Copyright (c) 2020-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,9 +26,9 @@ add_sample_with_tags(
     NAME "16-bit arithmetic"
     DESCRIPTION "Using VK_KHR_shader_float16_int8 to improve arithmetic throughput."
     SHADER_FILES_GLSL
-        "16bit_arithmetic/visualize.vert"
-        "16bit_arithmetic/visualize.frag"
-        "16bit_arithmetic/compute_buffer.comp"
-        "16bit_arithmetic/compute_buffer_fp16.comp"
-        "16bit_arithmetic/compute_buffer_fp16_fallback.comp"
+        "16bit_arithmetic/glsl/visualize.vert"
+        "16bit_arithmetic/glsl/visualize.frag"
+        "16bit_arithmetic/glsl/compute_buffer.comp"
+        "16bit_arithmetic/glsl/compute_buffer_fp16.comp"
+        "16bit_arithmetic/glsl/compute_buffer_fp16_fallback.comp"
     )
