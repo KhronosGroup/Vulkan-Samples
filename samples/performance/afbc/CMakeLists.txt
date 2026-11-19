@@ -29,4 +29,7 @@ add_sample_with_tags(
         "arm"
     SHADER_FILES_GLSL
         "base/glsl/base.vert"
-        "base/glsl/base.frag")
+        "base/glsl/base.frag"
+    SHADER_FILES_SLANG
+        "base/slang/base.vert.slang"
+        "base/slang/base.frag.slang")

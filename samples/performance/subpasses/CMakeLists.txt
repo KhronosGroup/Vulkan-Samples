@@ -29,4 +29,9 @@ add_sample(
         "deferred/glsl/geometry.vert"
         "deferred/glsl/geometry.frag"
         "deferred/glsl/lighting.vert"
-        "deferred/glsl/lighting.frag")
+        "deferred/glsl/lighting.frag"
+    SHADER_FILES_SLANG
+        "deferred/slang/geometry.vert.slang"
+        "deferred/slang/geometry.frag.slang"
+        "deferred/slang/lighting.vert.slang"
+        "deferred/slang/lighting.frag.slang")

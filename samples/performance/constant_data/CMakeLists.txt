@@ -33,4 +33,13 @@ add_sample(
         "constant_data/glsl/ubo_large.vert"
         "constant_data/glsl/ubo.frag"
         "constant_data/glsl/buffer_array.vert"
-        "constant_data/glsl/buffer_array.frag")
+        "constant_data/glsl/buffer_array.frag"
+    SHADER_FILES_SLANG
+        "constant_data/slang/push_constant_small.vert.slang"
+        "constant_data/slang/push_constant_large.vert.slang"
+        "constant_data/slang/push_constant.frag.slang"
+        "constant_data/slang/ubo_small.vert.slang"
+        "constant_data/slang/ubo_large.vert.slang"
+        "constant_data/slang/ubo.frag.slang"
+        "constant_data/slang/buffer_array.vert.slang"
+        "constant_data/slang/buffer_array.frag.slang")
