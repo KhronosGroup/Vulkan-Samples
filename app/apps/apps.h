@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2024, Arm Limited and Contributors
+/* Copyright (c) 2020-2026, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,10 @@
 
 #pragma once
 
-#include <functional>
-#include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "platform/application.h"
+#include "platform/app_info.h"
 
 /*
  *
@@ -35,41 +32,6 @@
 
 namespace apps
 {
-using CreateFunc = std::function<std::unique_ptr<vkb::Application>()>;
-
-/*
- *  Apps - Used by Vulkan Samples to load a vkb::Applicaiton with the creation function (CreateFunc create).
- */
-
-class AppInfo
-{
-  public:
-	AppInfo(const std::string &id, const CreateFunc &create) :
-	    id(id), create(create)
-	{}
-
-	std::string id;
-	CreateFunc  create;
-};
-
-/*
- *  Samples - These are individual applications which show different usages and optimizations of the Vulkan API
- */
-
-class SampleInfo : public AppInfo
-{
-  public:
-	SampleInfo(const std::string &id, const CreateFunc &create, const std::string &category, const std::string &author, const std::string &name, const std::string &description, const std::vector<std::string> &tags = {}) :
-	    AppInfo(id, create), category(category), author(author), name(name), description(description), tags(tags)
-	{}
-
-	std::string              category;
-	std::string              author;
-	std::string              name;
-	std::string              description;
-	std::vector<std::string> tags;
-};
-
 /**
  * @brief Get a specific app
  *

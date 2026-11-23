@@ -161,9 +161,17 @@ elseif(${TARGET_TYPE} STREQUAL "Test")
 endif()
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+    # reuse the framework's precompiled header instead of parsing vulkan.hpp/glm/spdlog again in every sample
+    # (a PCH can only be reused when the language flags match, e.g. samples that set CMAKE_CXX_EXTENSIONS OFF cannot)
+    if(VKB_USE_PCH AND (NOT DEFINED CMAKE_CXX_EXTENSIONS OR CMAKE_CXX_EXTENSIONS))
+        target_precompile_headers(${PROJECT_NAME} REUSE_FROM framework)
+    endif()
+
     # # inherit include directories from framework target
     target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE framework)
+    # a few samples use plugin headers (e.g. benchmark_mode); one directory, not propagated to consumers
+    target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/app/plugins)
 
     # Link against extra project specific libraries
     if(TARGET_LIBS)
