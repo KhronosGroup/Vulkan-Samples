@@ -612,17 +612,26 @@ void TimelineSemaphore::build_graphics_command_buffer()
 	VK_CHECK(vkEndCommandBuffer(graphics.command_buffer));
 }
 
+void TimelineSemaphore::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	// Need to enable the timelineSemaphore feature.
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceTimelineSemaphoreFeaturesKHR, timelineSemaphore);
+}
+
 void TimelineSemaphore::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
 	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
 
 	requested_extensions[VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME] = vkb::RequestMode::Required;
-}
-
-void TimelineSemaphore::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	// Need to enable the timelineSemaphore feature.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceTimelineSemaphoreFeaturesKHR, timelineSemaphore);
 }
 
 bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)

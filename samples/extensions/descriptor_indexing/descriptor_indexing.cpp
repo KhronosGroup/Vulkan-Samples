@@ -478,6 +478,29 @@ void DescriptorIndexing::create_images()
 	}
 }
 
+void DescriptorIndexing::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	ApiVulkanSample::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	assert(vkb::contains(create_info->enabledExtensionCount, create_info->ppEnabledExtensionNames, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME));
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
+
+	// These are required to support the 4 descriptor binding flags we use in this sample.
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingSampledImageUpdateAfterBind);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingPartiallyBound);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingUpdateUnusedWhilePending);
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
+
+	// Enables use of runtimeDescriptorArrays in SPIR-V shaders.
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
+}
+
 bool DescriptorIndexing::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!ApiVulkanSample::prepare(options))
@@ -496,7 +519,7 @@ bool DescriptorIndexing::prepare(const vkb::ApplicationOptions &options)
 
 void DescriptorIndexing::request_device_extensions(std::unordered_map<std::string, vkb::RequestMode> &requested_extensions) const
 {
-	vkb::VulkanSampleC::request_device_extensions(requested_extensions);
+	ApiVulkanSample::request_device_extensions(requested_extensions);
 
 	requested_extensions[VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME] = vkb::RequestMode::Required;
 	requested_extensions[VK_KHR_MAINTENANCE3_EXTENSION_NAME]        = vkb::RequestMode::Required;
@@ -509,17 +532,6 @@ void DescriptorIndexing::request_device_extensions(std::unordered_map<std::strin
 void DescriptorIndexing::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
 	gpu.get_mutable_requested_features().shaderSampledImageArrayDynamicIndexing = VK_TRUE;
-
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, shaderSampledImageArrayNonUniformIndexing);
-
-	// These are required to support the 4 descriptor binding flags we use in this sample.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingSampledImageUpdateAfterBind);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingPartiallyBound);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingUpdateUnusedWhilePending);
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, descriptorBindingVariableDescriptorCount);
-
-	// Enables use of runtimeDescriptorArrays in SPIR-V shaders.
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDeviceDescriptorIndexingFeaturesEXT, runtimeDescriptorArray);
 
 	// There are lot of properties associated with descriptor_indexing, grab them here.
 	descriptor_indexing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;

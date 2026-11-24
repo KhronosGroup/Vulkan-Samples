@@ -133,6 +133,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	ExtendedDynamicState2();
 	~ExtendedDynamicState2();
 
+	void extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	bool prepare(const vkb::ApplicationOptions &options) override;

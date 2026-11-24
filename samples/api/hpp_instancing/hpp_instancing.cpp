@@ -89,7 +89,7 @@ bool HPPInstancing::resize(const uint32_t width, const uint32_t height)
 void HPPInstancing::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	auto       &requested_features = gpu.get_mutable_requested_features();
-	auto const &features           = gpu.get_features();
+	auto const &features           = gpu.get_supported_features();
 
 	// Enable anisotropic filtering if supported
 	if (features.samplerAnisotropy)

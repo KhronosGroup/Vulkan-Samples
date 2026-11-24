@@ -157,6 +157,19 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 	set_render_pipeline(std::move(render_pipeline));
 }
 
+void KHR16BitStorageInputOutputSample::extend_device_create_info(vkb::StructureChainBuilderC<VkDeviceCreateInfo> &scb)
+{
+	vkb::VulkanSampleC::extend_device_create_info(scb);
+#if !defined(NDEBUG)
+	VkDeviceCreateInfo const *create_info = scb.get_struct<VkDeviceCreateInfo>();
+	assert(create_info);
+#endif
+
+	auto const &gpu = get_physical_device();
+
+	ENABLE_REQUIRED_FEATURE(gpu, scb, VkPhysicalDevice16BitStorageFeatures, storageInputOutput16);
+}
+
 bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!VulkanSample::prepare(options))
@@ -192,11 +205,6 @@ void KHR16BitStorageInputOutputSample::request_device_extensions(std::unordered_
 	requested_extensions[VK_KHR_16BIT_STORAGE_EXTENSION_NAME] = vkb::RequestMode::Optional;
 	// 16-bit storage depends on this extension as well.
 	requested_extensions[VK_KHR_STORAGE_BUFFER_STORAGE_CLASS_EXTENSION_NAME] = vkb::RequestMode::Optional;
-}
-
-void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
-{
-	REQUEST_REQUIRED_FEATURE(gpu, VkPhysicalDevice16BitStorageFeatures, storageInputOutput16);
 }
 
 void KHR16BitStorageInputOutputSample::update(float delta_time)

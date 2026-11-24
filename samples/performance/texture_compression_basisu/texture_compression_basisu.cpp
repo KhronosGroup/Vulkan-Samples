@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, Sascha Willems
+/* Copyright (c) 2021-2026, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,7 +44,7 @@ TextureCompressionBasisu::~TextureCompressionBasisu()
 
 void TextureCompressionBasisu::request_gpu_features(vkb::core::PhysicalDeviceC &gpu)
 {
-	if (gpu.get_features().samplerAnisotropy)
+	if (gpu.get_supported_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
@@ -65,7 +65,7 @@ void TextureCompressionBasisu::get_available_target_formats()
 {
 	available_target_formats.clear();
 
-	VkPhysicalDeviceFeatures device_features = get_device().get_gpu().get_features();
+	VkPhysicalDeviceFeatures device_features = get_device().get_gpu().get_supported_features();
 
 	// Block compression
 	if (device_features.textureCompressionBC)
@@ -267,7 +267,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	sampler.compareOp           = VK_COMPARE_OP_NEVER;
 	sampler.minLod              = 0.0f;
 	sampler.maxLod              = static_cast<float>(texture.mip_levels);
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_supported_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
 		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;

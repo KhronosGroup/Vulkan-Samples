@@ -69,7 +69,7 @@ bool HPPTerrainTessellation::prepare(const vkb::ApplicationOptions &options)
 void HPPTerrainTessellation::request_gpu_features(vkb::core::PhysicalDeviceCpp &gpu)
 {
 	// Tessellation shader support is required for this example
-	auto &available_features = gpu.get_features();
+	auto &available_features = gpu.get_supported_features();
 	if (!available_features.tessellationShader)
 	{
 		throw vkb::common::VulkanExceptionCpp(vk::Result::eErrorFeatureNotPresent, "Selected GPU does not support tessellation shaders!");
