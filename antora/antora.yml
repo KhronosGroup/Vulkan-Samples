@@ -9,5 +9,11 @@ asciidoc:
   attributes:
     source-language: asciidoc@
     table-caption: false
+    # Links to other docs should use the 'xref:' prefix to generate proper links.
+    # This overrides the default 'link:' prefixes declared in the .adoc files
+    doc-link-prefix: 'xref:'
+    # Links to source code files should use GitHub URLs (as source code is not hosted on the docs site)
+    # This overrides the default relative paths declared in the .adoc files.
+    source-root: https://github.com/KhronosGroup/Vulkan-Samples/blob/main
 nav:
   - modules/ROOT/nav.adoc
