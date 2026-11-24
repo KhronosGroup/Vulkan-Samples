@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "core/instance.h"
 #include "platform/application.h"
 
@@ -167,6 +166,12 @@ class HelloTriangleV13 : public vkb::Application
 	void transition_image_layout(VkCommandBuffer cmd, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags2 srcAccessMask, VkAccessFlags2 dstAccessMask, VkPipelineStageFlags2 srcStage, VkPipelineStageFlags2 dstStage);
 
 	uint32_t find_memory_type(VkPhysicalDevice physical_device, uint32_t type_filter, VkMemoryPropertyFlags properties);
+
+  private:
+	VkSurfaceFormatKHR select_surface_format(
+	    VkPhysicalDevice             gpu,
+	    VkSurfaceKHR                 surface,
+	    std::vector<VkFormat> const &format_priority_list = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R5G6B5_UNORM_PACK16});
 
   private:
 	Context context;

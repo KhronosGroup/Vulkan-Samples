@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "common/vk_common.h"
 #include "rendering/pipeline_state.h"
 
 namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "platform/application.h"
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
-
-#include <platform/application.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates

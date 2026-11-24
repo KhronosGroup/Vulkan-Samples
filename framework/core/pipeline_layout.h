@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/helpers.h"
-#include "common/vk_common.h"
 #include "core/descriptor_set_layout.h"
 #include "core/shader_module.h"
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2025, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2026, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,7 +42,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>            &request
 	timestamp_period = gpu.get_properties().limits.timestampPeriod;
 
 	// Interrogate device for supported stats
-	uint32_t queue_family_index = vkb::get_queue_family_index(gpu.get_queue_family_properties(), VK_QUEUE_GRAPHICS_BIT);
+	uint32_t queue_family_index = vkb::common::select_queue_family_index(gpu.get_queue_family_properties(), VK_QUEUE_GRAPHICS_BIT);
 
 	std::vector<VkPerformanceCounterKHR>            counters;
 	std::vector<VkPerformanceCounterDescriptionKHR> descs;

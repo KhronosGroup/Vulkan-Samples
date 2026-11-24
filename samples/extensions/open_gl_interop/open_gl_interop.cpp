@@ -17,15 +17,12 @@
  */
 
 #include "open_gl_interop.h"
-
-#include "common/vk_common.h"
+#include "common/vk_initializers.h"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
 #include "gui.h"
-
-#include "rendering/subpasses/forward_subpass.h"
-
 #include "offscreen_context.h"
+#include "rendering/subpasses/forward_subpass.h"
 
 constexpr const char *OPENGL_VERTEX_SHADER =
     R"SHADER(
@@ -246,7 +243,7 @@ void OpenGLInterop::prepare_shared_resources()
 		// Calculate valid filter and mipmap modes
 		VkFilter            filter      = VK_FILTER_LINEAR;
 		VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		vkb::make_filters_valid(get_device().get_gpu().get_handle(), imageCreateInfo.format, &filter, &mipmap_mode);
+		vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), imageCreateInfo.format, &filter, &mipmap_mode);
 
 		// Create sampler
 		VkSamplerCreateInfo samplerCreateInfo{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
@@ -269,7 +266,7 @@ void OpenGLInterop::prepare_shared_resources()
 		vkCreateImageView(deviceHandle, &viewCreateInfo, nullptr, &sharedTexture.view);
 
 		with_command_buffer(
-		    [&](VkCommandBuffer image_command_buffer) { vkb::image_layout_transition(image_command_buffer, sharedTexture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); },
+		    [&](VkCommandBuffer image_command_buffer) { vkb::common::image_layout_transition(image_command_buffer, sharedTexture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); },
 		    sharedSemaphores.gl_ready);
 	}
 }
@@ -710,7 +707,7 @@ void OpenGLInterop::build_command_buffers()
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		vkb::common::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info,
 		                     VK_SUBPASS_CONTENTS_INLINE);
@@ -737,7 +734,7 @@ void OpenGLInterop::build_command_buffers()
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		vkb::common::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}

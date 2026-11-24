@@ -16,6 +16,7 @@
  */
 
 #include "render_octomap.h"
+#include "common/vk_initializers.h"
 #include "core/util/logging.hpp"
 #include "filesystem/legacy.h"
 #include "gltf_loader.h"
@@ -25,7 +26,6 @@
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/scene.h"
-
 #include <algorithm>
 #include <filesystem>
 #include <tiny_gltf.h>

@@ -20,6 +20,7 @@
  */
 
 #include "texture_loading.h"
+#include "common/vk_initializers.h"
 
 TextureLoading::TextureLoading()
 {
@@ -348,7 +349,7 @@ void TextureLoading::load_texture()
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), format, &filter, &mipmap_mode);
 
 	// Create a texture sampler
 	// In Vulkan textures are accessed by samplers

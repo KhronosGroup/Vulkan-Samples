@@ -20,6 +20,7 @@
  */
 
 #include "dynamic_primitive_clipping.h"
+#include "common/vk_initializers.h"
 
 DynamicPrimitiveClipping::DynamicPrimitiveClipping()
 {

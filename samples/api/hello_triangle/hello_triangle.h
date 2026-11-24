@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "common/vk_common.h"
 #include "core/instance.h"
 #include "platform/application.h"
+#include <vk_mem_alloc.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates
@@ -169,6 +169,12 @@ class HelloTriangle : public vkb::Application
 	VkResult present_image(uint32_t index);
 
 	void init_framebuffers();
+
+  private:
+	VkSurfaceFormatKHR select_surface_format(
+	    VkPhysicalDevice             gpu,
+	    VkSurfaceKHR                 surface,
+	    std::vector<VkFormat> const &format_priority_list = {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R5G6B5_UNORM_PACK16});
 
   private:
 	Context context;

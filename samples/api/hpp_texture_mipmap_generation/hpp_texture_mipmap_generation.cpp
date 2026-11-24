@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2025, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2026, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
  */
 
 #include "hpp_texture_mipmap_generation.h"
-#include "common/hpp_vk_common.h"
 #include "common/ktx_common.h"
 #include "common/vk_initializers.h"
 #include "core/command_pool.h"

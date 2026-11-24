@@ -21,7 +21,7 @@
  */
 
 #include "debug_utils.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 DebugUtils::DebugUtils()
@@ -200,7 +200,7 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(shader_file_name, get_device().get_handle(), stage);
+	shader_stage.module                          = vkb::common::load_shader(shader_file_name, get_device().get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);

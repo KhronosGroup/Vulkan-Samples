@@ -25,7 +25,7 @@
  */
 
 #include "graphics_pipeline_library.h"
-
+#include "common/vk_initializers.h"
 #include "scene_graph/components/sub_mesh.h"
 
 void GraphicsPipelineLibrary::pipeline_creation_threadfn()

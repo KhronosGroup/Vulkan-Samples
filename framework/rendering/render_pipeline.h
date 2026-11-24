@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/hpp_vk_common.h"
 #include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "rendering/render_target.h"
@@ -46,8 +45,6 @@ class RenderPipeline
   public:
 	using ClearValueType      = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::ClearValue, VkClearValue>::type;
 	using SubpassContentsType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vk::SubpassContents, VkSubpassContents>::type;
-
-	using LoadStoreInfoType = typename std::conditional<bindingType == vkb::BindingType::Cpp, vkb::common::HPPLoadStoreInfo, vkb::LoadStoreInfo>::type;
 
   public:
 	RenderPipeline(std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> &&subpasses = {});
@@ -82,7 +79,7 @@ class RenderPipeline
 	/**
 	 * @return Load store info
 	 */
-	const std::vector<LoadStoreInfoType> &get_load_store() const;
+	const std::vector<vkb::common::LoadStoreInfo<bindingType>> &get_load_store() const;
 
 	std::vector<std::unique_ptr<vkb::rendering::Subpass<bindingType>>> &get_subpasses();
 
@@ -99,7 +96,7 @@ class RenderPipeline
 	/**
 	 * @param load_store Load store info to set
 	 */
-	void set_load_store(const std::vector<LoadStoreInfoType> &load_store);
+	void set_load_store(const std::vector<vkb::common::LoadStoreInfo<bindingType>> &load_store);
 
   private:
 	void draw_impl(vkb::core::CommandBufferCpp     &command_buffer,
@@ -109,7 +106,7 @@ class RenderPipeline
   private:
 	size_t                                                   active_subpass_index = 0;
 	std::vector<vk::ClearValue>                              clear_value{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}, vk::ClearDepthStencilValue{0.0f, ~0U}};                                                    // Defaults for swapchain and depth attachment
-	std::vector<vkb::common::HPPLoadStoreInfo>               load_store{{vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore}, {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment
+	std::vector<vkb::common::LoadStoreInfoCpp>               load_store{{vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore}, {vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare}};        // Defaults for swapchain and depth attachment
 	std::vector<std::unique_ptr<vkb::rendering::SubpassCpp>> subpasses;
 };
 
@@ -221,7 +218,7 @@ const std::vector<typename RenderPipeline<bindingType>::ClearValueType> &RenderP
 }
 
 template <vkb::BindingType bindingType>
-const std::vector<typename RenderPipeline<bindingType>::LoadStoreInfoType> &RenderPipeline<bindingType>::get_load_store() const
+const std::vector<vkb::common::LoadStoreInfo<bindingType>> &RenderPipeline<bindingType>::get_load_store() const
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -229,7 +226,7 @@ const std::vector<typename RenderPipeline<bindingType>::LoadStoreInfoType> &Rend
 	}
 	else
 	{
-		return reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store);
+		return reinterpret_cast<std::vector<vkb::common::LoadStoreInfoC> const &>(load_store);
 	}
 }
 
@@ -282,7 +279,7 @@ void RenderPipeline<bindingType>::set_clear_value(const std::vector<ClearValueTy
 }
 
 template <vkb::BindingType bindingType>
-void RenderPipeline<bindingType>::set_load_store(const std::vector<LoadStoreInfoType> &ls)
+void RenderPipeline<bindingType>::set_load_store(const std::vector<vkb::common::LoadStoreInfo<bindingType>> &ls)
 {
 	if constexpr (bindingType == vkb::BindingType::Cpp)
 	{
@@ -290,7 +287,7 @@ void RenderPipeline<bindingType>::set_load_store(const std::vector<LoadStoreInfo
 	}
 	else
 	{
-		load_store = reinterpret_cast<std::vector<vkb::common::HPPLoadStoreInfo> const &>(ls);
+		load_store = reinterpret_cast<std::vector<vkb::common::LoadStoreInfoCpp> const &>(ls);
 	}
 }
 

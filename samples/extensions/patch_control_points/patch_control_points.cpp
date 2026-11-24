@@ -16,6 +16,7 @@
  */
 
 #include "patch_control_points.h"
+#include "common/vk_initializers.h"
 
 PatchControlPoints::PatchControlPoints()
 {

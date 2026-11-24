@@ -22,7 +22,7 @@
  */
 
 #include "descriptor_buffer_basic.h"
-
+#include "common/vk_initializers.h"
 #include "core/buffer.h"
 #include "scene_graph/components/sub_mesh.h"
 

@@ -24,6 +24,7 @@
  */
 
 #include "conservative_rasterization.h"
+#include "common/vk_initializers.h"
 
 #define FB_COLOR_FORMAT VK_FORMAT_R8G8B8A8_UNORM
 #define ZOOM_FACTOR 16
@@ -85,7 +86,7 @@ void ConservativeRasterization::prepare_offscreen()
 	offscreen_pass.height = height / ZOOM_FACTOR;
 
 	// Find a suitable depth format
-	VkFormat framebuffer_depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
+	VkFormat framebuffer_depth_format = vkb::common::select_suitable_depth_format(get_device().get_gpu().get_handle());
 
 	// Color attachment
 	VkImageCreateInfo image = vkb::initializers::image_create_info();
@@ -150,7 +151,7 @@ void ConservativeRasterization::prepare_offscreen()
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), offscreen_pass.depth.image, offscreen_pass.depth.mem, 0));
 
 	// The depth format we get for the current device may not include a stencil part, which affects the aspect mask used by the image view
-	const VkImageAspectFlags aspect_mask = vkb::is_depth_only_format(framebuffer_depth_format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+	const VkImageAspectFlags aspect_mask = vkb::common::is_depth_only_format(framebuffer_depth_format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
 	VkImageViewCreateInfo depth_stencil_view           = vkb::initializers::image_view_create_info();
 	depth_stencil_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;

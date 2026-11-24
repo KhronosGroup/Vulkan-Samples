@@ -20,7 +20,7 @@
  */
 
 #include "terrain_tessellation.h"
-
+#include "common/vk_initializers.h"
 #include "heightmap.h"
 
 TerrainTessellation::TerrainTessellation()
@@ -145,7 +145,7 @@ void TerrainTessellation::load_assets()
 	// Calculate valid filter and mipmap modes
 	VkFilter            filter      = VK_FILTER_LINEAR;
 	VkSamplerMipmapMode mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.heightmap.image->get_format(), &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), textures.heightmap.image->get_format(), &filter, &mipmap_mode);
 
 	// Setup a mirroring sampler for the height map
 	vkDestroySampler(get_device().get_handle(), textures.heightmap.sampler, nullptr);
@@ -163,7 +163,7 @@ void TerrainTessellation::load_assets()
 
 	filter      = VK_FILTER_LINEAR;
 	mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	vkb::make_filters_valid(get_device().get_gpu().get_handle(), textures.terrain_array.image->get_format(), &filter, &mipmap_mode);
+	vkb::common::make_filters_valid(get_device().get_gpu().get_handle(), textures.terrain_array.image->get_format(), &filter, &mipmap_mode);
 
 	// Setup a repeating sampler for the terrain texture layers
 	vkDestroySampler(get_device().get_handle(), textures.terrain_array.sampler, nullptr);

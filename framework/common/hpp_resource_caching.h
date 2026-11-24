@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/hpp_vk_common.h"
 #include "core/hpp_descriptor_set.h"
 #include "core/hpp_image_view.h"
 #include "core/hpp_render_pass.h"
@@ -59,9 +58,9 @@ struct hash<std::vector<T>>
 };
 
 template <>
-struct hash<vkb::common::HPPLoadStoreInfo>
+struct hash<vkb::common::LoadStoreInfoCpp>
 {
-	size_t operator()(vkb::common::HPPLoadStoreInfo const &lsi) const
+	size_t operator()(vkb::common::LoadStoreInfoCpp const &lsi) const
 	{
 		size_t result = 0;
 		vkb::hash_combine(result, lsi.load_op);
