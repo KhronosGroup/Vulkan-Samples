@@ -19,9 +19,9 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-# On Windows, build as STATIC to avoid DLL export issues
-# On other platforms, build as SHARED for better memory efficiency
-if(WIN32)
+# Windows avoids DLL export issues with static libraries. iOS links the
+# libraries into the app because it does not package standalone dylibs.
+if(WIN32 OR IOS)
     set(OCTOMAP_LIBRARY_TYPE STATIC)
 else()
     set(OCTOMAP_LIBRARY_TYPE SHARED)
