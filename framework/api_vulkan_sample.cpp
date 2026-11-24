@@ -124,8 +124,12 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 		return false;
 	}
 
-	const bool swapchain_updated = get_render_context().handle_surface_changes();
-	const auto extent            = get_render_context().get_render_frames().front()->get_render_target().get_extent();
+	const bool swapchain_updated = get_render_context().handle_surface_changes(swapchain_out_of_date);
+	if (swapchain_updated)
+	{
+		swapchain_out_of_date = false;
+	}
+	const auto extent = get_render_context().get_render_frames().front()->get_render_target().get_extent();
 
 	// Don't rebuild frame resources if neither the swapchain nor its dimensions changed.
 	if (!swapchain_updated && width == extent.width && height == extent.height)
@@ -548,6 +552,7 @@ bool ApiVulkanSample::try_prepare_frame()
 		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+			swapchain_out_of_date = true;
 			resize(width, height);
 			return false;
 		}
