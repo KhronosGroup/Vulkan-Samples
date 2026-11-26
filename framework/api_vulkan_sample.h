@@ -162,6 +162,9 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	// Active frame buffer index
 	uint32_t current_buffer = 0;
 
+	/// Force swapchain recreation after an out-of-date image acquisition.
+	bool swapchain_out_of_date = false;
+
 	// Descriptor set pool
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
 
@@ -390,6 +393,7 @@ class ApiVulkanSample : public vkb::VulkanSampleC
 	/**
 	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
 	 *        sets the default wait and signal semaphores
+	 *        Retries once after an out-of-date acquisition and reports an error if it fails again
 	 */
 	void prepare_frame();
 

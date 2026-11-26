@@ -38,9 +38,11 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 	depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
 
-	// Update width and height from surface extent to reflect command line arguments
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
+	// Initialize rendering dimensions before creating attachments.
+	// Use the created image extent to reflect command line sizing and surface constraints.
+	const auto extent = get_render_context().get_render_frames().front()->get_render_target().get_extent();
+	width             = extent.width;
+	height            = extent.height;
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
@@ -122,16 +124,21 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 		return false;
 	}
 
-	get_render_context().handle_surface_changes();
+	const bool swapchain_updated = get_render_context().handle_surface_changes(swapchain_out_of_date);
+	if (swapchain_updated)
+	{
+		swapchain_out_of_date = false;
+	}
+	const auto extent = get_render_context().get_render_frames().front()->get_render_target().get_extent();
 
-	// Don't recreate the swapchain if the dimensions haven't changed
-	if (width == get_render_context().get_surface_extent().width && height == get_render_context().get_surface_extent().height)
+	// Don't rebuild frame resources if neither the swapchain nor its dimensions changed.
+	if (!swapchain_updated && width == extent.width && height == extent.height)
 	{
 		return false;
 	}
 
-	width  = get_render_context().get_surface_extent().width;
-	height = get_render_context().get_surface_extent().height;
+	width  = extent.width;
+	height = extent.height;
 
 	prepared = false;
 
@@ -531,11 +538,17 @@ void ApiVulkanSample::prepare_frame()
 		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+			// Force recreation even at unchanged dimensions, rebuild sample resources,
+			// and retry once before allowing callers to submit work.
+			swapchain_out_of_date = true;
 			resize(width, height);
+			assert(get_render_context().has_swapchain());
+			result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
 		}
 		// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
 		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
-		else if (result != VK_SUBOPTIMAL_KHR)
+		// Report any other failure, including an out-of-date retry, before submission.
+		if (result != VK_SUBOPTIMAL_KHR)
 		{
 			VK_CHECK(result);
 		}
@@ -679,7 +692,7 @@ void ApiVulkanSample::setup_depth_stencil()
 	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_create_info.imageType   = VK_IMAGE_TYPE_2D;
 	image_create_info.format      = depth_format;
-	image_create_info.extent      = {get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1};
+	image_create_info.extent      = {width, height, 1};
 	image_create_info.mipLevels   = 1;
 	image_create_info.arrayLayers = 1;
 	image_create_info.samples     = VK_SAMPLE_COUNT_1_BIT;
@@ -728,8 +741,8 @@ void ApiVulkanSample::setup_framebuffer()
 	framebuffer_create_info.renderPass              = render_pass;
 	framebuffer_create_info.attachmentCount         = 2;
 	framebuffer_create_info.pAttachments            = attachments;
-	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
-	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
+	framebuffer_create_info.width                   = width;
+	framebuffer_create_info.height                  = height;
 	framebuffer_create_info.layers                  = 1;
 
 	// Delete existing frame buffers
