@@ -530,20 +530,6 @@ void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer, uint32_t swa
 
 void ApiVulkanSample::prepare_frame()
 {
-	// Acquire an image before returning so callers can submit safely.
-	// Retry once after an out-of-date acquisition has triggered resize handling.
-	// Report repeated failure instead of submitting without an acquired image.
-	if (!try_prepare_frame())
-	{
-		if (!try_prepare_frame())
-		{
-			VK_CHECK(VK_ERROR_OUT_OF_DATE_KHR);
-		}
-	}
-}
-
-bool ApiVulkanSample::try_prepare_frame()
-{
 	if (get_render_context().has_swapchain())
 	{
 		handle_surface_changes();
@@ -552,18 +538,21 @@ bool ApiVulkanSample::try_prepare_frame()
 		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+			// Force recreation even at unchanged dimensions, rebuild sample resources,
+			// and retry once before allowing callers to submit work.
 			swapchain_out_of_date = true;
 			resize(width, height);
-			return false;
+			assert(get_render_context().has_swapchain());
+			result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
 		}
 		// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
 		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
+		// Report any other failure, including an out-of-date retry, before submission.
 		if (result != VK_SUBOPTIMAL_KHR)
 		{
 			VK_CHECK(result);
 		}
 	}
-	return true;
 }
 
 void ApiVulkanSample::submit_frame()

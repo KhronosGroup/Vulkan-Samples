@@ -1033,11 +1033,7 @@ void FragmentShadingRateDynamic::update_uniform_buffers()
 
 void FragmentShadingRateDynamic::draw()
 {
-	// Skip submission if acquisition was out of date and no image was acquired.
-	if (!ApiVulkanSample::try_prepare_frame())
-	{
-		return;
-	}
+	ApiVulkanSample::prepare_frame();
 
 	VkSemaphore        semaphore{VK_NULL_HANDLE};
 	const VkSemaphore *old_semaphore{VK_NULL_HANDLE};
