@@ -34,4 +34,14 @@ add_sample_with_tags(
         "async_compute/glsl/shadow.frag"
         "async_compute/glsl/composite.vert"
         "async_compute/glsl/composite.frag"
-        "async_compute/glsl/threshold.comp")
+        "async_compute/glsl/threshold.comp"
+    SHADER_FILES_SLANG
+        "async_compute/slang/blur_down.comp.slang"
+        "async_compute/slang/blur_up.comp.slang"
+        "async_compute/slang/forward.vert.slang"
+        "async_compute/slang/forward.frag.slang"
+        "async_compute/slang/shadow.vert.slang"
+        "async_compute/slang/shadow.frag.slang"
+        "async_compute/slang/composite.vert.slang"
+        "async_compute/slang/composite.frag.slang"
+        "async_compute/slang/threshold.comp.slang")
