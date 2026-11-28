@@ -19,7 +19,7 @@
 #ifndef BLUR_COMMON_H_
 #define BLUR_COMMON_H_
 
-[[vk::binding(0, 0)]] Sampler2D in_tex;
+[[vk::binding(0, 0)]] Sampler2D                                           in_tex;
 [[vk::image_format("rgba16f")]] [[vk::binding(1, 0)]] RWTexture2D<float4> out_tex;
 
 struct Registers
