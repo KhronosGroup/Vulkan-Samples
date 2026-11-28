@@ -29,4 +29,9 @@ add_sample(
         "shadows/glsl/shadowmap.vert"
         "shadows/glsl/shadowmap.frag"
         "shadows/glsl/main.vert"
-        "shadows/glsl/main.frag")
+        "shadows/glsl/main.frag"
+    SHADER_FILES_SLANG
+        "shadows/slang/shadowmap.vert.slang"
+        "shadows/slang/shadowmap.frag.slang"
+        "shadows/slang/main.vert.slang"
+        "shadows/slang/main.frag.slang")
