@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2025, Arm Limited and Contributors
+# Copyright (c) 2021-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,12 +26,22 @@ add_sample_with_tags(
     NAME "Async compute"
     DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU."
     SHADER_FILES_GLSL
-        "async_compute/blur_down.comp"
-        "async_compute/blur_up.comp"
-        "async_compute/forward.vert"
-        "async_compute/forward.frag"
-        "async_compute/shadow.vert"
-        "async_compute/shadow.frag"
-        "async_compute/composite.vert"
-        "async_compute/composite.frag"
-        "async_compute/threshold.comp")
+        "async_compute/glsl/blur_down.comp"
+        "async_compute/glsl/blur_up.comp"
+        "async_compute/glsl/forward.vert"
+        "async_compute/glsl/forward.frag"
+        "async_compute/glsl/shadow.vert"
+        "async_compute/glsl/shadow.frag"
+        "async_compute/glsl/composite.vert"
+        "async_compute/glsl/composite.frag"
+        "async_compute/glsl/threshold.comp"
+    SHADER_FILES_SLANG
+        "async_compute/slang/blur_down.comp.slang"
+        "async_compute/slang/blur_up.comp.slang"
+        "async_compute/slang/forward.vert.slang"
+        "async_compute/slang/forward.frag.slang"
+        "async_compute/slang/shadow.vert.slang"
+        "async_compute/slang/shadow.frag.slang"
+        "async_compute/slang/composite.vert.slang"
+        "async_compute/slang/composite.frag.slang"
+        "async_compute/slang/threshold.comp.slang")

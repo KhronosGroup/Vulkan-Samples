@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Arm Limited and Contributors
+# Copyright (c) 2020-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,12 @@ add_sample(
     NAME "RP Multithreading"
     DESCRIPTION "Multithreading with multiple render passes."
     SHADER_FILES_GLSL
-        "shadows/shadowmap.vert"
-        "shadows/shadowmap.frag"
-        "shadows/main.vert"
-        "shadows/main.frag")
+        "shadows/glsl/shadowmap.vert"
+        "shadows/glsl/shadowmap.frag"
+        "shadows/glsl/main.vert"
+        "shadows/glsl/main.frag"
+    SHADER_FILES_SLANG
+        "shadows/slang/shadowmap.vert.slang"
+        "shadows/slang/shadowmap.frag.slang"
+        "shadows/slang/main.vert.slang"
+        "shadows/slang/main.frag.slang")

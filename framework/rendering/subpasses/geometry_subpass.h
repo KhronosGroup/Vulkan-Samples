@@ -548,8 +548,16 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 
 	for (auto &input_resource : vertex_input_resources)
 	{
+		// In Slang, inputs are part of a structure, so we need to strip prefixes
+		auto   input_name     = input_resource.name;
+		size_t prefix_end_pos = input_name.find('.');
+		if (prefix_end_pos != std::string::npos)
+		{
+			input_name = input_name.substr(prefix_end_pos + 1);
+		}
+
 		vkb::scene_graph::components::HPPVertexAttribute attribute;
-		if (!sub_mesh.get_attribute(input_resource.name, attribute))
+		if (!sub_mesh.get_attribute(input_name, attribute))
 		{
 			continue;
 		}
@@ -564,7 +572,15 @@ inline void GeometrySubpass<bindingType>::draw_submesh_impl(vkb::core::CommandBu
 	// Find submesh vertex buffers matching the shader input attribute names
 	for (auto &input_resource : vertex_input_resources)
 	{
-		auto const *buffer_ptr = sub_mesh.find_vertex_buffer(input_resource.name);
+		// In Slang, inputs are part of a structure, so we need to strip prefixes
+		auto   input_name     = input_resource.name;
+		size_t prefix_end_pos = input_name.find('.');
+		if (prefix_end_pos != std::string::npos)
+		{
+			input_name = input_name.substr(prefix_end_pos + 1);
+		}
+
+		auto const *buffer_ptr = sub_mesh.find_vertex_buffer(input_name);
 
 		if (buffer_ptr)
 		{

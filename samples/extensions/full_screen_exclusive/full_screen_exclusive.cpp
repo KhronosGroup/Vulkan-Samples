@@ -519,7 +519,7 @@ void FullScreenExclusive::init_render_pass()
 	VK_CHECK(vkCreateRenderPass(context.device, &rp_info, nullptr, &context.render_pass));
 }
 
-VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
+VkShaderModule FullScreenExclusive::load_shader_module(const std::string &path) const
 {
 	std::vector<uint32_t> spirv = vkb::fs::read_shader_binary_u32(path);
 
@@ -575,12 +575,12 @@ void FullScreenExclusive::init_pipeline()
 
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module("triangle.vert.spv");
+	shader_stages[0].module = load_shader_module("triangle/" + get_shader_folder() + "/triangle.vert.spv");
 	shader_stages[0].pName  = "main";
 
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module("triangle.frag.spv");
+	shader_stages[1].module = load_shader_module("triangle/" + get_shader_folder() + "/triangle.frag.spv");
 	shader_stages[1].pName  = "main";
 
 	VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};

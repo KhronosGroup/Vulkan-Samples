@@ -650,8 +650,8 @@ void MultiDrawIndirect::create_pipeline()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("multi_draw_indirect/multi_draw_indirect.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("multi_draw_indirect/multi_draw_indirect.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("multi_draw_indirect", "multi_draw_indirect.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("multi_draw_indirect", "multi_draw_indirect.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
@@ -663,16 +663,16 @@ void MultiDrawIndirect::create_compute_pipeline()
 {
 	auto create = [this](VkPipelineLayout &layout, VkPipeline &_pipeline, const char *filename) {
 		VkComputePipelineCreateInfo compute_create_info = vkb::initializers::compute_pipeline_create_info(layout, 0);
-		compute_create_info.stage                       = load_shader(filename, VK_SHADER_STAGE_COMPUTE_BIT);
+		compute_create_info.stage                       = load_shader("multi_draw_indirect", filename, VK_SHADER_STAGE_COMPUTE_BIT);
 
 		VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_create_info, nullptr, &_pipeline));
 	};
 
-	create(gpu_cull_pipeline_layout, gpu_cull_pipeline, "multi_draw_indirect/cull.comp.spv");
+	create(gpu_cull_pipeline_layout, gpu_cull_pipeline, "cull.comp.spv");
 
 	if (m_supports_buffer_device)
 	{
-		create(device_address_pipeline_layout, device_address_pipeline, "multi_draw_indirect/cull_address.comp.spv");
+		create(device_address_pipeline_layout, device_address_pipeline, "cull_address.comp.spv");
 	}
 }
 

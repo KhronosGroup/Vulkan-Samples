@@ -113,8 +113,8 @@ std::unique_ptr<vkb::rendering::RenderTargetC> MultithreadingRenderPasses::creat
 std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_shadow_renderpass()
 {
 	// Shadowmap subpass
-	auto shadowmap_vs  = vkb::core::ShaderSource{"shadows/shadowmap.vert.spv"};
-	auto shadowmap_fs  = vkb::core::ShaderSource{"shadows/shadowmap.frag.spv"};
+	auto shadowmap_vs  = vkb::core::ShaderSource{"shadows", "shadowmap.vert.spv"};
+	auto shadowmap_fs  = vkb::core::ShaderSource{"shadows", "shadowmap.frag.spv"};
 	auto scene_subpass = std::make_unique<ShadowSubpass>(get_render_context(), std::move(shadowmap_vs), std::move(shadowmap_fs), get_scene(), *shadowmap_camera);
 
 	shadow_subpass = scene_subpass.get();
@@ -129,8 +129,8 @@ std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::cre
 std::unique_ptr<vkb::rendering::RenderPipelineC> MultithreadingRenderPasses::create_main_renderpass()
 {
 	// Main subpass
-	auto main_vs       = vkb::core::ShaderSource{"shadows/main.vert.spv"};
-	auto main_fs       = vkb::core::ShaderSource{"shadows/main.frag.spv"};
+	auto main_vs       = vkb::core::ShaderSource{"shadows", "main.vert.spv"};
+	auto main_fs       = vkb::core::ShaderSource{"shadows", "main.frag.spv"};
 	auto scene_subpass = std::make_unique<MainSubpass>(
 	    get_render_context(), std::move(main_vs), std::move(main_fs), get_scene(), *camera, *shadowmap_camera, shadow_render_targets);
 

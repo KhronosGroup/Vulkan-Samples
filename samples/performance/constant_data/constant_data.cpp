@@ -107,9 +107,9 @@ bool ConstantData::prepare(const vkb::ApplicationOptions &options)
 	// Shader data passing depends on max. push constant size of the implementation
 	auto push_constant_limit = get_device().get_gpu().get_properties().limits.maxPushConstantsSize;
 
-	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>(push_constant_limit >= 256 ? "constant_data/push_constant_large.vert.spv" : "constant_data/push_constant_small.vert.spv", "constant_data/push_constant.frag.spv");
-	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>(push_constant_limit >= 256 ? "constant_data/ubo_large.vert.spv" : "constant_data/ubo_small.vert.spv", "constant_data/ubo.frag.spv");
-	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert.spv", "constant_data/buffer_array.frag.spv");
+	push_constant_render_pipeline  = create_render_pipeline<PushConstantSubpass>(push_constant_limit >= 256 ? "push_constant_large.vert.spv" : "push_constant_small.vert.spv", "push_constant.frag.spv");
+	descriptor_set_render_pipeline = create_render_pipeline<DescriptorSetSubpass>(push_constant_limit >= 256 ? "ubo_large.vert.spv" : "ubo_small.vert.spv", "ubo.frag.spv");
+	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("buffer_array.vert.spv", "buffer_array.frag.spv");
 
 	// Add a GUI with the stats you want to monitor
 	get_stats().request_stats(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::gpu_load_store_cycles});

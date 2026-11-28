@@ -21,6 +21,7 @@
 #include "common/vk_common.h"
 #include "common/vulkan_exception.h"
 #include "filesystem/legacy.h"
+#include "platform/application.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
@@ -121,7 +122,7 @@ class ShaderSource
 {
   public:
 	ShaderSource() = default;
-	ShaderSource(std::string const &filename);
+	ShaderSource(const std::string &folder_name, const std::string &shader_filename);
 
 	std::string const &get_filename() const;
 	size_t             get_id() const;
@@ -226,9 +227,11 @@ inline void ShaderVariant::set_runtime_array_sizes(std::unordered_map<std::strin
 	runtime_array_sizes = sizes;
 }
 
-inline ShaderSource::ShaderSource(std::string const &filename) :
-    filename{filename}, source{fs::read_text_file(filename)}
+inline ShaderSource::ShaderSource(const std::string &folder_name, const std::string &shader_filename)
 {
+	auto shader_folder = vkb::Application::get_shader_folder();
+	this->filename     = folder_name + "/" + shader_folder + "/" + shader_filename;
+	source             = fs::read_text_file(this->filename);
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
 }

@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Holochip Corporation
+# Copyright (c) 2021-2026, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,7 @@ add_sample_with_tags(
     NAME "Multi-Draw Indirect"
     DESCRIPTION "Improve performance by offloading common tasks from CPU to GPU."
     SHADER_FILES_GLSL
-    "multi_draw_indirect/cull.comp"
-    "multi_draw_indirect/cull_address.comp"
-    "multi_draw_indirect/multi_draw_indirect.vert"
-    "multi_draw_indirect/multi_draw_indirect.frag")
+    "multi_draw_indirect/glsl/cull.comp"
+    "multi_draw_indirect/glsl/cull_address.comp"
+    "multi_draw_indirect/glsl/multi_draw_indirect.vert"
+    "multi_draw_indirect/glsl/multi_draw_indirect.frag")

@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2025, Arm Limited and Contributors
+# Copyright (c) 2019-2026, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,8 +26,8 @@ add_sample(
     NAME "Swapchain Images"
     DESCRIPTION "Using triple buffering over double buffering."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag"
+        "base/glsl/base.vert"
+        "base/glsl/base.frag"
     GLSLC_ADDITIONAL_ARGUMENTS
         "-I .."
     )

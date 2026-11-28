@@ -485,8 +485,8 @@ inline Gui<bindingType>::Gui(
 	vkb::common::make_filters_valid(device.get_gpu().get_handle(), font_image->get_format(), &filter);
 
 	// Load shaders
-	vkb::core::ShaderSource vert_shader("imgui.vert.spv");
-	vkb::core::ShaderSource frag_shader("imgui.frag.spv");
+	vkb::core::ShaderSource vert_shader("base", "imgui.vert.spv");
+	vkb::core::ShaderSource frag_shader("base", "imgui.frag.spv");
 
 	std::vector<vkb::core::ShaderModuleCpp *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, vert_shader, {}));
