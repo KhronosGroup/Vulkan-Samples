@@ -28,5 +28,14 @@ add_sample(
     SHADER_FILES_GLSL
         "base/glsl/base.vert"
         "base/glsl/base.frag"
+        "postprocessing/glsl/outline.frag"
+        "postprocessing/glsl/outline_ms_depth.frag"
         "postprocessing/glsl/postprocessing.vert"
-        "postprocessing/glsl/outline.frag")
+        "postprocessing/glsl/outline.frag"
+    SHADER_FILES_SLANG
+        "base/slang/base.vert.slang"
+        "base/slang/base.frag.slang"
+        "postprocessing/slang/outline.frag.slang"
+        "postprocessing/slang/outline_ms_depth.frag.slang"
+        "postprocessing/slang/postprocessing.vert.slang"
+        "postprocessing/slang/outline.frag.slang")
